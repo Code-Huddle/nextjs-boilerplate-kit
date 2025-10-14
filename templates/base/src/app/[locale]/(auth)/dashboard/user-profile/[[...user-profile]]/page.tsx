@@ -1,4 +1,3 @@
-import { auth } from 'auth';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getI18nPath } from '@/utils/Helpers';
 
@@ -21,7 +20,8 @@ export async function generateMetadata(props: IUserProfilePageProps) {
 export default async function UserProfilePage(props: IUserProfilePageProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
-  const session = await auth();
+  // Auth will be provided by the selected auth module
+  const session = null; // Placeholder - will be replaced by auth module
 
   return (
     <div className="my-6 -ml-16">
@@ -51,7 +51,7 @@ export default async function UserProfilePage(props: IUserProfilePageProps) {
               </div>
             )
           : (
-              <p>Loading user data...</p>
+              <p>Authentication module not configured</p>
             )
       }
 

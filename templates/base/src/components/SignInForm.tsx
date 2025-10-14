@@ -12,6 +12,7 @@ export function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +21,7 @@ export function SignInForm() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     setLoading(false);
+    setMessage('Authentication module not configured');
 
     // Handle sign in logic here
     // TODO: Implement actual sign in logic
@@ -144,6 +146,13 @@ export function SignInForm() {
             Sign up
           </Link>
         </p>
+        {message && (
+          <div className="mt-4 text-center">
+            <Badge variant={message.includes('error') ? 'destructive' : 'default'}>
+              {message}
+            </Badge>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

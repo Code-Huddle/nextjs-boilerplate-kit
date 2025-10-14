@@ -1,4 +1,3 @@
-import { auth, signOut } from 'auth';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -16,7 +15,8 @@ export default async function DashboardLayout(props: {
     namespace: 'DashboardLayout',
   });
 
-  const session = await auth();
+  // Auth will be provided by the selected auth module
+  const session = null; // Placeholder - will be replaced by auth module
   if (!session) {
     redirect('/sign-in');
   }
@@ -40,16 +40,16 @@ export default async function DashboardLayout(props: {
       rightNav={(
         <>
           <li>
-            <form
-              action={async () => {
-                'use server';
-                await signOut({ redirectTo: '/' });
+            <button 
+              className="border-none text-gray-700 hover:text-gray-900" 
+              type="button"
+              onClick={() => {
+                // Sign out will be handled by the selected auth module
+                console.log('Sign out not configured');
               }}
             >
-              <button className="border-none text-gray-700 hover:text-gray-900" type="submit">
-                {t('sign_out')}
-              </button>
-            </form>
+              {t('sign_out')}
+            </button>
           </li>
           <li>
             <LocaleSwitcher />

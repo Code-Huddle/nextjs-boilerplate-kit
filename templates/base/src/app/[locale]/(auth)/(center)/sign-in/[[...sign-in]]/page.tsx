@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Github from 'lucide-react/dist/esm/icons/github';
 import Mail from 'lucide-react/dist/esm/icons/mail';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -36,22 +35,8 @@ export default function SignIn() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email: values.email,
-        password: values.password,
-      });
-
-      if (result?.error) {
-        setError('Invalid email or password');
-      } else {
-        router.push('/dashboard');
-      }
-    } catch (error) {
-      console.error('Sign in error:', error);
-      setError('An error occurred during sign in');
-    }
+    // This will be replaced by the selected auth module
+    setError('Authentication module not configured');
   }
 
   return (
@@ -102,7 +87,7 @@ export default function SignIn() {
           <div className="flex w-full flex-col space-y-2">
             <Button
               variant="outline"
-              onClick={() => signIn('github', { callbackUrl: '/dashboard' })}
+              onClick={() => setError('Authentication module not configured')}
               className="w-full"
             >
               <Github className="mr-2 size-4" />
@@ -111,7 +96,7 @@ export default function SignIn() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+              onClick={() => setError('Authentication module not configured')}
               className="w-full"
             >
               <Mail className="mr-2 size-4" />

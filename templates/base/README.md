@@ -108,7 +108,7 @@ Make sure to create a `.env` file based on `.env.example` before starting the co
 
 ### Set up authentication
 
-The Auth Version 5 beta is already done. You just have have to change the environment variables in .env.local file and then update the api in the auth.ts file.
+Authentication is modular and can be configured during project creation. Choose between NextAuth, Supabase, or None when running the CLI.
 
 ### Translation (i18n) setup
 

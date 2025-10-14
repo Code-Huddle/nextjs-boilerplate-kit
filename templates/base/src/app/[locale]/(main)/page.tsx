@@ -89,11 +89,16 @@ export default async function Index(props: IIndexProps) {
           </div>
 
           {/* Subtitle */}
-          <p className="mx-auto mb-16 max-w-4xl text-xl leading-relaxed text-muted-foreground md:text-2xl">
+          <p className="mx-auto mb-6 max-w-4xl text-xl leading-relaxed text-muted-foreground md:text-2xl">
             A production-ready Next.js boilerplate with TypeScript, Tailwind CSS, and authentication.
             <span className="mt-2 block font-semibold text-foreground">
               Built for developers who want to ship fast.
             </span>
+          </p>
+
+          {/* Auth provider message will be replaced by the CLI after project generation */}
+          <p className="mx-auto mb-10 max-w-4xl text-lg text-muted-foreground">
+            __AUTH_MESSAGE__
           </p>
 
           {/* CTA Buttons */}
