@@ -11,11 +11,12 @@
 - **Tailwind CSS v4** for styling
 - **Server Components** and Client Components
 
-### 🔐 **Authentication & Security**
-- **NextAuth.js v5** with multiple providers
-- **Protected routes** and middleware
-- **Session management** with database support
-- **Environment-based configuration**
+### 🔐 **Modular Authentication System**
+- **Choose your auth provider**: NextAuth.js, Supabase, or None
+- **Interactive CLI selection** during project creation
+- **Protected routes** and middleware for each provider
+- **Session management** with provider-specific implementations
+- **Environment-based configuration** per auth type
 
 ### 🎨 **UI & Styling**
 - **Radix UI** components for accessibility
@@ -74,6 +75,11 @@ npx create-codehuddle-nextjs my-awesome-app
 npx create-codehuddle-nextjs .
 ```
 
+**🎯 Authentication Selection**: During project creation, you'll be prompted to choose your authentication provider:
+- **NextAuth** - Complete authentication with OAuth providers and credentials
+- **Supabase** - Authentication with Supabase Auth and real-time features  
+- **None** - No authentication (add your own later)
+
 ### Setup and Run
 
 ```bash
@@ -83,12 +89,14 @@ cd my-awesome-app
 # Install dependencies
 npm install
 
-# Copy environment variables
+# Copy environment variables (auth-specific)
 cp .env.example .env.local
 
 # Start development server
 npm run dev
 ```
+
+**📝 Environment Setup**: The `.env.example` file will contain the appropriate environment variables for your selected authentication provider.
 
 Visit [http://localhost:3000](http://localhost:3000) to see your application!
 
@@ -138,7 +146,7 @@ my-awesome-app/
 - **Tailwind CSS v4** - Utility-first CSS framework
 
 ### 📦 **Key Dependencies**
-- **NextAuth.js** - Authentication for Next.js
+- **Authentication** - NextAuth.js, Supabase Auth, or custom solution
 - **TanStack Query** - Server state management
 - **React Hook Form** - Performant forms
 - **Zod** - TypeScript-first schema validation
@@ -161,19 +169,39 @@ my-awesome-app/
 
 ### Environment Variables
 
-Create a `.env.local` file with the following variables:
+The `.env.example` file will be automatically generated based on your selected authentication provider:
 
+#### **NextAuth Configuration**
 ```env
-# Database
-DATABASE_URL="your_database_url"
-
-# NextAuth
-NEXTAUTH_SECRET="your_secret"
+# NextAuth.js Configuration
+NEXTAUTH_SECRET="your-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
 
-# OAuth Providers (optional)
-GOOGLE_CLIENT_ID="your_google_client_id"
-GOOGLE_CLIENT_SECRET="your_google_client_secret"
+# OAuth Providers
+AUTH_GITHUB_ID="your-github-client-id"
+AUTH_GITHUB_SECRET="your-github-client-secret"
+AUTH_GOOGLE_ID="your-google-client-id"
+AUTH_GOOGLE_SECRET="your-google-client-secret"
+
+# API Configuration
+NEXT_PUBLIC_SERVER_URL="https://your-api-url.com/api"
+```
+
+#### **Supabase Configuration**
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL="your-supabase-project-url"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+
+# Optional: For server-side operations
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+```
+
+#### **No Authentication**
+```env
+# General Configuration
+NODE_ENV="development"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
 ### Customization
@@ -184,6 +212,15 @@ The boilerplate is designed to be easily customizable:
 2. **Styles**: Customize Tailwind config in `tailwind.config.js`
 3. **Features**: Enable/disable features via environment variables
 4. **Themes**: Customize the theme in `src/styles/`
+5. **Authentication**: Switch auth providers by re-running the CLI or manually updating components
+
+### 🔄 **Changing Authentication Providers**
+
+If you want to switch authentication providers after project creation:
+
+1. **Re-run the CLI**: Delete the project and create a new one with your preferred auth provider
+2. **Manual Migration**: Replace auth-specific files and update dependencies manually
+3. **Hybrid Approach**: Keep the base template and manually add your preferred auth solution
 
 ## 📚 Documentation
 

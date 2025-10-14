@@ -5,6 +5,8 @@ import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { RandomJoke } from '@/components/RandomJoke';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthFeatureCard } from '@/components/AuthFeatureCard';
+import { AuthTechBadge } from '@/components/AuthTechBadge';
 
 type IIndexProps = {
   params: Promise<{ locale: string }>;
@@ -26,6 +28,10 @@ export default async function Index(props: IIndexProps) {
     locale,
     namespace: 'RootLayout',
   });
+
+  // Get auth-specific content
+  const authFeatureCard = AuthFeatureCard();
+  const authTechBadge = AuthTechBadge();
 
   return (
     <div className="geometric-bg min-h-screen bg-background">
@@ -144,12 +150,7 @@ export default async function Index(props: IIndexProps) {
                 icon: '⚡',
                 gradient: 'from-black to-gray-800',
               },
-              {
-                title: 'Authentication',
-                description: 'Complete authentication system with NextAuth.js including social login and user management.',
-                icon: '🔐',
-                gradient: 'from-gray-800 to-gray-600',
-              },
+              authFeatureCard,
               {
                 title: 'TypeScript',
                 description: 'Fully typed with TypeScript for better development experience and fewer runtime errors.',
@@ -215,7 +216,7 @@ export default async function Index(props: IIndexProps) {
                 'React 19',
                 'TypeScript',
                 'Tailwind',
-                'NextAuth',
+                authTechBadge,
                 'Vitest',
               ].map(tech => (
                 <div
