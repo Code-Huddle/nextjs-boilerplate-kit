@@ -1,0 +1,439 @@
+---
+title: State Management with Zustand
+type: auto_attached
+file_patterns: ["**/stores/**/*.ts", "**/hooks/**/*.ts"]
+description: State management patterns using Zustand
+---
+
+# State Management with Zustand
+
+## When to Use State Management
+
+**Use Zustand when:**
+- State needs to be shared across multiple components
+- State needs to persist across route changes
+- Complex state logic that doesn't belong in components
+
+**Don't use Zustand when:**
+- State is only used in one component (use `useState`)
+- State is server data (use TanStack Query)
+- State is form data (use React Hook Form)
+- State is URL-based (use searchParams)
+
+## Store Structure
+
+```typescript
+// ✅ Good: Well-structured store
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface UserState {
+  // State
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  
+  // Actions
+  setUser: (user: User) => void;
+  updateUser: (updates: Partial<User>) => void;
+  clearUser: () => void;
+  fetchUser: (userId: string) => Promise<void>;
+}
+
+export const useUserStore = create<UserState>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        // Initial state
+        user: null,
+        isLoading: false,
+        error: null,
+        
+        // Actions
+        setUser: (user) => set({ user, error: null }),
+        
+        updateUser: (updates) =>
+          set((state) => ({
+            user: state.user ? { ...state.user, ...updates } : null,
+          })),
+        
+        clearUser: () => set({ user: null, error: null }),
+        
+        fetchUser: async (userId) => {
+          set({ isLoading: true, error: null });
+          try {
+            const response = await fetch(`/api/users/${userId}`);
+            if (!response.ok) throw new Error('Failed to fetch user');
+            const user = await response.json();
+            set({ user, isLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : 'Unknown error',
+              isLoading: false,
+            });
+          }
+        },
+      }),
+      {
+        name: 'user-storage',
+        partialize: (state) => ({ user: state.user }), // Only persist user
+      }
+    ),
+    { name: 'UserStore' }
+  )
+);
+```
+
+## Slice Pattern
+
+```typescript
+// ✅ Good: Separate slices for large stores
+// stores/slices/userSlice.ts
+export interface UserSlice {
+  user: User | null;
+  setUser: (user: User) => void;
+  clearUser: () => void;
+}
+
+export const createUserSlice: StateCreator<AppState, [], [], UserSlice> = (set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+  clearUser: () => set({ user: null }),
+});
+
+// stores/slices/settingsSlice.ts
+export interface SettingsSlice {
+  theme: 'light' | 'dark';
+  locale: string;
+  setTheme: (theme: 'light' | 'dark') => void;
+  setLocale: (locale: string) => void;
+}
+
+export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> = (set) => ({
+  theme: 'light',
+  locale: 'en',
+  setTheme: (theme) => set({ theme }),
+  setLocale: (locale) => set({ locale }),
+});
+
+// stores/useAppStore.ts
+type AppState = UserSlice & SettingsSlice;
+
+export const useAppStore = create<AppState>()((...a) => ({
+  ...createUserSlice(...a),
+  ...createSettingsSlice(...a),
+}));
+```
+
+## Selectors
+
+```typescript
+// ✅ Good: Use selectors to prevent unnecessary re-renders
+export function UserProfile() {
+  // Only re-renders when user.name changes
+  const userName = useUserStore((state) => state.user?.name);
+  
+  return <div>{userName}</div>;
+}
+
+// ✅ Good: Shallow comparison for objects
+import { shallow } from 'zustand/shallow';
+
+export function UserCard() {
+  const { user, updateUser } = useUserStore(
+    (state) => ({ user: state.user, updateUser: state.updateUser }),
+    shallow
+  );
+  
+  return <div>{user?.name}</div>;
+}
+
+// ❌ Bad: Selecting entire state
+export function UserProfile() {
+  // Re-renders on ANY state change
+  const state = useUserStore();
+  return <div>{state.user?.name}</div>;
+}
+```
+
+## Computed Values
+
+```typescript
+// ✅ Good: Computed values in store
+interface CartState {
+  items: CartItem[];
+  
+  // Computed values
+  get total(): number {
+    return this.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  },
+  
+  get itemCount(): number {
+    return this.items.reduce((sum, item) => sum + item.quantity, 0);
+  },
+  
+  // Actions
+  addItem: (item: CartItem) => void;
+  removeItem: (itemId: string) => void;
+}
+
+export const useCartStore = create<CartState>((set, get) => ({
+  items: [],
+  
+  get total() {
+    return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  },
+  
+  get itemCount() {
+    return get().items.reduce((sum, item) => sum + item.quantity, 0);
+  },
+  
+  addItem: (item) =>
+    set((state) => ({ items: [...state.items, item] })),
+  
+  removeItem: (itemId) =>
+    set((state) => ({
+      items: state.items.filter((item) => item.id !== itemId),
+    })),
+}));
+```
+
+## Async Actions
+
+```typescript
+// ✅ Good: Handle async operations in actions
+export const usePostStore = create<PostState>((set, get) => ({
+  posts: [],
+  isLoading: false,
+  error: null,
+  
+  fetchPosts: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('/api/posts');
+      if (!response.ok) throw new Error('Failed to fetch posts');
+      const posts = await response.json();
+      set({ posts, isLoading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Unknown error',
+        isLoading: false,
+      });
+    }
+  },
+  
+  createPost: async (data: CreatePostData) => {
+    const response = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) throw new Error('Failed to create post');
+    
+    const newPost = await response.json();
+    set((state) => ({ posts: [...state.posts, newPost] }));
+    return newPost;
+  },
+  
+  deletePost: async (postId: string) => {
+    await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+    set((state) => ({
+      posts: state.posts.filter((post) => post.id !== postId),
+    }));
+  },
+}));
+```
+
+## Persistence
+
+```typescript
+// ✅ Good: Persist specific state
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+export const useSettingsStore = create(
+  persist<SettingsState>(
+    (set) => ({
+      theme: 'light',
+      locale: 'en',
+      sidebarCollapsed: false,
+      
+      setTheme: (theme) => set({ theme }),
+      setLocale: (locale) => set({ locale }),
+      toggleSidebar: () =>
+        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+    }),
+    {
+      name: 'app-settings',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist specific fields
+      partialize: (state) => ({
+        theme: state.theme,
+        locale: state.locale,
+        sidebarCollapsed: state.sidebarCollapsed,
+      }),
+    }
+  )
+);
+
+// ✅ Good: Versioning for breaking changes
+export const useUserStore = create(
+  persist<UserState>(
+    (set) => ({
+      user: null,
+      setUser: (user) => set({ user }),
+    }),
+    {
+      name: 'user-storage',
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Migration from v0 to v1
+          return {
+            ...persistedState,
+            user: persistedState.currentUser, // Renamed field
+          };
+        }
+        return persistedState;
+      },
+    }
+  )
+);
+```
+
+## DevTools
+
+```typescript
+// ✅ Good: Enable DevTools in development
+import { devtools } from 'zustand/middleware';
+
+export const useStore = create(
+  devtools<State>(
+    (set) => ({
+      count: 0,
+      increment: () => set((state) => ({ count: state.count + 1 }), false, 'increment'),
+      decrement: () => set((state) => ({ count: state.count - 1 }), false, 'decrement'),
+    }),
+    { name: 'CounterStore' }
+  )
+);
+```
+
+## Immer Integration
+
+```typescript
+// ✅ Good: Use Immer for complex state updates
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+
+interface TodoState {
+  todos: Todo[];
+  addTodo: (todo: Todo) => void;
+  toggleTodo: (id: string) => void;
+  updateTodo: (id: string, updates: Partial<Todo>) => void;
+}
+
+export const useTodoStore = create<TodoState>()(
+  immer((set) => ({
+    todos: [],
+    
+    addTodo: (todo) =>
+      set((state) => {
+        state.todos.push(todo);
+      }),
+    
+    toggleTodo: (id) =>
+      set((state) => {
+        const todo = state.todos.find((t) => t.id === id);
+        if (todo) {
+          todo.completed = !todo.completed;
+        }
+      }),
+    
+    updateTodo: (id, updates) =>
+      set((state) => {
+        const index = state.todos.findIndex((t) => t.id === id);
+        if (index !== -1) {
+          Object.assign(state.todos[index], updates);
+        }
+      }),
+  }))
+);
+```
+
+## Testing Stores
+
+```typescript
+// ✅ Good: Test store actions
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useCounterStore } from './useCounterStore';
+
+describe('CounterStore', () => {
+  beforeEach(() => {
+    // Reset store before each test
+    useCounterStore.setState({ count: 0 });
+  });
+  
+  it('should increment count', () => {
+    const { increment } = useCounterStore.getState();
+    
+    increment();
+    
+    expect(useCounterStore.getState().count).toBe(1);
+  });
+  
+  it('should decrement count', () => {
+    const { decrement } = useCounterStore.getState();
+    
+    useCounterStore.setState({ count: 5 });
+    decrement();
+    
+    expect(useCounterStore.getState().count).toBe(4);
+  });
+});
+
+// ✅ Good: Test with React components
+import { renderHook, act } from '@testing-library/react';
+
+describe('CounterStore with component', () => {
+  it('should update when count changes', () => {
+    const { result } = renderHook(() => useCounterStore());
+    
+    expect(result.current.count).toBe(0);
+    
+    act(() => {
+      result.current.increment();
+    });
+    
+    expect(result.current.count).toBe(1);
+  });
+});
+```
+
+## Best Practices
+
+1. **Keep stores focused** - One store per domain/feature
+2. **Use selectors** - Prevent unnecessary re-renders
+3. **Avoid derived state** - Compute values on the fly
+4. **Don't store server data** - Use TanStack Query instead
+5. **Normalize data** - Use IDs and lookups for relationships
+6. **Use TypeScript** - Always type your stores
+7. **Enable DevTools** - For debugging in development
+8. **Test stores** - Write unit tests for complex logic
+9. **Use middleware** - persist, devtools, immer when needed
+10. **Reset on logout** - Clear sensitive data
+
+## Zustand vs Other Solutions
+
+- **Use `useState`**: Component-local state
+- **Use Zustand**: Global state, cross-component state
+- **Use TanStack Query**: Server state, data fetching
+- **Use React Hook Form**: Form state
+- **Use URL params**: Shareable state (filters, pagination)

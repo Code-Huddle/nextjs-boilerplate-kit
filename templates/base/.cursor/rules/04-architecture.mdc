@@ -1,0 +1,551 @@
+---
+title: Architecture Patterns
+type: always
+description: Clean architecture and design patterns for the project
+---
+
+# Architecture Patterns
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── [locale]/          # Internationalized routes
+│   ├── api/               # API routes
+│   └── global-error.tsx   # Global error boundary
+├── components/            # React components
+│   ├── ui/               # Reusable UI components (shadcn)
+│   └── ...               # Feature components
+├── hooks/                # Custom React hooks
+├── libs/                 # Core libraries and utilities
+├── stores/               # Zustand stores
+├── types/                # TypeScript type definitions
+├── utils/                # Utility functions
+├── validations/          # Zod validation schemas
+└── styles/               # Global styles
+```
+
+## Separation of Concerns
+
+### Component Layer
+
+**Responsibility**: Presentation and user interaction
+
+```typescript
+// ✅ Good: Component focuses on UI
+'use client';
+
+import { useUserProfile } from '@/hooks/useUserProfile';
+
+export function UserProfile({ userId }: { userId: string }) {
+  const { user, isLoading, error } = useUserProfile(userId);
+  
+  if (isLoading) return <Skeleton />;
+  if (error) return <ErrorMessage error={error} />;
+  if (!user) return <NotFound />;
+  
+  return (
+    <Card>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </Card>
+  );
+}
+
+// ❌ Bad: Component contains business logic
+export function UserProfile({ userId }: { userId: string }) {
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }, [userId]);
+  
+  return <div>{user?.name}</div>;
+}
+```
+
+### Hook Layer
+
+**Responsibility**: State management and business logic
+
+```typescript
+// ✅ Good: Hook encapsulates data fetching logic
+export function useUserProfile(userId: string) {
+  return useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: UpdateUserData) => updateUser(data),
+    onSuccess: (user) => {
+      queryClient.invalidateQueries({ queryKey: ['user', user.id] });
+      toast.success('Profile updated successfully');
+    },
+    onError: (error) => {
+      Logger.error('Failed to update user', { error });
+      toast.error('Failed to update profile');
+    },
+  });
+}
+```
+
+### Service Layer
+
+**Responsibility**: API communication and data transformation
+
+```typescript
+// src/libs/api/userService.ts
+
+// ✅ Good: Service handles API communication
+export async function fetchUser(userId: string): Promise<User> {
+  const response = await fetch(`/api/users/${userId}`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user: ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  return userSchema.parse(data);
+}
+
+export async function updateUser(data: UpdateUserData): Promise<User> {
+  const validatedData = updateUserSchema.parse(data);
+  
+  const response = await fetch(`/api/users/${data.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(validatedData),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to update user: ${response.statusText}`);
+  }
+  
+  const result = await response.json();
+  return userSchema.parse(result);
+}
+```
+
+### Validation Layer
+
+**Responsibility**: Data validation and schema definition
+
+```typescript
+// src/validations/UserValidation.ts
+
+import { z } from 'zod';
+
+// ✅ Good: Centralized validation schemas
+export const userSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150),
+  role: z.enum(['user', 'admin', 'moderator']),
+  createdAt: z.string().datetime(),
+});
+
+export const createUserSchema = userSchema.omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const updateUserSchema = createUserSchema.partial();
+
+export type User = z.infer<typeof userSchema>;
+export type CreateUserData = z.infer<typeof createUserSchema>;
+export type UpdateUserData = z.infer<typeof updateUserSchema>;
+```
+
+## Feature-Based Organization
+
+For larger features, use feature folders:
+
+```
+src/
+├── features/
+│   ├── auth/
+│   │   ├── components/
+│   │   │   ├── SignInForm.tsx
+│   │   │   └── SignUpForm.tsx
+│   │   ├── hooks/
+│   │   │   └── useAuth.ts
+│   │   ├── services/
+│   │   │   └── authService.ts
+│   │   ├── validations/
+│   │   │   └── authValidation.ts
+│   │   └── types.ts
+│   └── posts/
+│       ├── components/
+│       ├── hooks/
+│       ├── services/
+│       └── types.ts
+```
+
+## Design Patterns
+
+### Custom Hook Pattern
+
+```typescript
+// ✅ Good: Reusable custom hook
+export function useLocalStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      Logger.error('Error reading from localStorage', { key, error });
+      return initialValue;
+    }
+  });
+  
+  const setValue = (value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
+    } catch (error) {
+      Logger.error('Error writing to localStorage', { key, error });
+    }
+  };
+  
+  return [storedValue, setValue] as const;
+}
+```
+
+### Compound Component Pattern
+
+```typescript
+// ✅ Good: Flexible and composable
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function Card({ children, className }: CardProps) {
+  return (
+    <div className={cn('rounded-lg border bg-white', className)}>
+      {children}
+    </div>
+  );
+}
+
+Card.Header = function CardHeader({ children, className }: CardProps) {
+  return (
+    <div className={cn('border-b p-4', className)}>
+      {children}
+    </div>
+  );
+};
+
+Card.Body = function CardBody({ children, className }: CardProps) {
+  return (
+    <div className={cn('p-4', className)}>
+      {children}
+    </div>
+  );
+};
+
+Card.Footer = function CardFooter({ children, className }: CardProps) {
+  return (
+    <div className={cn('border-t p-4', className)}>
+      {children}
+    </div>
+  );
+};
+
+// Usage
+<Card>
+  <Card.Header>
+    <h2>Title</h2>
+  </Card.Header>
+  <Card.Body>
+    <p>Content</p>
+  </Card.Body>
+  <Card.Footer>
+    <Button>Action</Button>
+  </Card.Footer>
+</Card>
+```
+
+### Factory Pattern
+
+```typescript
+// ✅ Good: Create objects based on conditions
+interface NotificationConfig {
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+}
+
+function createNotification({ type, message }: NotificationConfig) {
+  const configs = {
+    success: {
+      icon: '✓',
+      className: 'bg-green-500',
+      duration: 3000,
+    },
+    error: {
+      icon: '✕',
+      className: 'bg-red-500',
+      duration: 5000,
+    },
+    warning: {
+      icon: '⚠',
+      className: 'bg-yellow-500',
+      duration: 4000,
+    },
+    info: {
+      icon: 'ℹ',
+      className: 'bg-blue-500',
+      duration: 3000,
+    },
+  } as const;
+  
+  const config = configs[type];
+  
+  return {
+    ...config,
+    message,
+  };
+}
+```
+
+### Repository Pattern
+
+```typescript
+// ✅ Good: Abstract data access
+interface UserRepository {
+  findById(id: string): Promise<User | null>;
+  findByEmail(email: string): Promise<User | null>;
+  create(data: CreateUserData): Promise<User>;
+  update(id: string, data: UpdateUserData): Promise<User>;
+  delete(id: string): Promise<void>;
+}
+
+// Implementation with Prisma
+export class PrismaUserRepository implements UserRepository {
+  async findById(id: string): Promise<User | null> {
+    return await prisma.user.findUnique({ where: { id } });
+  }
+  
+  async findByEmail(email: string): Promise<User | null> {
+    return await prisma.user.findUnique({ where: { email } });
+  }
+  
+  async create(data: CreateUserData): Promise<User> {
+    return await prisma.user.create({ data });
+  }
+  
+  async update(id: string, data: UpdateUserData): Promise<User> {
+    return await prisma.user.update({ where: { id }, data });
+  }
+  
+  async delete(id: string): Promise<void> {
+    await prisma.user.delete({ where: { id } });
+  }
+}
+```
+
+## Dependency Injection
+
+```typescript
+// ✅ Good: Inject dependencies
+interface EmailService {
+  send(to: string, subject: string, body: string): Promise<void>;
+}
+
+class UserService {
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly emailService: EmailService
+  ) {}
+  
+  async createUser(data: CreateUserData): Promise<User> {
+    const user = await this.userRepository.create(data);
+    
+    await this.emailService.send(
+      user.email,
+      'Welcome!',
+      'Thank you for signing up'
+    );
+    
+    return user;
+  }
+}
+
+// Usage
+const userService = new UserService(
+  new PrismaUserRepository(),
+  new SendGridEmailService()
+);
+```
+
+## Error Handling Architecture
+
+```typescript
+// ✅ Good: Custom error classes
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public statusCode: number = 500
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
+}
+
+export class ValidationError extends AppError {
+  constructor(message: string) {
+    super(message, 'VALIDATION_ERROR', 400);
+    this.name = 'ValidationError';
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(resource: string) {
+    super(`${resource} not found`, 'NOT_FOUND', 404);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message: string = 'Unauthorized') {
+    super(message, 'UNAUTHORIZED', 401);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+// Centralized error handler
+export function handleError(error: unknown): ApiResponse {
+  if (error instanceof AppError) {
+    return {
+      success: false,
+      error: {
+        message: error.message,
+        code: error.code,
+      },
+      statusCode: error.statusCode,
+    };
+  }
+  
+  if (error instanceof ZodError) {
+    return {
+      success: false,
+      error: {
+        message: 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        details: error.errors,
+      },
+      statusCode: 400,
+    };
+  }
+  
+  Logger.error('Unhandled error', { error });
+  
+  return {
+    success: false,
+    error: {
+      message: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+    },
+    statusCode: 500,
+  };
+}
+```
+
+## Configuration Management
+
+```typescript
+// src/libs/Env.ts - Already exists, use it!
+
+// ✅ Good: Centralized configuration
+import { createEnv } from '@t3-oss/env-nextjs';
+import { z } from 'zod';
+
+export const Env = createEnv({
+  server: {
+    DATABASE_URL: z.string().url(),
+    NEXTAUTH_SECRET: z.string().min(1),
+  },
+  client: {
+    NEXT_PUBLIC_API_URL: z.string().url(),
+  },
+  runtimeEnv: {
+    DATABASE_URL: process.env.DATABASE_URL,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
+});
+
+// Usage
+const apiUrl = Env.NEXT_PUBLIC_API_URL; // Type-safe!
+```
+
+## Single Responsibility Principle
+
+Each module should have one reason to change:
+
+```typescript
+// ❌ Bad: Component does too much
+export function UserDashboard() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .finally(() => setLoading(false));
+  }, []);
+  
+  const exportToCsv = () => {
+    const csv = users.map(u => `${u.name},${u.email}`).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users.csv';
+    a.click();
+  };
+  
+  return (
+    <div>
+      {loading ? <Spinner /> : <UserList users={users} />}
+      <button onClick={exportToCsv}>Export</button>
+    </div>
+  );
+}
+
+// ✅ Good: Separated concerns
+export function UserDashboard() {
+  const { users, isLoading } = useUsers();
+  const { exportToCsv } = useExportUsers();
+  
+  if (isLoading) return <Spinner />;
+  
+  return (
+    <div>
+      <UserList users={users} />
+      <Button onClick={() => exportToCsv(users)}>Export</Button>
+    </div>
+  );
+}
+```

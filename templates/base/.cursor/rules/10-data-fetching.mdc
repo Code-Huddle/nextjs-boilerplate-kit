@@ -1,0 +1,496 @@
+---
+title: Data Fetching with TanStack Query
+type: auto_attached
+file_patterns: ["**/hooks/**/*.ts", "**/app/**/*.tsx"]
+description: Data fetching patterns using TanStack Query
+---
+
+# Data Fetching with TanStack Query
+
+## Query Configuration
+
+```typescript
+// src/libs/queryClient.ts - Already exists!
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: 3,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+  },
+});
+```
+
+## Basic Queries
+
+```typescript
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+
+// ✅ Good: Typed query
+export function useUser(userId: string) {
+  return useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId),
+    enabled: !!userId, // Only run when userId exists
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// Usage
+export function UserProfile({ userId }: { userId: string }) {
+  const { data: user, isLoading, error } = useUser(userId);
+  
+  if (isLoading) return <Skeleton />;
+  if (error) return <ErrorMessage error={error} />;
+  if (!user) return <NotFound />;
+  
+  return <div>{user.name}</div>;
+}
+```
+
+## Query Keys
+
+```typescript
+// ✅ Good: Structured query keys
+export const queryKeys = {
+  users: {
+    all: ['users'] as const,
+    lists: () => [...queryKeys.users.all, 'list'] as const,
+    list: (filters: UserFilters) => 
+      [...queryKeys.users.lists(), filters] as const,
+    details: () => [...queryKeys.users.all, 'detail'] as const,
+    detail: (id: string) => 
+      [...queryKeys.users.details(), id] as const,
+  },
+  posts: {
+    all: ['posts'] as const,
+    lists: () => [...queryKeys.posts.all, 'list'] as const,
+    list: (filters: PostFilters) => 
+      [...queryKeys.posts.lists(), filters] as const,
+    details: () => [...queryKeys.posts.all, 'detail'] as const,
+    detail: (id: string) => 
+      [...queryKeys.posts.details(), id] as const,
+  },
+} as const;
+
+// Usage
+export function useUser(userId: string) {
+  return useQuery({
+    queryKey: queryKeys.users.detail(userId),
+    queryFn: () => fetchUser(userId),
+  });
+}
+
+export function useUsers(filters: UserFilters) {
+  return useQuery({
+    queryKey: queryKeys.users.list(filters),
+    queryFn: () => fetchUsers(filters),
+  });
+}
+```
+
+## Mutations
+
+```typescript
+// ✅ Good: Mutation with optimistic updates
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: UpdateUserData) => updateUser(data),
+    
+    // Optimistic update
+    onMutate: async (newUser) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        queryKey: queryKeys.users.detail(newUser.id) 
+      });
+      
+      // Snapshot previous value
+      const previousUser = queryClient.getQueryData(
+        queryKeys.users.detail(newUser.id)
+      );
+      
+      // Optimistically update
+      queryClient.setQueryData(
+        queryKeys.users.detail(newUser.id),
+        newUser
+      );
+      
+      return { previousUser };
+    },
+    
+    // Rollback on error
+    onError: (err, newUser, context) => {
+      queryClient.setQueryData(
+        queryKeys.users.detail(newUser.id),
+        context?.previousUser
+      );
+      toast.error('Failed to update user');
+    },
+    
+    // Refetch on success
+    onSuccess: (user) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      toast.success('User updated successfully');
+    },
+    
+    // Always refetch after error or success
+    onSettled: (user) => {
+      if (user) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.users.detail(user.id),
+        });
+      }
+    },
+  });
+}
+
+// Usage
+export function EditUserForm({ user }: { user: User }) {
+  const updateUser = useUpdateUser();
+  
+  const handleSubmit = (data: UpdateUserData) => {
+    updateUser.mutate(data);
+  };
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* Form fields */}
+      <Button type="submit" disabled={updateUser.isPending}>
+        {updateUser.isPending ? 'Saving...' : 'Save'}
+      </Button>
+    </form>
+  );
+}
+```
+
+## Infinite Queries
+
+```typescript
+// ✅ Good: Infinite scroll
+interface PostsResponse {
+  posts: Post[];
+  nextCursor: string | null;
+}
+
+export function useInfinitePosts() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.posts.lists(),
+    queryFn: ({ pageParam }) => fetchPosts({ cursor: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getPreviousPageParam: (firstPage) => firstPage.prevCursor,
+  });
+}
+
+// Usage
+export function PostList() {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfinitePosts();
+  
+  if (isLoading) return <Skeleton />;
+  
+  return (
+    <div>
+      {data?.pages.map((page) =>
+        page.posts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))
+      )}
+      
+      {hasNextPage && (
+        <Button
+          onClick={() => fetchNextPage()}
+          disabled={isFetchingNextPage}
+        >
+          {isFetchingNextPage ? 'Loading...' : 'Load More'}
+        </Button>
+      )}
+    </div>
+  );
+}
+```
+
+## Dependent Queries
+
+```typescript
+// ✅ Good: Wait for userId before fetching posts
+export function UserPosts({ userId }: { userId: string }) {
+  const { data: user } = useQuery({
+    queryKey: queryKeys.users.detail(userId),
+    queryFn: () => fetchUser(userId),
+  });
+  
+  const { data: posts } = useQuery({
+    queryKey: ['posts', 'user', userId],
+    queryFn: () => fetchUserPosts(userId),
+    enabled: !!user, // Only fetch when user exists
+  });
+  
+  return <div>{/* Render posts */}</div>;
+}
+```
+
+## Parallel Queries
+
+```typescript
+// ✅ Good: Fetch multiple resources in parallel
+export function Dashboard() {
+  const userQuery = useQuery({
+    queryKey: queryKeys.users.detail('me'),
+    queryFn: fetchCurrentUser,
+  });
+  
+  const postsQuery = useQuery({
+    queryKey: queryKeys.posts.lists(),
+    queryFn: fetchPosts,
+  });
+  
+  const statsQuery = useQuery({
+    queryKey: ['stats'],
+    queryFn: fetchStats,
+  });
+  
+  const isLoading = userQuery.isLoading || postsQuery.isLoading || statsQuery.isLoading;
+  
+  if (isLoading) return <DashboardSkeleton />;
+  
+  return (
+    <div>
+      <UserInfo user={userQuery.data} />
+      <Posts posts={postsQuery.data} />
+      <Stats stats={statsQuery.data} />
+    </div>
+  );
+}
+
+// ✅ Better: Use useQueries for dynamic queries
+export function Dashboard() {
+  const queries = useQueries({
+    queries: [
+      {
+        queryKey: queryKeys.users.detail('me'),
+        queryFn: fetchCurrentUser,
+      },
+      {
+        queryKey: queryKeys.posts.lists(),
+        queryFn: fetchPosts,
+      },
+      {
+        queryKey: ['stats'],
+        queryFn: fetchStats,
+      },
+    ],
+  });
+  
+  const isLoading = queries.some(query => query.isLoading);
+  const [userQuery, postsQuery, statsQuery] = queries;
+  
+  if (isLoading) return <DashboardSkeleton />;
+  
+  return <div>{/* Render data */}</div>;
+}
+```
+
+## Prefetching
+
+```typescript
+// ✅ Good: Prefetch on hover
+export function UserCard({ userId }: { userId: string }) {
+  const queryClient = useQueryClient();
+  
+  const handleMouseEnter = () => {
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.users.detail(userId),
+      queryFn: () => fetchUser(userId),
+      staleTime: 5 * 60 * 1000,
+    });
+  };
+  
+  return (
+    <Link
+      href={`/users/${userId}`}
+      onMouseEnter={handleMouseEnter}
+    >
+      User Profile
+    </Link>
+  );
+}
+
+// ✅ Good: Prefetch on server
+// app/users/page.tsx
+import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
+import { queryClient } from '@/libs/queryClient';
+
+export default async function UsersPage() {
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.users.lists(),
+    queryFn: fetchUsers,
+  });
+  
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <UserList />
+    </HydrationBoundary>
+  );
+}
+```
+
+## Error Handling
+
+```typescript
+// ✅ Good: Custom error handling
+export function useUser(userId: string) {
+  return useQuery({
+    queryKey: queryKeys.users.detail(userId),
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${userId}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new NotFoundError('User not found');
+        }
+        if (response.status === 403) {
+          throw new ForbiddenError('Access denied');
+        }
+        throw new Error('Failed to fetch user');
+      }
+      
+      return response.json();
+    },
+    retry: (failureCount, error) => {
+      // Don't retry on 404
+      if (error instanceof NotFoundError) {
+        return false;
+      }
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
+    },
+  });
+}
+
+// Usage with error boundary
+export function UserProfile({ userId }: { userId: string }) {
+  const { data: user, error } = useUser(userId);
+  
+  if (error instanceof NotFoundError) {
+    return <NotFound />;
+  }
+  
+  if (error instanceof ForbiddenError) {
+    return <AccessDenied />;
+  }
+  
+  if (error) {
+    return <ErrorMessage error={error} />;
+  }
+  
+  return <div>{user?.name}</div>;
+}
+```
+
+## Cache Management
+
+```typescript
+// ✅ Good: Invalidate related queries
+export function useDeletePost() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: deletePost,
+    onSuccess: (_, postId) => {
+      // Remove from cache
+      queryClient.removeQueries({
+        queryKey: queryKeys.posts.detail(postId),
+      });
+      
+      // Invalidate lists
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.lists(),
+      });
+      
+      // Invalidate user's posts
+      queryClient.invalidateQueries({
+        queryKey: ['posts', 'user'],
+      });
+    },
+  });
+}
+
+// ✅ Good: Set cache data manually
+export function useCreatePost() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: createPost,
+    onSuccess: (newPost) => {
+      // Add to cache
+      queryClient.setQueryData(
+        queryKeys.posts.detail(newPost.id),
+        newPost
+      );
+      
+      // Update list cache
+      queryClient.setQueryData(
+        queryKeys.posts.lists(),
+        (old: Post[] = []) => [newPost, ...old]
+      );
+    },
+  });
+}
+```
+
+## Suspense
+
+```typescript
+// ✅ Good: Use with Suspense
+export function useUser(userId: string) {
+  return useSuspenseQuery({
+    queryKey: queryKeys.users.detail(userId),
+    queryFn: () => fetchUser(userId),
+  });
+}
+
+// Usage
+export function UserProfile({ userId }: { userId: string }) {
+  const { data: user } = useUser(userId); // No need for isLoading check!
+  
+  return <div>{user.name}</div>;
+}
+
+// Wrap with Suspense boundary
+<Suspense fallback={<UserProfileSkeleton />}>
+  <UserProfile userId="123" />
+</Suspense>
+```
+
+## Best Practices
+
+1. **Use query keys consistently** - Create a centralized query key factory
+2. **Enable queries conditionally** - Use `enabled` option
+3. **Set appropriate stale times** - Balance freshness and performance
+4. **Implement optimistic updates** - For better UX
+5. **Handle errors gracefully** - Don't just show generic errors
+6. **Invalidate strategically** - Only invalidate what's needed
+7. **Prefetch when possible** - Improve perceived performance
+8. **Use TypeScript** - Type your queries and mutations
+9. **Don't fetch in effects** - Use TanStack Query, not useEffect
+10. **Monitor cache size** - Set appropriate `gcTime` values
+
+## TanStack Query vs Server Components
+
+- **Server Components**: Initial data, SEO, server-only data
+- **TanStack Query**: Client-side data, real-time updates, user-specific data, mutations

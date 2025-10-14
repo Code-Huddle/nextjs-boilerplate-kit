@@ -1,0 +1,434 @@
+---
+title: TypeScript Standards
+type: auto_attached
+file_patterns: ["**/*.ts", "**/*.tsx"]
+description: TypeScript best practices and type safety standards
+---
+
+# TypeScript Standards
+
+## Type Safety Principles
+
+### No Any Types
+
+```typescript
+// ❌ Never use 'any'
+function processData(data: any) {
+  return data.value;
+}
+
+// ✅ Use proper types
+function processData(data: { value: string }) {
+  return data.value;
+}
+
+// ✅ Or use generics
+function processData<T extends { value: string }>(data: T) {
+  return data.value;
+}
+
+// ✅ Use 'unknown' if type is truly unknown
+function processData(data: unknown) {
+  if (isValidData(data)) {
+    return data.value;
+  }
+  throw new Error('Invalid data');
+}
+```
+
+### Interface vs Type
+
+**Prefer interfaces for object shapes** (they can be extended and merged):
+
+```typescript
+// ✅ Good: Use interface for objects
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface Admin extends User {
+  role: 'admin';
+  permissions: string[];
+}
+
+// ✅ Use type for unions, intersections, and primitives
+type Status = 'pending' | 'approved' | 'rejected';
+type ID = string | number;
+type UserWithTimestamp = User & { createdAt: Date };
+
+// ❌ Don't use type for simple objects unless necessary
+type User = {
+  id: string;
+  name: string;
+};
+```
+
+### No Enums - Use Const Objects
+
+```typescript
+// ❌ Avoid enums
+enum UserRole {
+  Admin = 'ADMIN',
+  User = 'USER',
+  Guest = 'GUEST',
+}
+
+// ✅ Use const objects with 'as const'
+const USER_ROLES = {
+  ADMIN: 'admin',
+  USER: 'user',
+  GUEST: 'guest',
+} as const;
+
+type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
+
+// ✅ Or use union types
+type UserRole = 'admin' | 'user' | 'guest';
+```
+
+### Type Inference
+
+Let TypeScript infer types when obvious:
+
+```typescript
+// ✅ Good: Let TypeScript infer
+const userName = 'John Doe'; // string
+const userAge = 25; // number
+const isActive = true; // boolean
+
+const users = [
+  { id: 1, name: 'John' },
+  { id: 2, name: 'Jane' },
+]; // { id: number; name: string; }[]
+
+// ✅ Explicit types when needed
+const config: AppConfig = getConfig();
+
+// ❌ Unnecessary explicit types
+const userName: string = 'John Doe';
+const userAge: number = 25;
+```
+
+### Satisfies Operator
+
+Use `satisfies` for type validation while preserving literal types:
+
+```typescript
+// ✅ Good: Use satisfies
+const routes = {
+  home: '/',
+  about: '/about',
+  contact: '/contact',
+} as const satisfies Record<string, string>;
+
+// Type is { home: '/'; about: '/about'; contact: '/contact' }
+// Not just Record<string, string>
+
+// ✅ Validates configuration
+const config = {
+  apiUrl: process.env.NEXT_PUBLIC_API_URL,
+  timeout: 5000,
+  retries: 3,
+} satisfies AppConfig;
+```
+
+### Strict Null Checks
+
+Always handle null and undefined:
+
+```typescript
+// ✅ Good: Handle null explicitly
+function getUserName(user: User | null): string {
+  if (!user) {
+    return 'Guest';
+  }
+  return user.name;
+}
+
+// ✅ Use optional chaining
+const userName = user?.profile?.name ?? 'Guest';
+
+// ✅ Use nullish coalescing
+const port = process.env.PORT ?? 3000;
+
+// ❌ Bad: Assuming value exists
+function getUserName(user: User | null): string {
+  return user.name; // Error: user might be null
+}
+```
+
+### Generic Types
+
+Use generics for reusable, type-safe code:
+
+```typescript
+// ✅ Good: Generic utility
+interface ApiResponse<T> {
+  data: T;
+  error: string | null;
+  status: number;
+}
+
+async function fetchData<T>(url: string): Promise<ApiResponse<T>> {
+  // Implementation
+}
+
+// Usage with type inference
+const userResponse = await fetchData<User>('/api/user');
+const postsResponse = await fetchData<Post[]>('/api/posts');
+
+// ✅ Constrained generics
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+const user = { id: 1, name: 'John' };
+const name = getProperty(user, 'name'); // Type: string
+```
+
+### Utility Types
+
+Leverage TypeScript utility types:
+
+```typescript
+// Partial - Make all properties optional
+type PartialUser = Partial<User>;
+
+// Required - Make all properties required
+type RequiredUser = Required<User>;
+
+// Pick - Select specific properties
+type UserPreview = Pick<User, 'id' | 'name'>;
+
+// Omit - Exclude specific properties
+type UserWithoutPassword = Omit<User, 'password'>;
+
+// Record - Create object type with specific key-value types
+type UserMap = Record<string, User>;
+
+// NonNullable - Exclude null and undefined
+type ValidValue = NonNullable<string | null | undefined>; // string
+
+// ReturnType - Get function return type
+type FetchResult = ReturnType<typeof fetchUser>;
+
+// Parameters - Get function parameter types
+type FetchParams = Parameters<typeof fetchUser>;
+
+// Awaited - Get the type of a Promise's resolved value
+type UserData = Awaited<Promise<User>>; // User
+```
+
+### Discriminated Unions
+
+Use discriminated unions for complex state management:
+
+```typescript
+// ✅ Good: Discriminated union
+type RequestState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: Error };
+
+function handleRequest<T>(state: RequestState<T>) {
+  switch (state.status) {
+    case 'idle':
+      return <div>Ready</div>;
+    case 'loading':
+      return <div>Loading...</div>;
+    case 'success':
+      return <div>{state.data}</div>; // TypeScript knows data exists
+    case 'error':
+      return <div>{state.error.message}</div>; // TypeScript knows error exists
+  }
+}
+```
+
+### Type Guards
+
+Create type guards for runtime type checking:
+
+```typescript
+// ✅ Good: Type guard
+function isUser(value: unknown): value is User {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    'name' in value &&
+    'email' in value
+  );
+}
+
+// Usage
+function processData(data: unknown) {
+  if (isUser(data)) {
+    // TypeScript knows data is User here
+    console.log(data.email);
+  }
+}
+
+// ✅ Array type guard
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+```
+
+### Type Assertions
+
+Use type assertions sparingly and only when necessary:
+
+```typescript
+// ✅ Acceptable: When you know more than TypeScript
+const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+
+// ✅ Acceptable: With proper validation
+function processUser(data: unknown) {
+  if (isUser(data)) {
+    const user = data as User;
+    // Process user
+  }
+}
+
+// ❌ Bad: Avoiding type checking
+const data = response as any;
+const user = data as User; // Unsafe!
+
+// ❌ Bad: Double assertion (almost always wrong)
+const value = something as unknown as SomeType;
+```
+
+### Const Assertions
+
+Use `as const` for literal types:
+
+```typescript
+// ✅ Good: Literal types
+const ROUTES = {
+  HOME: '/',
+  ABOUT: '/about',
+  CONTACT: '/contact',
+} as const;
+
+type Route = typeof ROUTES[keyof typeof ROUTES]; // '/' | '/about' | '/contact'
+
+// ✅ Readonly arrays
+const colors = ['red', 'green', 'blue'] as const;
+type Color = typeof colors[number]; // 'red' | 'green' | 'blue'
+
+// ✅ Configuration objects
+const config = {
+  api: {
+    url: 'https://api.example.com',
+    timeout: 5000,
+  },
+} as const;
+```
+
+### Function Overloads
+
+Use function overloads for different input/output combinations:
+
+```typescript
+// ✅ Good: Function overloads
+function createUser(email: string): User;
+function createUser(email: string, name: string): User;
+function createUser(email: string, name?: string): User {
+  return {
+    id: generateId(),
+    email,
+    name: name ?? email.split('@')[0],
+  };
+}
+```
+
+### Branded Types
+
+Create branded types for type safety:
+
+```typescript
+// ✅ Good: Branded types
+type UserId = string & { readonly __brand: 'UserId' };
+type PostId = string & { readonly __brand: 'PostId' };
+
+function createUserId(id: string): UserId {
+  return id as UserId;
+}
+
+function getUserById(id: UserId): User {
+  // Implementation
+}
+
+const userId = createUserId('123');
+getUserById(userId); // ✅ Works
+
+const postId = '456';
+getUserById(postId); // ❌ Error: Type 'string' is not assignable to type 'UserId'
+```
+
+## Project-Specific Types
+
+### Always Define Props Interfaces
+
+```typescript
+// ✅ Good: Named interface
+interface UserCardProps {
+  user: User;
+  onEdit?: (user: User) => void;
+  className?: string;
+}
+
+export function UserCard({ user, onEdit, className }: UserCardProps) {
+  // Implementation
+}
+
+// ❌ Bad: Inline types
+export function UserCard({ user, onEdit }: { user: User; onEdit?: (user: User) => void }) {
+  // Implementation
+}
+```
+
+### Server Component Props
+
+```typescript
+// ✅ Good: Async props handling
+interface PageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function Page(props: PageProps) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  
+  // Use params and searchParams
+}
+```
+
+### API Response Types
+
+```typescript
+// ✅ Good: Typed API responses
+interface ApiSuccessResponse<T> {
+  success: true;
+  data: T;
+}
+
+interface ApiErrorResponse {
+  success: false;
+  error: {
+    message: string;
+    code: string;
+  };
+}
+
+type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+
+// Usage
+async function fetchUsers(): Promise<ApiResponse<User[]>> {
+  // Implementation
+}
+```

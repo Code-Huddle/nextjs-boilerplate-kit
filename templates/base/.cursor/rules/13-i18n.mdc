@@ -1,0 +1,422 @@
+---
+title: Internationalization (i18n)
+type: auto_attached
+file_patterns: ["**/app/[locale]/**/*.tsx", "**/locales/**/*.json", "**/libs/i18n*.ts"]
+description: i18n patterns using next-intl
+---
+
+# Internationalization (i18n)
+
+## Setup
+
+This project uses `next-intl` for internationalization. Configuration is in:
+- `src/libs/i18n.ts` - i18n configuration
+- `src/libs/i18nNavigation.ts` - Localized navigation helpers
+- `src/locales/` - Translation files
+
+## Using Translations
+
+```typescript
+// ✅ Good: Server Component translations
+import { getTranslations } from 'next-intl/server';
+
+export default async function HomePage() {
+  const t = await getTranslations('HomePage');
+  
+  return (
+    <div>
+      <h1>{t('title')}</h1>
+      <p>{t('description')}</p>
+    </div>
+  );
+}
+
+// ✅ Good: Client Component translations
+'use client';
+
+import { useTranslations } from 'next-intl';
+
+export function WelcomeMessage() {
+  const t = useTranslations('Welcome');
+  
+  return (
+    <div>
+      <h1>{t('greeting')}</h1>
+      <p>{t('message')}</p>
+    </div>
+  );
+}
+```
+
+## Translation Files
+
+```json
+// src/locales/en.json
+{
+  "HomePage": {
+    "title": "Welcome to Our App",
+    "description": "This is a multilingual application"
+  },
+  "Welcome": {
+    "greeting": "Hello, {name}!",
+    "message": "You have {count, plural, =0 {no messages} =1 {one message} other {# messages}}"
+  },
+  "Buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete"
+  },
+  "Validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email",
+    "minLength": "Must be at least {min} characters"
+  }
+}
+
+// src/locales/fr.json
+{
+  "HomePage": {
+    "title": "Bienvenue dans notre application",
+    "description": "Ceci est une application multilingue"
+  },
+  "Welcome": {
+    "greeting": "Bonjour, {name}!",
+    "message": "Vous avez {count, plural, =0 {aucun message} =1 {un message} other {# messages}}"
+  },
+  "Buttons": {
+    "submit": "Soumettre",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer"
+  }
+}
+```
+
+## Interpolation
+
+```typescript
+// ✅ Good: Variable interpolation
+const t = useTranslations('Welcome');
+
+<p>{t('greeting', { name: 'John' })}</p>
+// Output: "Hello, John!"
+
+// ✅ Good: Pluralization
+<p>{t('message', { count: 0 })}</p> // "You have no messages"
+<p>{t('message', { count: 1 })}</p> // "You have one message"
+<p>{t('message', { count: 5 })}</p> // "You have 5 messages"
+
+// ✅ Good: Rich text
+const t = useTranslations('Terms');
+
+<p>
+  {t.rich('agreement', {
+    link: (chunks) => <Link href="/terms">{chunks}</Link>,
+    bold: (chunks) => <strong>{chunks}</strong>,
+  })}
+</p>
+```
+
+## Navigation
+
+```typescript
+// ✅ Good: Use localized navigation
+import { Link, redirect, useRouter } from '@/libs/i18nNavigation';
+
+// Link component (automatically adds locale)
+<Link href="/about">About</Link>
+// Renders: /en/about or /fr/about based on current locale
+
+// Router
+export function Navigation() {
+  const router = useRouter();
+  
+  const handleClick = () => {
+    router.push('/dashboard');
+  };
+  
+  return <button onClick={handleClick}>Go to Dashboard</button>;
+}
+
+// Redirect
+export default async function Page() {
+  const session = await auth();
+  
+  if (!session) {
+    redirect('/sign-in');
+  }
+  
+  return <Dashboard />;
+}
+```
+
+## Locale Switching
+
+```typescript
+// ✅ Good: Locale switcher component
+'use client';
+
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter, usePathname } from '@/libs/i18nNavigation';
+
+const locales = [
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+] as const;
+
+export function LocaleSwitcher() {
+  const t = useTranslations('LocaleSwitcher');
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  const handleChange = (newLocale: string) => {
+    router.replace(pathname, { locale: newLocale });
+  };
+  
+  return (
+    <Select value={locale} onValueChange={handleChange}>
+      <SelectTrigger aria-label={t('switchLanguage')}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {locales.map((loc) => (
+          <SelectItem key={loc.code} value={loc.code}>
+            {loc.flag} {loc.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+```
+
+## Formatting
+
+```typescript
+// ✅ Good: Date formatting
+import { useFormatter } from 'next-intl';
+
+export function DateDisplay({ date }: { date: Date }) {
+  const format = useFormatter();
+  
+  return (
+    <div>
+      <p>{format.dateTime(date, { dateStyle: 'full' })}</p>
+      {/* En: "Monday, January 1, 2024" */}
+      {/* Fr: "lundi 1 janvier 2024" */}
+      
+      <p>{format.relativeTime(date)}</p>
+      {/* "2 days ago" */}
+    </div>
+  );
+}
+
+// ✅ Good: Number formatting
+export function PriceDisplay({ amount }: { amount: number }) {
+  const format = useFormatter();
+  
+  return (
+    <div>
+      <p>{format.number(amount, { style: 'currency', currency: 'USD' })}</p>
+      {/* "$1,234.56" */}
+      
+      <p>{format.number(amount, { style: 'percent' })}</p>
+      {/* "12%" */}
+    </div>
+  );
+}
+
+// ✅ Good: List formatting
+export function UserList({ users }: { users: string[] }) {
+  const format = useFormatter();
+  
+  return (
+    <p>{format.list(users, { type: 'conjunction' })}</p>
+    {/* En: "John, Jane, and Bob" */}
+    {/* Fr: "John, Jane et Bob" */}
+  );
+}
+```
+
+## Type-Safe Translations
+
+```typescript
+// ✅ Good: Type-safe translation keys
+import type en from '@/locales/en.json';
+
+type Messages = typeof en;
+
+declare global {
+  interface IntlMessages extends Messages {}
+}
+
+// Now TypeScript will check translation keys
+const t = useTranslations('HomePage');
+t('title'); // ✅ Valid
+t('invalidKey'); // ❌ TypeScript error
+```
+
+## Server Components
+
+```typescript
+// ✅ Good: Async translations in Server Components
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata({ params }: PageProps) {
+  const t = await getTranslations('Metadata');
+  
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
+
+export default async function Page() {
+  const t = await getTranslations('Page');
+  
+  return (
+    <div>
+      <h1>{t('heading')}</h1>
+      <ClientComponent />
+    </div>
+  );
+}
+```
+
+## Namespace Organization
+
+```json
+// ✅ Good: Organize by feature/page
+{
+  "Common": {
+    "buttons": {
+      "submit": "Submit",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "generic": "Something went wrong"
+    }
+  },
+  "Auth": {
+    "signIn": {
+      "title": "Sign In",
+      "emailLabel": "Email",
+      "passwordLabel": "Password"
+    },
+    "signUp": {
+      "title": "Sign Up",
+      "alreadyHaveAccount": "Already have an account?"
+    }
+  },
+  "Dashboard": {
+    "welcome": "Welcome back, {name}!",
+    "stats": {
+      "users": "Users",
+      "posts": "Posts"
+    }
+  }
+}
+```
+
+## Form Validation Messages
+
+```typescript
+// ✅ Good: Localized validation
+import { z } from 'zod';
+import { useTranslations } from 'next-intl';
+
+export function useSignUpSchema() {
+  const t = useTranslations('Validation');
+  
+  return z.object({
+    email: z.string().email(t('email')),
+    password: z.string().min(8, t('minLength', { min: 8 })),
+    confirmPassword: z.string(),
+  }).refine(data => data.password === data.confirmPassword, {
+    message: t('passwordsMustMatch'),
+    path: ['confirmPassword'],
+  });
+}
+
+// Usage
+export function SignUpForm() {
+  const t = useTranslations('Auth.signUp');
+  const schema = useSignUpSchema();
+  
+  const form = useForm({
+    resolver: zodResolver(schema),
+  });
+  
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <h1>{t('title')}</h1>
+      {/* Form fields */}
+    </form>
+  );
+}
+```
+
+## Dynamic Imports
+
+```typescript
+// ✅ Good: Load translations dynamically
+async function loadMessages(locale: string) {
+  return (await import(`@/locales/${locale}.json`)).default;
+}
+
+// Use in middleware or layout
+export async function generateStaticParams() {
+  return [
+    { locale: 'en' },
+    { locale: 'fr' },
+  ];
+}
+```
+
+## Best Practices
+
+1. **Organize by namespace** - Group related translations
+2. **Use descriptive keys** - `auth.signIn.title` not `title1`
+3. **Interpolation** - Use variables instead of string concatenation
+4. **Pluralization** - Use ICU message format for plurals
+5. **Rich text** - Use `t.rich()` for formatted content
+6. **Type safety** - Extend IntlMessages type
+7. **Format dates/numbers** - Use built-in formatters
+8. **Keep translations consistent** - Same terminology across app
+9. **Don't hardcode text** - Everything should be translatable
+10. **Test in all locales** - Ensure UI works with different text lengths
+
+## i18n Checklist
+
+- [ ] All user-facing text is in translation files
+- [ ] Translation keys are descriptive
+- [ ] Pluralization rules are implemented
+- [ ] Dates and numbers are formatted correctly
+- [ ] Locale switcher is accessible
+- [ ] Default locale is configured
+- [ ] All supported locales have complete translations
+- [ ] URL structure includes locale
+- [ ] Metadata is translated
+- [ ] Form validation messages are translated
+- [ ] Error messages are translated
+- [ ] Loading states are translated
+
+## Translation File Structure
+
+```
+src/
+└── locales/
+    ├── en.json           # English
+    ├── fr.json           # French
+    └── [locale].json     # Add more as needed
+```
+
+## Adding a New Locale
+
+1. Create translation file: `src/locales/de.json`
+2. Copy structure from `en.json`
+3. Translate all values
+4. Update locale list in components
+5. Test thoroughly

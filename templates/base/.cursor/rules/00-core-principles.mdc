@@ -1,0 +1,226 @@
+---
+title: Core Development Principles
+type: always
+description: Fundamental principles that govern all code in this project
+---
+
+# Core Development Principles
+
+## Philosophy
+
+You are an expert senior software engineer specializing in modern web development. Every decision should prioritize:
+
+1. **Code Quality Over Speed**: Write maintainable, readable, and testable code
+2. **Type Safety**: Leverage TypeScript's full power for compile-time safety
+3. **User Experience**: Optimize for performance, accessibility, and usability
+4. **Developer Experience**: Write self-documenting code with clear patterns
+5. **Security First**: Never compromise on security for convenience
+
+## Mandatory Practices
+
+### Before Writing Any Code
+
+1. **Understand the Context**: Read related files and understand the existing patterns
+2. **Plan the Solution**: Break down complex tasks into smaller, manageable steps
+3. **Check Dependencies**: Verify all required packages are in package.json
+4. **Follow Existing Patterns**: Match the style and structure of the codebase
+
+### Code Quality Standards
+
+- **No `any` Types**: Always use proper TypeScript types
+- **No `console.log`**: Use the Logger utility from `@/libs/Logger`
+- **No Magic Numbers**: Use named constants with clear meaning
+- **No Hardcoded Strings**: Use configuration files or constants
+- **No TODO Comments**: Either fix it now or create an issue
+
+### Error Handling
+
+```typescript
+// ✅ Good: Explicit error handling
+async function fetchUserData(userId: string) {
+  try {
+    const response = await fetch(`/api/users/${userId}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    Logger.error('Failed to fetch user data', { userId, error });
+    throw error;
+  }
+}
+
+// ❌ Bad: Silent failures
+async function fetchUserData(userId: string) {
+  const response = await fetch(`/api/users/${userId}`);
+  return await response.json();
+}
+```
+
+### Imports Organization
+
+Always organize imports in this order:
+
+```typescript
+// 1. External dependencies
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
+// 2. Internal dependencies (absolute imports with @/)
+import { Button } from '@/components/ui/button';
+import { useCounterStore } from '@/stores/useCounterStore';
+import { Logger } from '@/libs/Logger';
+
+// 3. Types
+import type { User } from '@/types/user';
+
+// 4. Relative imports
+import { localHelper } from './helpers';
+
+// 5. Styles
+import './styles.css';
+```
+
+### Code Organization
+
+```typescript
+// ✅ Good: Logical organization
+// 1. Type definitions
+interface ComponentProps {
+  title: string;
+  onSubmit: (data: FormData) => void;
+}
+
+// 2. Constants
+const MAX_RETRIES = 3;
+const DEBOUNCE_DELAY = 300;
+
+// 3. Main component
+export function Component({ title, onSubmit }: ComponentProps) {
+  // 3a. Hooks
+  const [state, setState] = useState();
+  
+  // 3b. Derived state
+  const isValid = state !== null;
+  
+  // 3c. Event handlers
+  const handleSubmit = () => {};
+  
+  // 3d. Render
+  return <div>{/* ... */}</div>;
+}
+
+// 4. Sub-components
+function SubComponent() {}
+
+// 5. Helper functions
+function helper() {}
+```
+
+### Naming Conventions
+
+- **Files**: 
+  - Components: PascalCase (`UserProfile.tsx`)
+  - Utilities: camelCase (`formatDate.ts`)
+  - Types: PascalCase (`UserTypes.ts`)
+  - Hooks: camelCase starting with `use` (`useUserData.ts`)
+  - Directories: kebab-case (`user-profile/`)
+
+- **Variables**:
+  - Boolean: Prefix with `is`, `has`, `should`, `can` (`isLoading`, `hasError`)
+  - Event handlers: Prefix with `handle` (`handleClick`, `handleSubmit`)
+  - Constants: UPPER_SNAKE_CASE (`MAX_FILE_SIZE`)
+  - Regular: camelCase (`userData`)
+
+- **Functions**:
+  - Pure functions: Verb + noun (`calculateTotal`, `formatCurrency`)
+  - React components: PascalCase (`UserCard`, `LoginForm`)
+
+### Comments
+
+```typescript
+// ✅ Good: Explain WHY, not WHAT
+// Using a debounce here to prevent excessive API calls
+// when the user is still typing
+const debouncedSearch = useMemo(() => debounce(search, 300), []);
+
+// ❌ Bad: Obvious comment
+// Set loading to true
+setLoading(true);
+
+// ✅ Good: Document complex logic
+/**
+ * Calculate the prorated amount based on the remaining days in the billing cycle.
+ * This ensures users are only charged for the days they actually use the service.
+ */
+function calculateProratedAmount(baseAmount: number, daysRemaining: number) {
+  // Implementation
+}
+```
+
+## DRY Principle
+
+Never repeat code. If you write the same logic twice, extract it:
+
+```typescript
+// ✅ Good: Reusable utility
+function formatUserName(user: User) {
+  return `${user.firstName} ${user.lastName}`.trim();
+}
+
+// Use it everywhere
+const name1 = formatUserName(user1);
+const name2 = formatUserName(user2);
+
+// ❌ Bad: Repeated logic
+const name1 = `${user1.firstName} ${user1.lastName}`.trim();
+const name2 = `${user2.firstName} ${user2.lastName}`.trim();
+```
+
+## Early Returns
+
+Always use early returns for better readability:
+
+```typescript
+// ✅ Good: Early returns
+function processUser(user: User | null) {
+  if (!user) {
+    return null;
+  }
+  
+  if (!user.isActive) {
+    return <InactiveUser />;
+  }
+  
+  return <ActiveUser user={user} />;
+}
+
+// ❌ Bad: Nested conditions
+function processUser(user: User | null) {
+  if (user) {
+    if (user.isActive) {
+      return <ActiveUser user={user} />;
+    } else {
+      return <InactiveUser />;
+    }
+  } else {
+    return null;
+  }
+}
+```
+
+## Performance Mindset
+
+- Avoid premature optimization, but be aware of performance implications
+- Use React.memo, useMemo, useCallback strategically
+- Lazy load components and routes when appropriate
+- Optimize images (use Next.js Image component)
+- Minimize client-side JavaScript
+
+## Deletion Over Addition
+
+- Before adding new code, check if existing code can be refactored
+- Delete unused code, dependencies, and files
+- Keep the codebase lean and maintainable

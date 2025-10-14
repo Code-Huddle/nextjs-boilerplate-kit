@@ -1,0 +1,459 @@
+---
+title: Testing Best Practices
+type: auto_attached
+file_patterns: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/tests/**/*"]
+description: Comprehensive testing strategies and patterns
+---
+
+# Testing Best Practices
+
+## Testing Philosophy
+
+- Write tests that give you confidence
+- Test behavior, not implementation
+- Keep tests simple and readable
+- Follow the Arrange-Act-Assert pattern
+- Use meaningful test descriptions
+
+## Unit Testing with Vitest
+
+### Component Testing
+
+```typescript
+// ✅ Good: Test component behavior
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { UserCard } from './UserCard';
+
+describe('UserCard', () => {
+  it('should display user information', () => {
+    const user = {
+      id: '1',
+      name: 'John Doe',
+      email: 'john@example.com',
+    };
+    
+    render(<UserCard user={user} />);
+    
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText('john@example.com')).toBeInTheDocument();
+  });
+  
+  it('should call onEdit when edit button is clicked', async () => {
+    const user = { id: '1', name: 'John Doe', email: 'john@example.com' };
+    const handleEdit = vi.fn();
+    
+    render(<UserCard user={user} onEdit={handleEdit} />);
+    
+    const editButton = screen.getByRole('button', { name: /edit/i });
+    await userEvent.click(editButton);
+    
+    expect(handleEdit).toHaveBeenCalledWith(user);
+  });
+  
+  it('should not render when user is null', () => {
+    const { container } = render(<UserCard user={null} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+});
+
+// ❌ Bad: Testing implementation details
+it('should set isEditing state to true', () => {
+  const { result } = renderHook(() => useState(false));
+  // Don't test internal state
+});
+```
+
+### Hook Testing
+
+```typescript
+// ✅ Good: Test custom hooks
+import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { useUserProfile } from './useUserProfile';
+
+describe('useUserProfile', () => {
+  it('should fetch user data successfully', async () => {
+    const userId = '123';
+    const mockUser = { id: userId, name: 'John Doe' };
+    
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockUser,
+    });
+    
+    const { result } = renderHook(() => useUserProfile(userId));
+    
+    expect(result.current.isLoading).toBe(true);
+    
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.error).toBeNull();
+  });
+  
+  it('should handle errors', async () => {
+    const userId = '123';
+    
+    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+    
+    const { result } = renderHook(() => useUserProfile(userId));
+    
+    await waitFor(() => {
+      expect(result.current.error).toBeTruthy();
+    });
+    
+    expect(result.current.user).toBeNull();
+  });
+});
+```
+
+### Utility Function Testing
+
+```typescript
+// ✅ Good: Test pure functions thoroughly
+import { describe, it, expect } from 'vitest';
+import { formatCurrency, calculateDiscount } from './helpers';
+
+describe('formatCurrency', () => {
+  it('should format USD correctly', () => {
+    expect(formatCurrency(1234.56, 'USD')).toBe('$1,234.56');
+  });
+  
+  it('should handle zero', () => {
+    expect(formatCurrency(0, 'USD')).toBe('$0.00');
+  });
+  
+  it('should handle negative values', () => {
+    expect(formatCurrency(-100, 'USD')).toBe('-$100.00');
+  });
+  
+  it('should round to 2 decimal places', () => {
+    expect(formatCurrency(1.999, 'USD')).toBe('$2.00');
+  });
+});
+
+describe('calculateDiscount', () => {
+  it.each([
+    [100, 10, 90],
+    [50, 50, 25],
+    [200, 25, 150],
+  ])('should calculate %d with %d%% discount as %d', (price, discount, expected) => {
+    expect(calculateDiscount(price, discount)).toBe(expected);
+  });
+});
+```
+
+### Mocking
+
+```typescript
+// ✅ Good: Mock external dependencies
+import { vi } from 'vitest';
+
+// Mock modules
+vi.mock('@/libs/Logger', () => ({
+  Logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+// Mock fetch
+global.fetch = vi.fn();
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+// ✅ Good: Mock Next.js router
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => '/dashboard',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+// ✅ Good: Mock environment variables
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000';
+});
+```
+
+## Integration Testing
+
+```typescript
+// ✅ Good: Test component integration
+import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { UserDashboard } from './UserDashboard';
+
+describe('UserDashboard Integration', () => {
+  const createWrapper = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+    
+    return ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
+  };
+  
+  it('should display users after loading', async () => {
+    const mockUsers = [
+      { id: '1', name: 'John Doe' },
+      { id: '2', name: 'Jane Smith' },
+    ];
+    
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockUsers,
+    });
+    
+    render(<UserDashboard />, { wrapper: createWrapper() });
+    
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+## E2E Testing with Playwright
+
+```typescript
+// ✅ Good: E2E test structure
+import { test, expect } from '@playwright/test';
+
+test.describe('User Authentication', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+  
+  test('should sign in successfully', async ({ page }) => {
+    await page.click('text=Sign In');
+    
+    await page.fill('input[name="email"]', 'test@example.com');
+    await page.fill('input[name="password"]', 'password123');
+    
+    await page.click('button[type="submit"]');
+    
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.locator('text=Welcome')).toBeVisible();
+  });
+  
+  test('should show error for invalid credentials', async ({ page }) => {
+    await page.click('text=Sign In');
+    
+    await page.fill('input[name="email"]', 'wrong@example.com');
+    await page.fill('input[name="password"]', 'wrongpassword');
+    
+    await page.click('button[type="submit"]');
+    
+    await expect(page.locator('text=Invalid credentials')).toBeVisible();
+  });
+  
+  test('should validate required fields', async ({ page }) => {
+    await page.click('text=Sign In');
+    await page.click('button[type="submit"]');
+    
+    await expect(page.locator('text=Email is required')).toBeVisible();
+    await expect(page.locator('text=Password is required')).toBeVisible();
+  });
+});
+
+// ✅ Good: Page Object Model
+class LoginPage {
+  constructor(private page: Page) {}
+  
+  async goto() {
+    await this.page.goto('/sign-in');
+  }
+  
+  async fillEmail(email: string) {
+    await this.page.fill('input[name="email"]', email);
+  }
+  
+  async fillPassword(password: string) {
+    await this.page.fill('input[name="password"]', password);
+  }
+  
+  async submit() {
+    await this.page.click('button[type="submit"]');
+  }
+  
+  async signIn(email: string, password: string) {
+    await this.fillEmail(email);
+    await this.fillPassword(password);
+    await this.submit();
+  }
+}
+
+test('should sign in using page object', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+  
+  await loginPage.goto();
+  await loginPage.signIn('test@example.com', 'password123');
+  
+  await expect(page).toHaveURL('/dashboard');
+});
+```
+
+## Test Organization
+
+```typescript
+// ✅ Good: Descriptive test structure
+describe('UserService', () => {
+  describe('createUser', () => {
+    it('should create a user with valid data', async () => {
+      // Test
+    });
+    
+    it('should throw ValidationError for invalid email', async () => {
+      // Test
+    });
+    
+    it('should throw Error when email already exists', async () => {
+      // Test
+    });
+  });
+  
+  describe('updateUser', () => {
+    it('should update user successfully', async () => {
+      // Test
+    });
+    
+    it('should throw NotFoundError for non-existent user', async () => {
+      // Test
+    });
+  });
+});
+```
+
+## Arrange-Act-Assert Pattern
+
+```typescript
+// ✅ Good: Clear AAA pattern
+it('should calculate total with discount', () => {
+  // Arrange
+  const items = [
+    { price: 10, quantity: 2 },
+    { price: 20, quantity: 1 },
+  ];
+  const discountPercent = 10;
+  
+  // Act
+  const total = calculateTotal(items, discountPercent);
+  
+  // Assert
+  expect(total).toBe(36); // (10*2 + 20*1) * 0.9
+});
+```
+
+## Testing Async Code
+
+```typescript
+// ✅ Good: Test async functions
+it('should fetch user data', async () => {
+  const userId = '123';
+  const mockUser = { id: userId, name: 'John' };
+  
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => mockUser,
+  });
+  
+  const user = await fetchUser(userId);
+  
+  expect(user).toEqual(mockUser);
+  expect(fetch).toHaveBeenCalledWith(`/api/users/${userId}`);
+});
+
+// ✅ Good: Test error handling
+it('should throw error on failed request', async () => {
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: false,
+    statusText: 'Not Found',
+  });
+  
+  await expect(fetchUser('123')).rejects.toThrow('Failed to fetch user: Not Found');
+});
+```
+
+## Snapshot Testing
+
+```typescript
+// ✅ Good: Use snapshots for complex UI
+it('should match snapshot', () => {
+  const user = { id: '1', name: 'John Doe', email: 'john@example.com' };
+  const { container } = render(<UserCard user={user} />);
+  
+  expect(container).toMatchSnapshot();
+});
+
+// ⚠️ Caution: Update snapshots carefully
+// Only update when you intentionally changed the UI
+```
+
+## Coverage Goals
+
+- Aim for 80%+ code coverage
+- 100% coverage for critical business logic
+- Focus on meaningful tests, not just coverage numbers
+
+```typescript
+// ✅ Good: Test edge cases
+describe('divide', () => {
+  it('should divide two numbers', () => {
+    expect(divide(10, 2)).toBe(5);
+  });
+  
+  it('should handle division by zero', () => {
+    expect(() => divide(10, 0)).toThrow('Cannot divide by zero');
+  });
+  
+  it('should handle negative numbers', () => {
+    expect(divide(-10, 2)).toBe(-5);
+  });
+  
+  it('should handle decimal results', () => {
+    expect(divide(7, 2)).toBe(3.5);
+  });
+});
+```
+
+## Testing Checklist
+
+Before committing:
+- [ ] All tests pass
+- [ ] New features have tests
+- [ ] Bug fixes have regression tests
+- [ ] Edge cases are covered
+- [ ] Tests are readable and maintainable
+- [ ] No unnecessary mocks
+- [ ] Async code is properly tested
+- [ ] Error cases are tested
+
+## Best Practices
+
+1. **Test behavior, not implementation**
+2. **Keep tests independent** - No test should depend on another
+3. **Use descriptive test names** - "should do X when Y"
+4. **One assertion per test** (when reasonable)
+5. **Mock external dependencies**
+6. **Clean up after tests** - Use beforeEach/afterEach
+7. **Don't test third-party libraries**
+8. **Test the public API**, not private methods
+9. **Write tests as documentation** - Tests should explain how code works
+10. **Fail fast** - Tests should fail quickly when something breaks

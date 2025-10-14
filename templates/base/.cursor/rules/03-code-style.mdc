@@ -1,0 +1,549 @@
+---
+title: Code Style and Formatting
+type: always
+description: Consistent code style and formatting rules
+---
+
+# Code Style and Formatting
+
+## General Principles
+
+- Write concise, readable code
+- Follow functional and declarative programming patterns
+- Use meaningful variable and function names
+- Keep functions small and focused (single responsibility)
+- Avoid deep nesting (max 3 levels)
+
+## Formatting
+
+### Line Length
+
+- Maximum 100 characters per line
+- Break long lines logically
+
+```typescript
+// ✅ Good: Readable line breaks
+const user = await prisma.user.findUnique({
+  where: { id: userId },
+  include: {
+    posts: true,
+    comments: true,
+    profile: true,
+  },
+});
+
+// ❌ Bad: Too long
+const user = await prisma.user.findUnique({ where: { id: userId }, include: { posts: true, comments: true, profile: true } });
+```
+
+### Indentation
+
+- Use 2 spaces for indentation
+- No tabs
+- Align multi-line statements
+
+```typescript
+// ✅ Good
+const result = someFunction(
+  firstParameter,
+  secondParameter,
+  thirdParameter
+);
+
+// ✅ Good: Object properties
+const config = {
+  apiUrl: 'https://api.example.com',
+  timeout: 5000,
+  retries: 3,
+};
+```
+
+### Spacing
+
+```typescript
+// ✅ Good: Proper spacing
+function calculateTotal(items: Item[], tax: number): number {
+  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  return subtotal * (1 + tax);
+}
+
+// ❌ Bad: Inconsistent spacing
+function calculateTotal(items:Item[],tax:number):number{
+  const subtotal=items.reduce((sum,item)=>sum+item.price,0);
+  return subtotal*(1+tax);
+}
+
+// ✅ Good: Space around operators
+const result = a + b * c;
+const isValid = value > 0 && value < 100;
+
+// ❌ Bad: No spacing
+const result=a+b*c;
+const isValid=value>0&&value<100;
+```
+
+### Semicolons
+
+- Always use semicolons
+- No exceptions
+
+```typescript
+// ✅ Good
+const user = getUser();
+const posts = getPosts();
+
+// ❌ Bad
+const user = getUser()
+const posts = getPosts()
+```
+
+### Quotes
+
+- Use single quotes for strings
+- Use template literals for interpolation
+
+```typescript
+// ✅ Good
+const greeting = 'Hello, World!';
+const message = `Welcome, ${userName}!`;
+
+// ❌ Bad
+const greeting = "Hello, World!";
+const message = 'Welcome, ' + userName + '!';
+```
+
+### Trailing Commas
+
+- Always use trailing commas in multi-line structures
+
+```typescript
+// ✅ Good
+const user = {
+  id: 1,
+  name: 'John',
+  email: 'john@example.com',
+};
+
+const colors = [
+  'red',
+  'green',
+  'blue',
+];
+
+// ❌ Bad
+const user = {
+  id: 1,
+  name: 'John',
+  email: 'john@example.com'
+};
+```
+
+## Naming Conventions
+
+### Variables and Functions
+
+```typescript
+// ✅ Good: Descriptive names
+const userName = 'John Doe';
+const isAuthenticated = true;
+const hasPermission = false;
+const shouldRedirect = true;
+const canEdit = false;
+
+function calculateTotalPrice(items: Item[]): number {
+  // Implementation
+}
+
+function formatCurrency(amount: number): string {
+  // Implementation
+}
+
+// ❌ Bad: Unclear names
+const un = 'John Doe';
+const auth = true;
+const perm = false;
+
+function calc(items: Item[]): number {
+  // Implementation
+}
+
+function format(amount: number): string {
+  // Implementation
+}
+```
+
+### Constants
+
+```typescript
+// ✅ Good: UPPER_SNAKE_CASE for constants
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const API_BASE_URL = 'https://api.example.com';
+const DEFAULT_TIMEOUT = 5000;
+
+// ✅ Good: Grouped constants
+const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 20,
+  MAX_PAGE_SIZE: 100,
+  MIN_PAGE_SIZE: 10,
+} as const;
+
+// ❌ Bad: Unclear or inconsistent
+const maxSize = 5242880;
+const ApiUrl = 'https://api.example.com';
+```
+
+### Boolean Variables
+
+```typescript
+// ✅ Good: Prefix with is, has, should, can
+const isLoading = true;
+const hasError = false;
+const shouldRender = true;
+const canDelete = false;
+const willRedirect = true;
+
+// ❌ Bad: Unclear boolean
+const loading = true;
+const error = false;
+const render = true;
+```
+
+### Event Handlers
+
+```typescript
+// ✅ Good: Prefix with 'handle'
+const handleClick = () => {};
+const handleSubmit = () => {};
+const handleChange = () => {};
+const handleKeyDown = () => {};
+
+// ❌ Bad: Unclear or inconsistent
+const onClick = () => {};
+const submit = () => {};
+const change = () => {};
+```
+
+### Components
+
+```typescript
+// ✅ Good: PascalCase
+export function UserProfile() {}
+export function DashboardLayout() {}
+export function SignInForm() {}
+
+// ❌ Bad: Wrong casing
+export function userProfile() {}
+export function dashboard_layout() {}
+export function signInForm() {}
+```
+
+## Code Organization
+
+### File Structure
+
+```typescript
+// ✅ Good: Organized structure
+// 1. Imports
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import type { User } from '@/types/user';
+
+// 2. Types/Interfaces
+interface UserProfileProps {
+  userId: string;
+}
+
+// 3. Constants
+const MAX_BIO_LENGTH = 500;
+
+// 4. Main component
+export function UserProfile({ userId }: UserProfileProps) {
+  // Implementation
+}
+
+// 5. Helper components
+function UserAvatar({ user }: { user: User }) {
+  // Implementation
+}
+
+// 6. Helper functions
+function formatDate(date: Date): string {
+  // Implementation
+}
+```
+
+### JSX Formatting
+
+```typescript
+// ✅ Good: Clean JSX
+export function UserCard({ user }: UserCardProps) {
+  return (
+    <div className="rounded-lg border p-4">
+      <h2 className="text-xl font-bold">{user.name}</h2>
+      <p className="text-gray-600">{user.email}</p>
+      <Button onClick={handleEdit}>Edit</Button>
+    </div>
+  );
+}
+
+// ✅ Good: Multi-line props
+export function UserCard({ user }: UserCardProps) {
+  return (
+    <Card
+      title={user.name}
+      description={user.bio}
+      avatar={user.avatarUrl}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+    />
+  );
+}
+
+// ❌ Bad: Unreadable
+export function UserCard({ user }: UserCardProps) {
+  return <div className="rounded-lg border p-4"><h2 className="text-xl font-bold">{user.name}</h2><p className="text-gray-600">{user.email}</p><Button onClick={handleEdit}>Edit</Button></div>;
+}
+```
+
+### Conditional Rendering
+
+```typescript
+// ✅ Good: Early return
+function UserProfile({ user }: { user: User | null }) {
+  if (!user) {
+    return <div>No user found</div>;
+  }
+  
+  return <div>{user.name}</div>;
+}
+
+// ✅ Good: Ternary for simple conditions
+<div>{isLoading ? <Spinner /> : <Content />}</div>
+
+// ✅ Good: Logical AND for conditional rendering
+<div>
+  {hasError && <ErrorMessage />}
+  {isSuccess && <SuccessMessage />}
+</div>
+
+// ❌ Bad: Nested ternaries
+<div>
+  {isLoading ? <Spinner /> : isError ? <Error /> : isSuccess ? <Success /> : <Empty />}
+</div>
+
+// ✅ Better: Extract to variable or function
+function getContent() {
+  if (isLoading) return <Spinner />;
+  if (isError) return <Error />;
+  if (isSuccess) return <Success />;
+  return <Empty />;
+}
+
+<div>{getContent()}</div>
+```
+
+## Arrays and Objects
+
+### Array Methods
+
+```typescript
+// ✅ Good: Use array methods
+const userNames = users.map(user => user.name);
+const activeUsers = users.filter(user => user.isActive);
+const totalAge = users.reduce((sum, user) => sum + user.age, 0);
+
+// ❌ Bad: Manual loops when array methods would work
+const userNames = [];
+for (let i = 0; i < users.length; i++) {
+  userNames.push(users[i].name);
+}
+```
+
+### Object Destructuring
+
+```typescript
+// ✅ Good: Use destructuring
+const { name, email, age } = user;
+const { data, error, isLoading } = useQuery(...);
+
+// ✅ Good: Rename while destructuring
+const { name: userName, email: userEmail } = user;
+
+// ✅ Good: Default values
+const { theme = 'light', locale = 'en' } = settings;
+
+// ❌ Bad: Accessing properties repeatedly
+const fullName = `${user.name} ${user.lastName}`;
+const contact = `${user.email} - ${user.phone}`;
+```
+
+### Spread Operator
+
+```typescript
+// ✅ Good: Use spread for copying
+const newUser = { ...user, name: 'New Name' };
+const newItems = [...items, newItem];
+
+// ✅ Good: Merge objects
+const config = { ...defaultConfig, ...userConfig };
+
+// ❌ Bad: Manual copying
+const newUser = {
+  id: user.id,
+  name: 'New Name',
+  email: user.email,
+  age: user.age,
+};
+```
+
+## Functions
+
+### Arrow Functions vs Regular Functions
+
+```typescript
+// ✅ Good: Arrow functions for simple operations
+const double = (x: number) => x * 2;
+const greet = (name: string) => `Hello, ${name}!`;
+
+// ✅ Good: Regular functions for components and complex logic
+export function UserProfile({ user }: UserProfileProps) {
+  // Implementation
+}
+
+function calculateComplexMetric(data: Data[]): number {
+  // Complex implementation
+}
+
+// ✅ Good: Arrow functions for callbacks
+users.map(user => user.name);
+items.filter(item => item.isActive);
+```
+
+### Function Parameters
+
+```typescript
+// ✅ Good: Object parameter for multiple params
+function createUser({ name, email, age }: {
+  name: string;
+  email: string;
+  age: number;
+}) {
+  // Implementation
+}
+
+// ✅ Good: Optional and default parameters
+function fetchData(url: string, options: FetchOptions = {}) {
+  // Implementation
+}
+
+// ❌ Bad: Too many positional parameters
+function createUser(name: string, email: string, age: number, role: string, department: string) {
+  // Hard to remember order
+}
+```
+
+### Function Return
+
+```typescript
+// ✅ Good: Explicit returns
+function getUser(id: string): User | null {
+  if (!id) {
+    return null;
+  }
+  return users.find(u => u.id === id) ?? null;
+}
+
+// ✅ Good: Implicit return for simple functions
+const double = (x: number) => x * 2;
+const isEven = (x: number) => x % 2 === 0;
+```
+
+## Comments
+
+### When to Comment
+
+```typescript
+// ✅ Good: Explain WHY, not WHAT
+// Using debounce to prevent excessive API calls while user is typing
+const debouncedSearch = useMemo(() => debounce(search, 300), []);
+
+// ✅ Good: Explain complex business logic
+// Calculate prorated amount based on remaining days in billing cycle
+// Formula: (baseAmount / daysInMonth) * daysRemaining
+function calculateProrated(baseAmount: number, daysRemaining: number): number {
+  const daysInMonth = 30;
+  return (baseAmount / daysInMonth) * daysRemaining;
+}
+
+// ✅ Good: Document public APIs
+/**
+ * Fetches user data from the API
+ * @param userId - The unique identifier for the user
+ * @returns User object or null if not found
+ * @throws {Error} If the API request fails
+ */
+export async function fetchUser(userId: string): Promise<User | null> {
+  // Implementation
+}
+
+// ❌ Bad: Obvious comments
+// Set loading to true
+setLoading(true);
+
+// Loop through users
+users.forEach(user => {
+  // Process user
+});
+```
+
+### TODO Comments
+
+```typescript
+// ❌ Bad: TODO comments should not be committed
+// TODO: Fix this later
+// FIXME: This is broken
+// HACK: Temporary solution
+
+// ✅ Good: Either fix it now or create an issue and reference it
+// See issue #123: Need to implement caching
+// Temporary workaround until API supports filtering (issue #456)
+```
+
+## Avoid These Patterns
+
+```typescript
+// ❌ Bad: console.log
+console.log('User data:', user);
+
+// ✅ Good: Use Logger
+Logger.info('User data loaded', { userId: user.id });
+
+// ❌ Bad: Magic numbers
+setTimeout(callback, 3000);
+
+// ✅ Good: Named constants
+const DEBOUNCE_DELAY = 3000;
+setTimeout(callback, DEBOUNCE_DELAY);
+
+// ❌ Bad: Nested ternaries
+const value = a ? b : c ? d : e ? f : g;
+
+// ✅ Good: Use if-else or early returns
+function getValue() {
+  if (a) return b;
+  if (c) return d;
+  if (e) return f;
+  return g;
+}
+
+// ❌ Bad: Double negatives
+if (!isNotValid) {
+  // ...
+}
+
+// ✅ Good: Positive logic
+if (isValid) {
+  // ...
+}
+```

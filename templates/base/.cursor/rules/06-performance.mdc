@@ -1,0 +1,515 @@
+---
+title: Performance Optimization
+type: agent_requested
+description: Performance best practices and optimization techniques
+---
+
+# Performance Optimization
+
+## Core Web Vitals
+
+Focus on these metrics:
+- **LCP (Largest Contentful Paint)**: < 2.5s
+- **FID (First Input Delay)**: < 100ms
+- **CLS (Cumulative Layout Shift)**: < 0.1
+- **FCP (First Contentful Paint)**: < 1.8s
+- **TTFB (Time to First Byte)**: < 0.8s
+
+## Next.js Optimizations
+
+### Image Optimization
+
+```typescript
+import Image from 'next/image';
+
+// ✅ Good: Optimized images
+export function ProductCard({ product }: { product: Product }) {
+  return (
+    <div>
+      <Image
+        src={product.imageUrl}
+        alt={product.name}
+        width={300}
+        height={300}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        priority={false} // Only set true for above-the-fold images
+        loading="lazy"
+        placeholder="blur"
+        blurDataURL={product.blurDataUrl}
+      />
+    </div>
+  );
+}
+
+// ❌ Bad: Unoptimized images
+export function ProductCard({ product }: { product: Product }) {
+  return <img src={product.imageUrl} alt={product.name} />;
+}
+```
+
+### Font Optimization
+
+```typescript
+// app/layout.tsx
+import { Inter } from 'next/font/google';
+
+// ✅ Good: Optimized fonts
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+  preload: true,
+});
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" className={inter.variable}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+### Code Splitting
+
+```typescript
+// ✅ Good: Dynamic imports for heavy components
+import dynamic from 'next/dynamic';
+
+const Chart = dynamic(() => import('@/components/Chart'), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+});
+
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
+  loading: () => <div>Loading editor...</div>,
+  ssr: false,
+});
+
+// ✅ Good: Route-based code splitting
+const AdminDashboard = dynamic(() => import('@/features/admin/Dashboard'));
+
+// ✅ Good: Conditional loading
+function Dashboard() {
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  
+  return (
+    <div>
+      <button onClick={() => setShowAnalytics(true)}>
+        Show Analytics
+      </button>
+      {showAnalytics && <Chart />}
+    </div>
+  );
+}
+```
+
+### Prefetching and Preloading
+
+```typescript
+import Link from 'next/link';
+
+// ✅ Good: Automatic prefetching with Link
+export function Navigation() {
+  return (
+    <nav>
+      <Link href="/dashboard" prefetch={true}>
+        Dashboard
+      </Link>
+      <Link href="/settings" prefetch={false}>
+        Settings
+      </Link>
+    </nav>
+  );
+}
+
+// ✅ Good: Manual prefetching
+'use client';
+
+import { useRouter } from 'next/navigation';
+
+export function UserCard() {
+  const router = useRouter();
+  
+  const handleMouseEnter = () => {
+    router.prefetch('/user/profile');
+  };
+  
+  return (
+    <div onMouseEnter={handleMouseEnter}>
+      <Link href="/user/profile">View Profile</Link>
+    </div>
+  );
+}
+```
+
+## React Optimizations
+
+### Memoization
+
+```typescript
+'use client';
+
+import { memo, useMemo, useCallback } from 'react';
+
+// ✅ Good: Memo for expensive components
+export const ExpensiveList = memo(function ExpensiveList({ 
+  items 
+}: { 
+  items: Item[] 
+}) {
+  return (
+    <ul>
+      {items.map(item => (
+        <ExpensiveListItem key={item.id} item={item} />
+      ))}
+    </ul>
+  );
+});
+
+// ✅ Good: useMemo for expensive calculations
+export function DataTable({ data }: { data: Data[] }) {
+  const sortedAndFilteredData = useMemo(() => {
+    return data
+      .filter(item => item.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [data]);
+  
+  return <Table data={sortedAndFilteredData} />;
+}
+
+// ✅ Good: useCallback for functions passed to children
+export function UserList({ users }: { users: User[] }) {
+  const handleUserClick = useCallback((userId: string) => {
+    Logger.info('User clicked', { userId });
+  }, []);
+  
+  return (
+    <div>
+      {users.map(user => (
+        <UserCard key={user.id} user={user} onClick={handleUserClick} />
+      ))}
+    </div>
+  );
+}
+
+// ❌ Bad: Unnecessary memoization
+const userName = useMemo(() => `${user.firstName} ${user.lastName}`, [user]);
+```
+
+### Virtualization
+
+```typescript
+// ✅ Good: Virtualize long lists
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+export function VirtualList({ items }: { items: Item[] }) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 50,
+    overscan: 5,
+  });
+  
+  return (
+    <div ref={parentRef} style={{ height: '400px', overflow: 'auto' }}>
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          position: 'relative',
+        }}
+      >
+        {virtualizer.getVirtualItems().map(virtualItem => (
+          <div
+            key={virtualItem.key}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: `${virtualItem.size}px`,
+              transform: `translateY(${virtualItem.start}px)`,
+            }}
+          >
+            <Item item={items[virtualItem.index]} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Debouncing and Throttling
+
+```typescript
+'use client';
+
+import { useMemo } from 'react';
+import { debounce, throttle } from 'lodash-es';
+
+// ✅ Good: Debounce search input
+export function SearchInput() {
+  const [search, setSearch] = useState('');
+  
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => {
+      // API call
+      fetchResults(value);
+    }, 300),
+    []
+  );
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    debouncedSearch(value);
+  };
+  
+  return <input value={search} onChange={handleChange} />;
+}
+
+// ✅ Good: Throttle scroll events
+export function ScrollTracker() {
+  const handleScroll = useMemo(
+    () => throttle(() => {
+      const scrollY = window.scrollY;
+      // Handle scroll
+    }, 100),
+    []
+  );
+  
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+  
+  return <div>...</div>;
+}
+```
+
+## Data Fetching Optimizations
+
+### Parallel Requests
+
+```typescript
+// ✅ Good: Parallel data fetching
+export default async function UserPage({ userId }: { userId: string }) {
+  const [user, posts, comments] = await Promise.all([
+    fetchUser(userId),
+    fetchUserPosts(userId),
+    fetchUserComments(userId),
+  ]);
+  
+  return (
+    <div>
+      <UserProfile user={user} />
+      <UserPosts posts={posts} />
+      <UserComments comments={comments} />
+    </div>
+  );
+}
+
+// ❌ Bad: Sequential requests
+export default async function UserPage({ userId }: { userId: string }) {
+  const user = await fetchUser(userId);
+  const posts = await fetchUserPosts(userId);
+  const comments = await fetchUserComments(userId);
+  
+  return <div>...</div>;
+}
+```
+
+### Request Deduplication
+
+```typescript
+// ✅ Good: React Query deduplicates automatically
+'use client';
+
+export function UserProfile({ userId }: { userId: string }) {
+  const { data: user } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  return <div>{user?.name}</div>;
+}
+
+// Multiple components can use the same query without duplicate requests
+```
+
+### Optimistic Updates
+
+```typescript
+// ✅ Good: Optimistic updates for better UX
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: updateUser,
+    onMutate: async (newUser) => {
+      await queryClient.cancelQueries({ queryKey: ['user', newUser.id] });
+      
+      const previousUser = queryClient.getQueryData(['user', newUser.id]);
+      
+      queryClient.setQueryData(['user', newUser.id], newUser);
+      
+      return { previousUser };
+    },
+    onError: (err, newUser, context) => {
+      queryClient.setQueryData(
+        ['user', newUser.id],
+        context?.previousUser
+      );
+    },
+    onSettled: (newUser) => {
+      queryClient.invalidateQueries({ queryKey: ['user', newUser?.id] });
+    },
+  });
+}
+```
+
+## Bundle Size Optimization
+
+### Tree Shaking
+
+```typescript
+// ✅ Good: Import only what you need
+import { debounce } from 'lodash-es';
+
+// ❌ Bad: Import entire library
+import _ from 'lodash';
+_.debounce();
+
+// ✅ Good: Named imports
+import { Button, Card } from '@/components/ui';
+
+// ❌ Bad: Default import from barrel file
+import * as UI from '@/components/ui';
+```
+
+### Analyzing Bundle Size
+
+```bash
+# Run bundle analyzer
+npm run build-stats
+
+# Review the output and:
+# 1. Look for duplicate dependencies
+# 2. Check for large libraries
+# 3. Find unused code
+# 4. Identify optimization opportunities
+```
+
+## Runtime Performance
+
+### Avoid Expensive Operations in Render
+
+```typescript
+// ❌ Bad: Creating objects/arrays in render
+export function UserList({ users }: { users: User[] }) {
+  return (
+    <div>
+      {users.map(user => (
+        <UserCard 
+          key={user.id} 
+          user={user} 
+          config={{ showEmail: true, showPhone: false }} // New object every render!
+        />
+      ))}
+    </div>
+  );
+}
+
+// ✅ Good: Define outside component
+const USER_CARD_CONFIG = { showEmail: true, showPhone: false };
+
+export function UserList({ users }: { users: User[] }) {
+  return (
+    <div>
+      {users.map(user => (
+        <UserCard 
+          key={user.id} 
+          user={user} 
+          config={USER_CARD_CONFIG}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+### Use CSS for Animations
+
+```typescript
+// ✅ Good: CSS animations (GPU accelerated)
+export function FadeIn({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="animate-fade-in">
+      {children}
+    </div>
+  );
+}
+
+// styles/globals.css
+// @keyframes fade-in {
+//   from { opacity: 0; }
+//   to { opacity: 1; }
+// }
+// .animate-fade-in {
+//   animation: fade-in 0.3s ease-in;
+// }
+
+// ❌ Bad: JavaScript animations
+export function FadeIn({ children }: { children: React.ReactNode }) {
+  const [opacity, setOpacity] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOpacity(prev => Math.min(prev + 0.1, 1));
+    }, 30);
+    return () => clearInterval(interval);
+  }, []);
+  
+  return <div style={{ opacity }}>{children}</div>;
+}
+```
+
+## Monitoring Performance
+
+```typescript
+// ✅ Good: Monitor performance
+'use client';
+
+export function PerformanceMonitor() {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'performance' in window) {
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      
+      Logger.info('Performance metrics', {
+        ttfb: navigation.responseStart - navigation.requestStart,
+        domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+        loadComplete: navigation.loadEventEnd - navigation.loadEventStart,
+      });
+    }
+  }, []);
+  
+  return null;
+}
+```
+
+## Performance Checklist
+
+- [ ] Images are optimized and lazy loaded
+- [ ] Fonts are optimized and preloaded
+- [ ] Heavy components are code-split
+- [ ] Lists are virtualized when > 100 items
+- [ ] API requests are deduplicated
+- [ ] Expensive calculations are memoized
+- [ ] Bundle size is monitored
+- [ ] Core Web Vitals are within targets
+- [ ] No unnecessary re-renders
+- [ ] CSS is used for animations

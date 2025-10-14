@@ -1,0 +1,465 @@
+---
+alwaysApply: true
+---
+# React 19 & Next.js 15 Best Practices
+
+## Server Components First
+
+**Default to Server Components** - Only use Client Components when necessary.
+
+```typescript
+// ✅ Good: Server Component (default)
+export default async function UserProfile({ userId }: { userId: string }) {
+  const user = await fetchUser(userId);
+  
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <UserActions user={user} /> {/* Client component */}
+    </div>
+  );
+}
+
+// ✅ Good: Client Component (only when needed)
+'use client';
+
+export function UserActions({ user }: { user: User }) {
+  const [isFollowing, setIsFollowing] = useState(false);
+  
+  return (
+    <button onClick={() => setIsFollowing(!isFollowing)}>
+      {isFollowing ? 'Unfollow' : 'Follow'}
+    </button>
+  );
+}
+```
+
+### When to Use Client Components
+
+Use `'use client'` only when you need:
+- Interactive event handlers (`onClick`, `onChange`, etc.)
+- React hooks (`useState`, `useEffect`, `useContext`, etc.)
+- Browser APIs (`localStorage`, `window`, etc.)
+- Third-party libraries that use React hooks
+
+## Async Request APIs
+
+**Always use async versions** of Next.js runtime APIs:
+
+```typescript
+// ✅ Good: Async APIs
+import { cookies, headers, draftMode } from 'next/headers';
+
+export default async function Page() {
+  const cookieStore = await cookies();
+  const headersList = await headers();
+  const { isEnabled } = await draftMode();
+  
+  const token = cookieStore.get('token');
+  const userAgent = headersList.get('user-agent');
+  
+  return <div>...</div>;
+}
+
+// ❌ Bad: Sync APIs (deprecated)
+const cookieStore = cookies(); // Don't do this
+```
+
+## Async Params and SearchParams
+
+```typescript
+// ✅ Good: Await params and searchParams
+interface PageProps {
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ sort?: string; filter?: string }>;
+}
+
+export default async function Page(props: PageProps) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  
+  return (
+    <div>
+      <h1>Post {params.id}</h1>
+      <p>Sort: {searchParams.sort}</p>
+    </div>
+  );
+}
+
+// ❌ Bad: Direct destructuring (deprecated)
+export default async function Page({ params, searchParams }: PageProps) {
+  // Don't do this
+}
+```
+
+## Component Structure
+
+### Functional Components
+
+```typescript
+// ✅ Good: Named export with clear structure
+interface UserCardProps {
+  user: User;
+  onEdit?: (user: User) => void;
+}
+
+export function UserCard({ user, onEdit }: UserCardProps) {
+  // 1. Hooks
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // 2. Derived state
+  const fullName = `${user.firstName} ${user.lastName}`;
+  
+  // 3. Event handlers
+  const handleEdit = () => {
+    setIsEditing(true);
+    onEdit?.(user);
+  };
+  
+  // 4. Early returns
+  if (!user) {
+    return null;
+  }
+  
+  // 5. Main render
+  return (
+    <div>
+      <h2>{fullName}</h2>
+      <button onClick={handleEdit}>Edit</button>
+    </div>
+  );
+}
+
+// ❌ Bad: Default export, poor structure
+export default ({ user }: { user: User }) => {
+  if (!user) {
+    return null;
+  }
+  const handleEdit = () => setIsEditing(true);
+  const [isEditing, setIsEditing] = useState(false);
+  return <div>{user.firstName}</div>;
+};
+```
+
+## Data Fetching
+
+### Server Component Data Fetching
+
+```typescript
+// ✅ Good: Direct async/await in Server Components
+export default async function PostsPage() {
+  const posts = await fetchPosts();
+  
+  return (
+    <div>
+      {posts.map(post => (
+        <PostCard key={post.id} post={post} />
+      ))}
+    </div>
+  );
+}
+
+// ✅ Good: Parallel data fetching
+export default async function UserPage({ userId }: { userId: string }) {
+  const [user, posts, comments] = await Promise.all([
+    fetchUser(userId),
+    fetchUserPosts(userId),
+    fetchUserComments(userId),
+  ]);
+  
+  return (
+    <div>
+      <UserProfile user={user} />
+      <UserPosts posts={posts} />
+      <UserComments comments={comments} />
+    </div>
+  );
+}
+```
+
+### Client Component Data Fetching
+
+Use TanStack Query for client-side data fetching:
+
+```typescript
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+
+export function UserProfile({ userId }: { userId: string }) {
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId),
+  });
+  
+  if (isLoading) {
+    return <Skeleton />;
+  }
+  
+  if (error) {
+    return <ErrorMessage error={error} />;
+  }
+  
+  return <div>{user.name}</div>;
+}
+```
+
+## Suspense and Error Boundaries
+
+### Using Suspense
+
+```typescript
+// ✅ Good: Suspense for async components
+import { Suspense } from 'react';
+
+export default function Page() {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <Suspense fallback={<UserProfileSkeleton />}>
+        <UserProfile />
+      </Suspense>
+      <Suspense fallback={<PostsSkeleton />}>
+        <RecentPosts />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+### Error Boundaries
+
+```typescript
+// app/dashboard/error.tsx
+'use client';
+
+interface ErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+export default function Error({ error, reset }: ErrorProps) {
+  useEffect(() => {
+    Logger.error('Dashboard error', { error });
+  }, [error]);
+  
+  return (
+    <div>
+      <h2>Something went wrong!</h2>
+      <p>{error.message}</p>
+      <button onClick={reset}>Try again</button>
+    </div>
+  );
+}
+```
+
+## Performance Optimization
+
+### React.memo
+
+```typescript
+// ✅ Good: Memo for expensive components
+export const UserCard = memo(function UserCard({ user }: UserCardProps) {
+  return (
+    <div>
+      <h2>{user.name}</h2>
+      <p>{user.email}</p>
+    </div>
+  );
+});
+
+// ✅ Good: Custom comparison
+export const UserCard = memo(
+  function UserCard({ user }: UserCardProps) {
+    return <div>{user.name}</div>;
+  },
+  (prevProps, nextProps) => prevProps.user.id === nextProps.user.id
+);
+```
+
+### useMemo and useCallback
+
+```typescript
+'use client';
+
+export function UserList({ users }: { users: User[] }) {
+  // ✅ Good: Memoize expensive calculations
+  const sortedUsers = useMemo(
+    () => users.sort((a, b) => a.name.localeCompare(b.name)),
+    [users]
+  );
+  
+  // ✅ Good: Memoize callbacks passed to child components
+  const handleUserClick = useCallback((userId: string) => {
+    Logger.info('User clicked', { userId });
+  }, []);
+  
+  return (
+    <div>
+      {sortedUsers.map(user => (
+        <UserCard key={user.id} user={user} onClick={handleUserClick} />
+      ))}
+    </div>
+  );
+}
+
+// ❌ Bad: Unnecessary memoization
+const userName = useMemo(() => `${user.firstName} ${user.lastName}`, [user]);
+```
+
+### Dynamic Imports
+
+```typescript
+// ✅ Good: Lazy load heavy components
+import dynamic from 'next/dynamic';
+
+const Chart = dynamic(() => import('@/components/Chart'), {
+  loading: () => <ChartSkeleton />,
+  ssr: false, // Only if component uses browser APIs
+});
+
+export function Dashboard() {
+  return (
+    <div>
+      <h1>Analytics</h1>
+      <Chart data={data} />
+    </div>
+  );
+}
+```
+
+## Image Optimization
+
+```typescript
+import Image from 'next/image';
+
+// ✅ Good: Optimized images
+export function UserAvatar({ user }: { user: User }) {
+  return (
+    <Image
+      src={user.avatarUrl}
+      alt={`${user.name}'s avatar`}
+      width={48}
+      height={48}
+      className="rounded-full"
+      priority={false} // Only set true for above-the-fold images
+    />
+  );
+}
+
+// ❌ Bad: Using img tag
+export function UserAvatar({ user }: { user: User }) {
+  return <img src={user.avatarUrl} alt={user.name} />;
+}
+```
+
+## Metadata API
+
+```typescript
+// ✅ Good: Static metadata
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'User Profile',
+  description: 'View and edit your profile information',
+};
+
+// ✅ Good: Dynamic metadata
+export async function generateMetadata(
+  props: { params: Promise<{ id: string }> }
+): Promise<Metadata> {
+  const params = await props.params;
+  const user = await fetchUser(params.id);
+  
+  return {
+    title: `${user.name} - Profile`,
+    description: user.bio,
+    openGraph: {
+      title: user.name,
+      description: user.bio,
+      images: [user.avatarUrl],
+    },
+  };
+}
+```
+
+## Route Handlers
+
+```typescript
+// app/api/users/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+// ✅ Good: Typed route handlers
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const query = searchParams.get('q');
+    
+    const users = await fetchUsers(query);
+    
+    return NextResponse.json({ success: true, data: users });
+  } catch (error) {
+    Logger.error('Failed to fetch users', { error });
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch users' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const validatedData = userSchema.parse(body);
+    
+    const user = await createUser(validatedData);
+    
+    return NextResponse.json(
+      { success: true, data: user },
+      { status: 201 }
+    );
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { success: false, error: error.errors },
+        { status: 400 }
+      );
+    }
+    
+    Logger.error('Failed to create user', { error });
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## Streaming and Partial Prerendering
+
+```typescript
+// ✅ Good: Streaming with loading.tsx
+// app/dashboard/loading.tsx
+export default function Loading() {
+  return <DashboardSkeleton />;
+}
+
+// app/dashboard/page.tsx
+export default async function Dashboard() {
+  const data = await fetchDashboardData();
+  return <DashboardContent data={data} />;
+}
+```
+
+## Best Practices Summary
+
+1. **Default to Server Components** - Use client components sparingly
+2. **Async APIs** - Always await `cookies()`, `headers()`, `params`, `searchParams`
+3. **Suspense Boundaries** - Wrap async components in Suspense
+4. **Error Boundaries** - Create error.tsx for proper error handling
+5. **Metadata** - Use the Metadata API for SEO
+6. **Image Optimization** - Always use Next.js Image component
+7. **Dynamic Imports** - Lazy load heavy components
+8. **Type Safety** - Properly type all components and APIs
+9. **Performance** - Use memo, useMemo, useCallback strategically
+10. **Loading States** - Always handle loading and error states

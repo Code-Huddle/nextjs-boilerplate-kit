@@ -1,0 +1,482 @@
+---
+title: Git Workflow and Commit Conventions
+type: manual
+description: Git best practices and conventional commits
+---
+
+# Git Workflow and Commit Conventions
+
+## Commit Message Format
+
+This project uses **Conventional Commits** with Commitizen and Commitlint.
+
+### Format
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, missing semicolons, etc.)
+- `refactor`: Code refactoring without feature changes
+- `perf`: Performance improvements
+- `test`: Adding or updating tests
+- `build`: Build system or dependency changes
+- `ci`: CI/CD configuration changes
+- `chore`: Other changes (maintenance, etc.)
+- `revert`: Revert a previous commit
+
+### Examples
+
+```bash
+# ✅ Good commit messages
+feat(auth): add social login with Google
+fix(ui): resolve button hover state issue
+docs(readme): update installation instructions
+refactor(api): simplify user service logic
+perf(dashboard): lazy load chart components
+test(utils): add tests for formatCurrency function
+build(deps): upgrade next to 15.5.2
+ci(github): add automated deployment workflow
+chore(lint): fix eslint warnings
+
+# ✅ With body and footer
+feat(auth): implement password reset flow
+
+- Add forgot password page
+- Send reset email via Resend
+- Create password reset token system
+- Add reset password confirmation page
+
+Closes #123
+BREAKING CHANGE: Auth API endpoints have changed
+
+# ❌ Bad commit messages
+update stuff
+fix bug
+wip
+asdfasdf
+Fixed it
+Changes
+```
+
+## Using Commitizen
+
+```bash
+# ✅ Good: Use Commitizen for commits
+git add .
+npm run commit
+
+# Follow the prompts:
+# 1. Select type (feat, fix, etc.)
+# 2. Enter scope (optional)
+# 3. Write short description
+# 4. Write longer description (optional)
+# 5. List breaking changes (optional)
+# 6. Reference issues (optional)
+
+# ❌ Don't bypass Commitizen
+git commit -m "some changes"
+```
+
+## Branch Naming
+
+```bash
+# ✅ Good branch names
+feature/user-authentication
+fix/login-button-alignment
+refactor/api-client
+docs/setup-guide
+test/user-service
+hotfix/critical-security-issue
+
+# Format: <type>/<description-in-kebab-case>
+
+# ❌ Bad branch names
+new-feature
+fix
+my-branch
+test123
+```
+
+## Git Workflow
+
+### 1. Create a New Branch
+
+```bash
+# Update main
+git checkout main
+git pull origin main
+
+# Create feature branch
+git checkout -b feature/user-profile
+
+# Or use GitHub CLI
+gh issue create --title "Add user profile page"
+gh issue develop 123 --checkout
+```
+
+### 2. Make Changes
+
+```bash
+# Stage changes
+git add .
+
+# Or stage specific files
+git add src/components/UserProfile.tsx
+
+# Commit using Commitizen
+npm run commit
+```
+
+### 3. Push Changes
+
+```bash
+# Push to remote
+git push origin feature/user-profile
+
+# Or set upstream
+git push -u origin feature/user-profile
+```
+
+### 4. Create Pull Request
+
+```bash
+# Using GitHub CLI
+gh pr create --title "feat(profile): add user profile page" --body "Closes #123"
+
+# Or create on GitHub web interface
+```
+
+### 5. Code Review
+
+- Address review comments
+- Make changes and commit
+- Push updates
+
+```bash
+# Make changes
+git add .
+npm run commit
+git push
+```
+
+### 6. Merge
+
+```bash
+# Option 1: Squash and merge (preferred for feature branches)
+# - Creates single commit
+# - Keeps main branch clean
+
+# Option 2: Merge commit
+# - Preserves all commits
+# - Shows full history
+
+# Option 3: Rebase and merge
+# - Linear history
+# - No merge commits
+```
+
+## Git Best Practices
+
+### Do's
+
+```bash
+# ✅ Write descriptive commit messages
+feat(auth): implement OAuth2 authentication flow
+
+# ✅ Make small, focused commits
+fix(button): correct hover state transition
+
+# ✅ Commit related changes together
+feat(profile): add profile editing functionality
+
+# ✅ Test before committing
+npm run test
+npm run lint
+npm run check-types
+
+# ✅ Keep commits atomic
+# Each commit should represent a single logical change
+
+# ✅ Use present tense
+feat(api): add user endpoint
+# Not: feat(api): added user endpoint
+
+# ✅ Reference issues
+fix(login): resolve session timeout issue
+
+Closes #456
+```
+
+### Don'ts
+
+```bash
+# ❌ Don't commit WIP code to main
+git commit -m "wip"
+
+# ❌ Don't commit commented-out code
+// const oldFunction = () => { ... }
+
+# ❌ Don't commit console.logs
+console.log('debug:', data);
+
+# ❌ Don't commit .env files
+# (Should be in .gitignore)
+
+# ❌ Don't commit node_modules
+# (Should be in .gitignore)
+
+# ❌ Don't commit build artifacts
+# (Should be in .gitignore)
+
+# ❌ Don't force push to main
+git push --force origin main
+
+# ❌ Don't commit directly to main
+# Use feature branches and PRs
+```
+
+## Gitignore
+
+Ensure `.gitignore` includes:
+
+```gitignore
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+coverage/
+.vitest/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+.cache/
+```
+
+## Pre-commit Hooks
+
+This project uses Husky for Git hooks:
+
+```bash
+# Pre-commit: Runs lint-staged
+# - ESLint for code quality
+# - Type checking
+# - Format check
+
+# Commit-msg: Validates commit message format
+# - Must follow Conventional Commits
+# - Enforced by Commitlint
+```
+
+## Resolving Conflicts
+
+```bash
+# Update your branch with main
+git checkout main
+git pull origin main
+git checkout feature/my-feature
+git merge main
+
+# Or use rebase (cleaner history)
+git checkout feature/my-feature
+git rebase main
+
+# Resolve conflicts in files
+# Edit files, keep desired changes
+
+# Stage resolved files
+git add resolved-file.ts
+
+# Continue rebase/merge
+git rebase --continue
+# Or
+git merge --continue
+
+# If you made a mistake
+git rebase --abort
+# Or
+git merge --abort
+```
+
+## Useful Git Commands
+
+```bash
+# View commit history
+git log --oneline --graph --decorate --all
+
+# View changes
+git diff
+git diff --staged
+
+# Undo changes
+git checkout -- file.ts  # Discard changes
+git reset HEAD file.ts   # Unstage file
+git reset --soft HEAD~1  # Undo last commit, keep changes
+git reset --hard HEAD~1  # Undo last commit, discard changes
+
+# Stash changes
+git stash
+git stash list
+git stash pop
+git stash apply stash@{0}
+
+# Cherry-pick commit
+git cherry-pick <commit-hash>
+
+# Interactive rebase (clean up commits)
+git rebase -i HEAD~3
+
+# Amend last commit
+git commit --amend
+
+# View file history
+git log --follow -- file.ts
+git blame file.ts
+```
+
+## Pull Request Guidelines
+
+### PR Title
+
+Use conventional commit format:
+
+```
+feat(auth): add OAuth2 authentication
+fix(ui): resolve mobile menu layout issue
+docs(api): update endpoint documentation
+```
+
+### PR Description Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Changes Made
+- Added user authentication
+- Updated API endpoints
+- Fixed mobile layout
+
+## Testing
+- [ ] Unit tests pass
+- [ ] E2E tests pass
+- [ ] Manual testing completed
+
+## Screenshots (if applicable)
+[Add screenshots]
+
+## Related Issues
+Closes #123
+Relates to #456
+
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+- [ ] Comments added for complex code
+- [ ] Documentation updated
+- [ ] No new warnings
+- [ ] Tests added/updated
+- [ ] All tests passing
+```
+
+### PR Review Process
+
+1. **Self-review** - Review your own changes first
+2. **Request reviewers** - Assign team members
+3. **Address feedback** - Make requested changes
+4. **Resolve conversations** - Mark resolved when done
+5. **Merge** - After approval, merge the PR
+
+## Release Process
+
+This project uses **semantic-release** for automated releases:
+
+```bash
+# Commits to main trigger automatic releases
+feat: → minor version bump (1.1.0 → 1.2.0)
+fix: → patch version bump (1.1.0 → 1.1.1)
+BREAKING CHANGE: → major version bump (1.1.0 → 2.0.0)
+
+# Semantic-release will:
+# 1. Analyze commits
+# 2. Determine version bump
+# 3. Generate changelog
+# 4. Create GitHub release
+# 5. Publish package (if applicable)
+```
+
+## Emergency Hotfix
+
+```bash
+# 1. Create hotfix branch from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-security-fix
+
+# 2. Make fix
+# ... make changes ...
+
+# 3. Commit
+npm run commit
+# Type: fix
+# Scope: security
+# Description: patch XSS vulnerability
+
+# 4. Push and create PR
+git push -u origin hotfix/critical-security-fix
+gh pr create --title "fix(security): patch XSS vulnerability"
+
+# 5. Request urgent review
+# 6. Merge immediately after approval
+# 7. Deploy to production
+```
+
+## Git Workflow Summary
+
+1. **Create branch** from main
+2. **Make changes** and commit often
+3. **Use Commitizen** for commit messages
+4. **Push to remote** regularly
+5. **Create PR** with description
+6. **Request review** from team
+7. **Address feedback** promptly
+8. **Merge** after approval
+9. **Delete branch** after merge
+10. **Pull latest** main and repeat

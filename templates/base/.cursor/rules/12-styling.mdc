@@ -1,0 +1,442 @@
+---
+title: Styling with Tailwind CSS
+type: auto_attached
+file_patterns: ["**/*.tsx", "**/*.css"]
+description: Tailwind CSS best practices and patterns
+---
+
+# Styling with Tailwind CSS
+
+## Utility-First Approach
+
+```typescript
+// ✅ Good: Utility classes
+export function Button({ children }: { children: React.ReactNode }) {
+  return (
+    <button className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+      {children}
+    </button>
+  );
+}
+
+// ❌ Bad: Inline styles
+export function Button({ children }: { children: React.ReactNode }) {
+  return (
+    <button style={{
+      borderRadius: '0.5rem',
+      backgroundColor: '#2563eb',
+      padding: '0.5rem 1rem',
+      color: 'white',
+    }}>
+      {children}
+    </button>
+  );
+}
+```
+
+## Class Organization
+
+```typescript
+// ✅ Good: Logical grouping (layout → spacing → sizing → colors → effects)
+<div className="
+  flex flex-col items-center justify-between
+  gap-4 p-6
+  w-full max-w-md
+  bg-white text-gray-900
+  rounded-lg shadow-lg
+  hover:shadow-xl transition-shadow
+">
+  Content
+</div>
+
+// ✅ Better: Use clsx/cn for conditional classes
+import { cn } from '@/lib/utils';
+
+export function Alert({ variant, children }: AlertProps) {
+  return (
+    <div className={cn(
+      'rounded-lg border p-4',
+      variant === 'error' && 'border-red-500 bg-red-50 text-red-900',
+      variant === 'success' && 'border-green-500 bg-green-50 text-green-900',
+      variant === 'warning' && 'border-yellow-500 bg-yellow-50 text-yellow-900',
+    )}>
+      {children}
+    </div>
+  );
+}
+```
+
+## Component Variants (CVA)
+
+```typescript
+// ✅ Good: Use class-variance-authority for complex variants
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
+      },
+      size: {
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 rounded-md px-3',
+        lg: 'h-11 rounded-md px-8',
+        icon: 'h-10 w-10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
+
+export function Button({ className, variant, size, ...props }: ButtonProps) {
+  return (
+    <button
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  );
+}
+
+// Usage
+<Button variant="destructive" size="lg">Delete</Button>
+<Button variant="outline">Cancel</Button>
+```
+
+## Responsive Design
+
+```typescript
+// ✅ Good: Mobile-first responsive design
+export function ResponsiveCard() {
+  return (
+    <div className="
+      grid grid-cols-1
+      md:grid-cols-2
+      lg:grid-cols-3
+      xl:grid-cols-4
+      gap-4
+      p-4
+      md:p-6
+      lg:p-8
+    ">
+      {/* Content */}
+    </div>
+  );
+}
+
+// ✅ Good: Responsive typography
+<h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold">
+  Heading
+</h1>
+
+// ✅ Good: Hide/show on different screens
+<div>
+  <MobileMenu className="block md:hidden" />
+  <DesktopMenu className="hidden md:block" />
+</div>
+```
+
+## Dark Mode
+
+```typescript
+// ✅ Good: Dark mode support
+export function Card() {
+  return (
+    <div className="
+      bg-white dark:bg-gray-900
+      text-gray-900 dark:text-gray-100
+      border border-gray-200 dark:border-gray-800
+      rounded-lg p-6
+    ">
+      Content
+    </div>
+  );
+}
+
+// ✅ Good: Use CSS variables
+// globals.css
+/*
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+  }
+  
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+  }
+}
+*/
+
+// Use in components
+<div className="bg-background text-foreground">
+  Content
+</div>
+```
+
+## Custom Utilities
+
+```typescript
+// tailwind.config.ts
+export default {
+  theme: {
+    extend: {
+      // Custom spacing
+      spacing: {
+        '18': '4.5rem',
+        '112': '28rem',
+      },
+      
+      // Custom colors
+      colors: {
+        brand: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          // ... more shades
+          900: '#0c4a6e',
+        },
+      },
+      
+      // Custom animations
+      animation: {
+        'fade-in': 'fadeIn 0.3s ease-in',
+        'slide-up': 'slideUp 0.3s ease-out',
+      },
+      
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+    },
+  },
+};
+
+// Usage
+<div className="animate-fade-in bg-brand-500 p-18">
+  Content
+</div>
+```
+
+## Layout Patterns
+
+```typescript
+// ✅ Good: Container pattern
+export function Container({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  );
+}
+
+// ✅ Good: Stack pattern
+export function Stack({ children, spacing = 4 }: StackProps) {
+  return (
+    <div className={cn('flex flex-col', `gap-${spacing}`)}>
+      {children}
+    </div>
+  );
+}
+
+// ✅ Good: Center pattern
+export function Center({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      {children}
+    </div>
+  );
+}
+
+// ✅ Good: Grid pattern
+export function Grid({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {children}
+    </div>
+  );
+}
+```
+
+## Performance Considerations
+
+```typescript
+// ✅ Good: Use Tailwind's JIT mode (enabled by default)
+// Purge unused styles automatically
+
+// ✅ Good: Use @apply sparingly
+// globals.css
+/*
+@layer components {
+  .btn-primary {
+    @apply rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700;
+  }
+}
+*/
+
+// ⚠️ Caution: Don't overuse @apply
+// It defeats the purpose of utility-first
+
+// ✅ Good: Group common patterns as components instead
+export const buttonBaseClasses = 'rounded-lg px-4 py-2 font-medium transition-colors';
+export const buttonPrimaryClasses = 'bg-blue-600 text-white hover:bg-blue-700';
+```
+
+## Accessibility
+
+```typescript
+// ✅ Good: Focus states
+<button className="
+  rounded-lg bg-blue-600 px-4 py-2 text-white
+  hover:bg-blue-700
+  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+  disabled:opacity-50 disabled:cursor-not-allowed
+">
+  Click me
+</button>
+
+// ✅ Good: Screen reader only classes
+<span className="sr-only">Hidden from visual users</span>
+
+// ✅ Good: Visible focus indicators
+<a href="/about" className="
+  text-blue-600 underline
+  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+">
+  About
+</a>
+```
+
+## Animations and Transitions
+
+```typescript
+// ✅ Good: Smooth transitions
+<button className="
+  bg-blue-600 text-white
+  transition-all duration-200 ease-in-out
+  hover:bg-blue-700 hover:scale-105
+  active:scale-95
+">
+  Hover me
+</button>
+
+// ✅ Good: Custom animations
+<div className="animate-fade-in">
+  Fades in on mount
+</div>
+
+// ✅ Good: Respect prefers-reduced-motion
+<div className="
+  transition-transform
+  motion-safe:animate-bounce
+  motion-reduce:transition-none
+">
+  Content
+</div>
+```
+
+## Common Patterns
+
+```typescript
+// ✅ Card component
+export function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="
+      rounded-lg border border-gray-200
+      bg-white p-6
+      shadow-sm
+      dark:border-gray-800 dark:bg-gray-900
+    ">
+      {children}
+    </div>
+  );
+}
+
+// ✅ Badge component
+export function Badge({ children, variant = 'default' }: BadgeProps) {
+  return (
+    <span className={cn(
+      'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
+      variant === 'default' && 'bg-gray-100 text-gray-800',
+      variant === 'success' && 'bg-green-100 text-green-800',
+      variant === 'error' && 'bg-red-100 text-red-800',
+    )}>
+      {children}
+    </span>
+  );
+}
+
+// ✅ Input component
+export function Input({ className, ...props }: InputProps) {
+  return (
+    <input
+      className={cn(
+        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
+        'ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium',
+        'placeholder:text-muted-foreground',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+```
+
+## Best Practices
+
+1. **Use utility classes** - Avoid custom CSS when possible
+2. **Mobile-first** - Start with mobile, add responsive modifiers
+3. **Dark mode support** - Use dark: prefix or CSS variables
+4. **Component variants** - Use CVA for complex components
+5. **Consistent spacing** - Use Tailwind's spacing scale
+6. **Focus states** - Always style focus indicators
+7. **Animations** - Use Tailwind's animation utilities
+8. **Responsive typography** - Scale text on different screens
+9. **Group related utilities** - Layout → spacing → sizing → colors → effects
+10. **Extract components** - Don't repeat complex utility combinations
+
+## Styling Checklist
+
+- [ ] Mobile-first responsive design
+- [ ] Dark mode support
+- [ ] Focus states on interactive elements
+- [ ] Hover states on clickable elements
+- [ ] Disabled states on form elements
+- [ ] Loading states on async actions
+- [ ] Animations respect prefers-reduced-motion
+- [ ] Consistent spacing throughout
+- [ ] Accessible color contrast
+- [ ] No inline styles (except dynamic values)
+
+## Tools
+
+- **Tailwind IntelliSense**: VS Code extension for autocomplete
+- **Prettier Plugin**: Format Tailwind classes
+- **Headless UI**: Unstyled accessible components
+- **shadcn/ui**: Pre-built accessible components

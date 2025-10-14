@@ -1,0 +1,551 @@
+---
+title: Accessibility Standards
+type: auto_attached
+file_patterns: ["**/components/**/*.tsx", "**/app/**/*.tsx"]
+description: WCAG 2.1 Level AA accessibility standards
+---
+
+# Accessibility Standards
+
+## WCAG 2.1 Level AA Compliance
+
+Target: Meet WCAG 2.1 Level AA standards for all user-facing features.
+
+## Semantic HTML
+
+```typescript
+// ✅ Good: Semantic HTML
+export function Article({ post }: { post: Post }) {
+  return (
+    <article>
+      <header>
+        <h1>{post.title}</h1>
+        <time dateTime={post.createdAt}>
+          {formatDate(post.createdAt)}
+        </time>
+      </header>
+      <main>
+        <p>{post.content}</p>
+      </main>
+      <footer>
+        <nav aria-label="Post actions">
+          <button>Like</button>
+          <button>Share</button>
+        </nav>
+      </footer>
+    </article>
+  );
+}
+
+// ❌ Bad: Div soup
+export function Article({ post }: { post: Post }) {
+  return (
+    <div>
+      <div>
+        <div>{post.title}</div>
+        <div>{post.createdAt}</div>
+      </div>
+      <div>{post.content}</div>
+    </div>
+  );
+}
+```
+
+## ARIA Labels
+
+```typescript
+// ✅ Good: Descriptive ARIA labels
+export function SearchForm() {
+  return (
+    <form role="search" aria-label="Search articles">
+      <input
+        type="search"
+        placeholder="Search..."
+        aria-label="Search articles"
+        aria-describedby="search-help"
+      />
+      <span id="search-help" className="sr-only">
+        Enter keywords to search articles
+      </span>
+      <button type="submit" aria-label="Submit search">
+        <SearchIcon aria-hidden="true" />
+      </button>
+    </form>
+  );
+}
+
+// ✅ Good: Icon buttons with labels
+export function DeleteButton({ onDelete }: { onDelete: () => void }) {
+  return (
+    <button onClick={onDelete} aria-label="Delete item">
+      <TrashIcon aria-hidden="true" />
+    </button>
+  );
+}
+
+// ❌ Bad: No labels
+export function DeleteButton({ onDelete }: { onDelete: () => void }) {
+  return (
+    <button onClick={onDelete}>
+      <TrashIcon />
+    </button>
+  );
+}
+```
+
+## Keyboard Navigation
+
+```typescript
+// ✅ Good: Keyboard accessible
+export function Modal({ isOpen, onClose, children }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (isOpen) {
+      // Trap focus inside modal
+      modalRef.current?.focus();
+      
+      // Handle escape key
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ✅ Good: Custom keyboard interactions
+export function Tabs({ tabs }: { tabs: Tab[] }) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  
+  const handleKeyDown = (e: KeyboardEvent) => {
+    switch (e.key) {
+      case 'ArrowRight':
+        setSelectedIndex((selectedIndex + 1) % tabs.length);
+        break;
+      case 'ArrowLeft':
+        setSelectedIndex((selectedIndex - 1 + tabs.length) % tabs.length);
+        break;
+      case 'Home':
+        setSelectedIndex(0);
+        break;
+      case 'End':
+        setSelectedIndex(tabs.length - 1);
+        break;
+    }
+  };
+  
+  return (
+    <div role="tablist" onKeyDown={handleKeyDown}>
+      {tabs.map((tab, index) => (
+        <button
+          key={tab.id}
+          role="tab"
+          aria-selected={index === selectedIndex}
+          aria-controls={`panel-${tab.id}`}
+          id={`tab-${tab.id}`}
+          tabIndex={index === selectedIndex ? 0 : -1}
+          onClick={() => setSelectedIndex(index)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+## Focus Management
+
+```typescript
+// ✅ Good: Visible focus indicators
+// globals.css
+/*
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+*/
+
+// ✅ Good: Skip to main content
+export function SkipToContent() {
+  return (
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white"
+    >
+      Skip to main content
+    </a>
+  );
+}
+
+// ✅ Good: Focus trap in modals
+import { FocusTrap } from '@headlessui/react';
+
+export function Modal({ isOpen, onClose, children }: ModalProps) {
+  return (
+    <FocusTrap active={isOpen}>
+      <div role="dialog" aria-modal="true">
+        {children}
+      </div>
+    </FocusTrap>
+  );
+}
+```
+
+## Color Contrast
+
+```typescript
+// ✅ Good: Sufficient color contrast (4.5:1 for normal text, 3:1 for large text)
+// Use tools like WebAIM Color Contrast Checker
+
+// tailwind.config.ts - Define accessible colors
+export default {
+  theme: {
+    extend: {
+      colors: {
+        // Ensure all colors meet WCAG AA standards
+        primary: {
+          DEFAULT: '#2563eb', // Blue with good contrast on white
+          foreground: '#ffffff',
+        },
+        error: {
+          DEFAULT: '#dc2626', // Red with good contrast
+          foreground: '#ffffff',
+        },
+      },
+    },
+  },
+};
+
+// ✅ Good: Don't rely on color alone
+export function Status({ status }: { status: 'success' | 'error' | 'pending' }) {
+  const statusConfig = {
+    success: { icon: CheckIcon, label: 'Success', color: 'text-green-700' },
+    error: { icon: XIcon, label: 'Error', color: 'text-red-700' },
+    pending: { icon: ClockIcon, label: 'Pending', color: 'text-yellow-700' },
+  };
+  
+  const { icon: Icon, label, color } = statusConfig[status];
+  
+  return (
+    <div className={color}>
+      <Icon aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+// ❌ Bad: Color only
+export function Status({ status }: { status: string }) {
+  const color = status === 'success' ? 'text-green-500' : 'text-red-500';
+  return <div className={color}>●</div>;
+}
+```
+
+## Form Accessibility
+
+```typescript
+// ✅ Good: Accessible forms
+export function LoginForm() {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  return (
+    <form aria-label="Login form">
+      <div>
+        <label htmlFor="email">
+          Email
+          <span aria-label="required">*</span>
+        </label>
+        <input
+          id="email"
+          type="email"
+          required
+          aria-required="true"
+          aria-invalid={!!errors.email}
+          aria-describedby={errors.email ? 'email-error' : undefined}
+        />
+        {errors.email && (
+          <span id="email-error" role="alert" className="text-red-600">
+            {errors.email}
+          </span>
+        )}
+      </div>
+      
+      <div>
+        <label htmlFor="password">
+          Password
+          <span aria-label="required">*</span>
+        </label>
+        <input
+          id="password"
+          type="password"
+          required
+          aria-required="true"
+          aria-invalid={!!errors.password}
+          aria-describedby="password-help"
+        />
+        <span id="password-help" className="text-sm text-gray-600">
+          Must be at least 8 characters
+        </span>
+      </div>
+      
+      <button type="submit">Sign In</button>
+    </form>
+  );
+}
+```
+
+## Images and Media
+
+```typescript
+// ✅ Good: Descriptive alt text
+export function ProductImage({ product }: { product: Product }) {
+  return (
+    <Image
+      src={product.imageUrl}
+      alt={`${product.name} - ${product.description}`}
+      width={300}
+      height={300}
+    />
+  );
+}
+
+// ✅ Good: Decorative images
+export function Hero() {
+  return (
+    <div>
+      <h1>Welcome</h1>
+      <Image
+        src="/background.jpg"
+        alt="" // Empty alt for decorative images
+        aria-hidden="true"
+        width={1200}
+        height={600}
+      />
+    </div>
+  );
+}
+
+// ✅ Good: Video captions
+export function VideoPlayer({ videoUrl, captionsUrl }: VideoProps) {
+  return (
+    <video controls>
+      <source src={videoUrl} type="video/mp4" />
+      <track
+        kind="captions"
+        src={captionsUrl}
+        srcLang="en"
+        label="English captions"
+        default
+      />
+    </video>
+  );
+}
+```
+
+## Live Regions
+
+```typescript
+// ✅ Good: Announce dynamic changes
+export function NotificationCenter() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  return (
+    <div>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {notifications.length > 0 && (
+          `You have ${notifications.length} new notification${notifications.length !== 1 ? 's' : ''}`
+        )}
+      </div>
+      
+      <div role="region" aria-label="Notifications">
+        {notifications.map(notification => (
+          <div key={notification.id}>
+            {notification.message}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ✅ Good: Loading states
+export function DataTable({ isLoading, data }: DataTableProps) {
+  return (
+    <div>
+      {isLoading && (
+        <div role="status" aria-live="polite">
+          <span className="sr-only">Loading data...</span>
+          <Spinner aria-hidden="true" />
+        </div>
+      )}
+      {!isLoading && <Table data={data} />}
+    </div>
+  );
+}
+```
+
+## Screen Reader Only Text
+
+```typescript
+// globals.css
+/*
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only:focus,
+.sr-only:active {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+*/
+
+// ✅ Good: Context for screen readers
+export function Pagination({ page, totalPages }: PaginationProps) {
+  return (
+    <nav aria-label="Pagination">
+      <button>
+        <span aria-hidden="true">&larr;</span>
+        <span className="sr-only">Previous page</span>
+      </button>
+      <span className="sr-only">Page {page} of {totalPages}</span>
+      <span aria-hidden="true">{page} / {totalPages}</span>
+      <button>
+        <span aria-hidden="true">&rarr;</span>
+        <span className="sr-only">Next page</span>
+      </button>
+    </nav>
+  );
+}
+```
+
+## Reduced Motion
+
+```typescript
+// ✅ Good: Respect prefers-reduced-motion
+// globals.css
+/*
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+*/
+
+// ✅ Good: Check in JavaScript
+export function AnimatedComponent() {
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  
+  return (
+    <div
+      className={prefersReducedMotion ? '' : 'animate-fade-in'}
+    >
+      Content
+    </div>
+  );
+}
+```
+
+## Testing Accessibility
+
+```typescript
+// ✅ Good: Test with jest-axe
+import { axe } from 'jest-axe';
+import { render } from '@testing-library/react';
+
+describe('Button', () => {
+  it('should not have accessibility violations', async () => {
+    const { container } = render(<Button>Click me</Button>);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+});
+
+// ✅ Good: Test keyboard navigation
+it('should be keyboard accessible', async () => {
+  const handleClick = vi.fn();
+  render(<Button onClick={handleClick}>Click me</Button>);
+  
+  const button = screen.getByRole('button');
+  button.focus();
+  
+  expect(button).toHaveFocus();
+  
+  await userEvent.keyboard('{Enter}');
+  expect(handleClick).toHaveBeenCalled();
+});
+```
+
+## Accessibility Checklist
+
+- [ ] All images have alt text
+- [ ] Color contrast meets WCAG AA (4.5:1)
+- [ ] All interactive elements are keyboard accessible
+- [ ] Focus indicators are visible
+- [ ] Forms have proper labels and error messages
+- [ ] ARIA labels for icon buttons
+- [ ] Semantic HTML structure
+- [ ] Skip to main content link
+- [ ] No reliance on color alone
+- [ ] Respect prefers-reduced-motion
+- [ ] Live regions for dynamic content
+- [ ] Screen reader only text where needed
+- [ ] Tested with screen reader (NVDA/JAWS/VoiceOver)
+- [ ] Tested keyboard-only navigation
+- [ ] No accessibility violations (axe)
+
+## Tools
+
+- **axe DevTools**: Browser extension for accessibility testing
+- **WAVE**: Web accessibility evaluation tool
+- **Lighthouse**: Automated accessibility audits
+- **Screen readers**: NVDA (Windows), JAWS (Windows), VoiceOver (Mac)
+- **Keyboard testing**: Test with Tab, Enter, Space, Arrow keys, Esc

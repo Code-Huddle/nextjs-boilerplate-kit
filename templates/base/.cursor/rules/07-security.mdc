@@ -1,0 +1,439 @@
+---
+title: Security Best Practices
+type: always
+description: Security standards and vulnerability prevention
+---
+
+# Security Best Practices
+
+## Authentication & Authorization
+
+### Protect Routes
+
+```typescript
+// app/dashboard/page.tsx
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
+
+// ✅ Good: Server-side auth check
+export default async function DashboardPage() {
+  const session = await auth();
+  
+  if (!session) {
+    redirect('/sign-in');
+  }
+  
+  return <Dashboard user={session.user} />;
+}
+
+// ✅ Good: Middleware protection
+// middleware.ts
+import { auth } from '@/auth';
+
+export default auth((req) => {
+  const isAuthenticated = !!req.auth;
+  const isAuthPage = req.nextUrl.pathname.startsWith('/sign-in');
+  const isProtectedPage = req.nextUrl.pathname.startsWith('/dashboard');
+  
+  if (isProtectedPage && !isAuthenticated) {
+    return Response.redirect(new URL('/sign-in', req.nextUrl));
+  }
+  
+  if (isAuthPage && isAuthenticated) {
+    return Response.redirect(new URL('/dashboard', req.nextUrl));
+  }
+});
+
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};
+```
+
+### Role-Based Access Control
+
+```typescript
+// ✅ Good: Check permissions
+export async function updateUser(userId: string, data: UpdateUserData) {
+  const session = await auth();
+  
+  if (!session) {
+    throw new UnauthorizedError('Not authenticated');
+  }
+  
+  // Users can only update their own data, unless they're admin
+  if (session.user.id !== userId && session.user.role !== 'admin') {
+    throw new ForbiddenError('Insufficient permissions');
+  }
+  
+  return await prisma.user.update({
+    where: { id: userId },
+    data,
+  });
+}
+
+// ✅ Good: Permission checking utility
+function hasPermission(user: User, permission: Permission): boolean {
+  const rolePermissions = {
+    admin: ['read', 'write', 'delete', 'manage_users'],
+    moderator: ['read', 'write', 'delete'],
+    user: ['read', 'write'],
+  } as const;
+  
+  return rolePermissions[user.role].includes(permission);
+}
+```
+
+## Input Validation
+
+### Always Validate Input
+
+```typescript
+import { z } from 'zod';
+
+// ✅ Good: Validate all inputs
+const createUserSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(8).max(100),
+  name: z.string().min(1).max(100).trim(),
+  age: z.number().int().min(0).max(150).optional(),
+});
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const validatedData = createUserSchema.parse(body);
+    
+    // Use validatedData, not body
+    const user = await createUser(validatedData);
+    
+    return NextResponse.json({ success: true, data: user });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, errors: error.errors },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// ❌ Bad: No validation
+export async function POST(request: Request) {
+  const body = await request.json();
+  const user = await createUser(body); // Dangerous!
+  return NextResponse.json(user);
+}
+```
+
+### Sanitize User Input
+
+```typescript
+// ✅ Good: Sanitize HTML content
+import DOMPurify from 'isomorphic-dompurify';
+
+export function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a'],
+    ALLOWED_ATTR: ['href'],
+  });
+}
+
+// Usage
+const userComment = sanitizeHtml(rawComment);
+```
+
+## XSS Prevention
+
+```typescript
+// ✅ Good: React escapes by default
+export function UserComment({ comment }: { comment: string }) {
+  return <p>{comment}</p>; // Safe - React escapes
+}
+
+// ⚠️ Dangerous: Only use dangerouslySetInnerHTML with sanitized content
+export function UserComment({ comment }: { comment: string }) {
+  const sanitizedComment = sanitizeHtml(comment);
+  
+  return (
+    <div dangerouslySetInnerHTML={{ __html: sanitizedComment }} />
+  );
+}
+
+// ❌ Bad: Never use user input directly
+export function UserComment({ comment }: { comment: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: comment }} />;
+}
+```
+
+## SQL Injection Prevention
+
+```typescript
+// ✅ Good: Use Prisma (prevents SQL injection)
+export async function getUser(email: string) {
+  return await prisma.user.findUnique({
+    where: { email },
+  });
+}
+
+// ✅ Good: Parameterized queries
+export async function getUser(email: string) {
+  return await prisma.$queryRaw`
+    SELECT * FROM users WHERE email = ${email}
+  `;
+}
+
+// ❌ Bad: String concatenation (vulnerable!)
+export async function getUser(email: string) {
+  return await prisma.$queryRawUnsafe(
+    `SELECT * FROM users WHERE email = '${email}'`
+  );
+}
+```
+
+## CSRF Protection
+
+```typescript
+// ✅ Good: Use CSRF tokens for mutations
+import { csrf } from '@/libs/csrf';
+
+export async function POST(request: Request) {
+  const valid = await csrf.verify(request);
+  
+  if (!valid) {
+    return NextResponse.json(
+      { error: 'Invalid CSRF token' },
+      { status: 403 }
+    );
+  }
+  
+  // Process request
+}
+
+// ✅ Good: SameSite cookies
+export function setAuthCookie(token: string) {
+  cookies().set('auth_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+  });
+}
+```
+
+## Rate Limiting
+
+```typescript
+// ✅ Good: Implement rate limiting
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, '10 s'),
+});
+
+export async function POST(request: Request) {
+  const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
+  const { success, reset } = await ratelimit.limit(ip);
+  
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { 
+        status: 429,
+        headers: { 'X-RateLimit-Reset': reset.toString() },
+      }
+    );
+  }
+  
+  // Process request
+}
+```
+
+## Environment Variables
+
+```typescript
+// ✅ Good: Validate env vars with @t3-oss/env-nextjs
+import { createEnv } from '@t3-oss/env-nextjs';
+import { z } from 'zod';
+
+export const Env = createEnv({
+  server: {
+    DATABASE_URL: z.string().url(),
+    NEXTAUTH_SECRET: z.string().min(32),
+    ADMIN_API_KEY: z.string().min(16),
+  },
+  client: {
+    NEXT_PUBLIC_API_URL: z.string().url(),
+  },
+  runtimeEnv: {
+    DATABASE_URL: process.env.DATABASE_URL,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    ADMIN_API_KEY: process.env.ADMIN_API_KEY,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
+});
+
+// ❌ Bad: Direct access without validation
+const apiKey = process.env.API_KEY; // Could be undefined!
+```
+
+## Sensitive Data
+
+```typescript
+// ✅ Good: Never expose sensitive data
+export async function GET(request: Request) {
+  const user = await getUser(userId);
+  
+  return NextResponse.json({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    // Don't include password, tokens, etc.
+  });
+}
+
+// ✅ Good: Hash passwords
+import bcrypt from 'bcryptjs';
+
+export async function createUser(email: string, password: string) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  
+  return await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+    },
+  });
+}
+
+// ✅ Good: Never log sensitive data
+Logger.info('User logged in', { 
+  userId: user.id,
+  // Don't log passwords, tokens, credit cards, etc.
+});
+```
+
+## Secure Headers
+
+```typescript
+// next.config.ts
+export default {
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://api.example.com",
+            ].join('; '),
+          },
+        ],
+      },
+    ];
+  },
+};
+```
+
+## File Upload Security
+
+```typescript
+// ✅ Good: Validate file uploads
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+export async function uploadFile(file: File) {
+  // Validate file type
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    throw new ValidationError('Invalid file type');
+  }
+  
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE) {
+    throw new ValidationError('File too large');
+  }
+  
+  // Generate safe filename
+  const ext = file.name.split('.').pop();
+  const filename = `${crypto.randomUUID()}.${ext}`;
+  
+  // Upload to secure storage
+  await uploadToS3(file, filename);
+  
+  return filename;
+}
+```
+
+## Dependency Security
+
+```bash
+# ✅ Good: Regularly audit dependencies
+npm audit
+npm audit fix
+
+# Check for outdated packages
+npm outdated
+
+# Use specific versions, not ranges
+# package.json
+{
+  "dependencies": {
+    "next": "15.5.2",  # ✅ Good: Exact version
+    "react": "^19.1.1" # ⚠️ Caution: Allow patches only
+  }
+}
+```
+
+## API Security Checklist
+
+- [ ] All routes require authentication
+- [ ] Authorization checks are in place
+- [ ] Input validation on all endpoints
+- [ ] Rate limiting implemented
+- [ ] CSRF protection enabled
+- [ ] Secure headers configured
+- [ ] Environment variables validated
+- [ ] Sensitive data never exposed
+- [ ] SQL injection prevented (use Prisma)
+- [ ] XSS prevention (sanitize user input)
+- [ ] HTTPS enforced in production
+- [ ] Dependencies regularly audited
+- [ ] Error messages don't leak information
+- [ ] File uploads are validated
+- [ ] Logging excludes sensitive data
+
+## Security Resources
+
+- OWASP Top 10
+- Next.js Security Headers
+- Content Security Policy
+- HTTPS/TLS Best Practices
+- JWT Security Best Practices
