@@ -18,6 +18,12 @@
 - **Session management** with provider-specific implementations
 - **Environment-based configuration** per auth type
 
+### 🌙 **Optional Dark Mode**
+- **Toggle-enabled dark mode** with CSS variables
+- **System preference detection** and localStorage persistence
+- **Smooth theme transitions** with modern glassmorphism effects
+- **Conditional inclusion** - only adds dark mode toggle if enabled
+
 ### 🎨 **UI & Styling**
 - **Radix UI** components for accessibility
 - **shadcn/ui** component library
@@ -75,10 +81,16 @@ npx create-codehuddle-nextjs my-awesome-app
 npx create-codehuddle-nextjs .
 ```
 
-**🎯 Authentication Selection**: During project creation, you'll be prompted to choose your authentication provider:
+**🎯 Project Configuration**: During project creation, you'll be prompted to configure:
+
+**Authentication Provider:**
 - **NextAuth** - Complete authentication with OAuth providers and credentials
 - **Supabase** - Authentication with Supabase Auth and real-time features  
 - **None** - No authentication (add your own later)
+
+**Dark Mode:**
+- **Enable** - Includes dark mode toggle button in header with CSS variables
+- **Disable** - Light theme only (no dark mode toggle)
 
 ### Setup and Run
 

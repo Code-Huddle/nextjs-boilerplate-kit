@@ -4,11 +4,9 @@ export const BaseTemplate = (props: {
   children: React.ReactNode;
 }) => {
   return (
-    <div className="w-full  text-gray-700 antialiased">
+    <div className="w-full text-gray-700 antialiased">
       <div className="">
-
         <main>{props.children}</main>
-
       </div>
     </div>
   );

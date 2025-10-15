@@ -2,6 +2,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { DarkModeToggle } from '@/components/DarkModeToggle';
 import { RandomJoke } from '@/components/RandomJoke';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +70,7 @@ export default async function Index(props: IIndexProps) {
                 </Link>
               </Button>
               <LocaleSwitcher />
+              {__DARK_MODE_ENABLED__ && <DarkModeToggle />}
             </div>
           </div>
         </div>
