@@ -111,6 +111,16 @@ program
         },
       ]);
 
+      // Prompt for Email (Nodemailer) module
+      const { includeResend } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'includeResend',
+          message: '✉️ Include Email module (Nodemailer) for transactional emails?',
+          default: false,
+        },
+      ]);
+
       // Copy the entire base template
       console.log(chalk.blue.bold(`\n🚀 Creating project in ${isCurrentDir ? 'current directory' : `'${projectName}'`}...`));
       console.log(chalk.gray('   📁 Copying base template files...'));
@@ -260,6 +270,19 @@ program
         await mergeEnvFiles(targetDir, selectedModules);
       }
 
+      // Configure Email (Nodemailer) module
+      if (includeResend) {
+        console.log(chalk.gray('   ✉️ Configuring email module (Nodemailer)...'));
+        const emailModuleDir = path.join(modulesDir, 'nodemailer-email');
+        await fs.copy(emailModuleDir, targetDir, { overwrite: true });
+        ensureDeps({ 'nodemailer': '^6.9.13' });
+        selectedModules.push('nodemailer-email');
+        // Merge env again to include resend entries
+        console.log(chalk.gray('   📝 Merging environment variables (Email)...'));
+        await mergeEnvFiles(targetDir, selectedModules);
+        console.log(chalk.blue('   ✅ Email module configured (visit /test-email to send test emails)'));
+      }
+
       // Inject auth message, dark mode setting, and Stripe integration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
@@ -275,10 +298,14 @@ program
           : stripeIntegration === 'Subscriptions'
             ? 'Subscription billing enabled with Stripe, test it on page <a href="/test-subscription" class="underline text-futuristic hover:text-futuristic/80 transition-colors">Test Subscription</a>'
             : 'No payment integration';
+        const emailMessage = includeResend
+          ? 'Email sending enabled with Nodemailer, test it on page <a href="/test-email" class="underline text-futuristic hover:text-futuristic/80 transition-colors">Test Email</a>'
+          : '';
         pageContent = pageContent.replace('__AUTH_MESSAGE__', authMessage);
         pageContent = pageContent.replace('__DARK_MODE_ENABLED__', enableDarkMode);
         pageContent = pageContent.replace('__STRIPE_INTEGRATION__', stripeMessage);
         pageContent = pageContent.replace('__STRIPE_INTEGRATION_TYPE__', stripeIntegration);
+        pageContent = pageContent.replace('__EMAIL_INTEGRATION__', emailMessage);
         await fs.writeFile(pagePath, pageContent, 'utf8');
         console.log(chalk.green('   ✅ Landing page customized'));
         console.log(chalk.blue(`   ✅ Dark mode ${enableDarkMode ? 'enabled' : 'disabled'}`));
@@ -295,6 +322,7 @@ program
       console.log(chalk.white.bold(`\n📋 Project Configuration:`));
       console.log(chalk.cyan(`   🔐 Authentication: ${authProvider}`));
       console.log(chalk.cyan(`   💳 Stripe Integration: ${stripeIntegration}`));
+      console.log(chalk.cyan(`   ✉️ Email (Nodemailer): ${includeResend ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.white.bold(`\n🚀 Next Steps:`));
       if (!isCurrentDir) {

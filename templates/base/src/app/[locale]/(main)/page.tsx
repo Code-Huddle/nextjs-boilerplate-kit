@@ -120,6 +120,12 @@ export default async function Index(props: IIndexProps) {
             dangerouslySetInnerHTML={{ __html: '__STRIPE_INTEGRATION__' }}
           />
 
+          {/* Email integration message will be replaced by the CLI after project generation */}
+          <p 
+            className="mx-auto mb-10 max-w-4xl text-lg text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: '__EMAIL_INTEGRATION__' }}
+          />
+
           {/* CTA Buttons */}
           <div className="mb-20 flex flex-col justify-center gap-6 sm:flex-row">
             <Button asChild variant="futuristic" size="xl" className="animate-glow">
