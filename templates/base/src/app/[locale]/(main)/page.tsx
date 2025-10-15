@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AuthFeatureCard } from '@/components/AuthFeatureCard';
 import { AuthTechBadge } from '@/components/AuthTechBadge';
 import { StripeFeatureCard, StripeTechBadge, StripeFeatureCardWithTest } from '@/components/StripeFeatureCard';
+import { EmailTechBadge } from '@/components/EmailTechBadge';
 
 type IIndexProps = {
   params: Promise<{ locale: string }>;
@@ -38,6 +39,9 @@ export default async function Index(props: IIndexProps) {
   // Get Stripe-specific content (will be replaced by CLI)
   const stripeTechBadge = StripeTechBadge({ integrationType: '__STRIPE_INTEGRATION_TYPE__' });
   const stripeFeatureCardWithTest = StripeFeatureCardWithTest({ integrationType: '__STRIPE_INTEGRATION_TYPE__' });
+  
+  // Get Email-specific content (will be replaced by CLI)
+  const emailTechBadge = EmailTechBadge();
 
   return (
     <div className="geometric-bg min-h-screen bg-background">
@@ -238,6 +242,7 @@ export default async function Index(props: IIndexProps) {
                 'Tailwind',
                 authTechBadge,
                 stripeTechBadge,
+                emailTechBadge,
                 'Vitest',
               ].filter(Boolean).map(tech => (
                 <div
