@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthFeatureCard } from '@/components/AuthFeatureCard';
 import { AuthTechBadge } from '@/components/AuthTechBadge';
+import { StripeFeatureCard, StripeTechBadge, StripeFeatureCardWithTest } from '@/components/StripeFeatureCard';
 
 type IIndexProps = {
   params: Promise<{ locale: string }>;
@@ -33,6 +34,10 @@ export default async function Index(props: IIndexProps) {
   // Get auth-specific content
   const authFeatureCard = AuthFeatureCard();
   const authTechBadge = AuthTechBadge();
+  
+  // Get Stripe-specific content (will be replaced by CLI)
+  const stripeTechBadge = StripeTechBadge({ integrationType: '__STRIPE_INTEGRATION_TYPE__' });
+  const stripeFeatureCardWithTest = StripeFeatureCardWithTest({ integrationType: '__STRIPE_INTEGRATION_TYPE__' });
 
   return (
     <div className="geometric-bg min-h-screen bg-background">
@@ -105,9 +110,15 @@ export default async function Index(props: IIndexProps) {
           </p>
 
           {/* Auth provider message will be replaced by the CLI after project generation */}
-          <p className="mx-auto mb-10 max-w-4xl text-lg text-muted-foreground">
+          <p className="mx-auto mb-6 max-w-4xl text-lg text-muted-foreground">
             __AUTH_MESSAGE__
           </p>
+          
+          {/* Stripe integration message will be replaced by the CLI after project generation */}
+          <p 
+            className="mx-auto mb-10 max-w-4xl text-lg text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: '__STRIPE_INTEGRATION__' }}
+          />
 
           {/* CTA Buttons */}
           <div className="mb-20 flex flex-col justify-center gap-6 sm:flex-row">
@@ -153,6 +164,7 @@ export default async function Index(props: IIndexProps) {
                 gradient: 'from-black to-gray-800',
               },
               authFeatureCard,
+              stripeFeatureCardWithTest,
               {
                 title: 'TypeScript',
                 description: 'Fully typed with TypeScript for better development experience and fewer runtime errors.',
@@ -177,7 +189,7 @@ export default async function Index(props: IIndexProps) {
                 icon: '🛠️',
                 gradient: 'from-white to-gray-100',
               },
-            ].map(feature => (
+            ].filter(Boolean).map(feature => (
               <Card
                 key={`feature-${feature.title}`}
                 className="border-futuristic group relative overflow-hidden border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-2xl"
@@ -219,8 +231,9 @@ export default async function Index(props: IIndexProps) {
                 'TypeScript',
                 'Tailwind',
                 authTechBadge,
+                stripeTechBadge,
                 'Vitest',
-              ].map(tech => (
+              ].filter(Boolean).map(tech => (
                 <div
                   key={`tech-${tech}`}
                   className="border-futuristic group rounded-2xl border border-border/30 bg-card/50 p-6 text-center font-medium text-foreground backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-border/60 hover:bg-card/80 hover:shadow-lg"

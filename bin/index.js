@@ -96,6 +96,21 @@ program
         },
       ]);
 
+      // Prompt for Stripe integration choice
+      const { stripeIntegration } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'stripeIntegration',
+          message: '💳 Choose your Stripe integration:',
+          choices: [
+            { name: 'None - Add payments later', value: 'None' },
+            { name: 'One-time payments - Single payments and purchases', value: 'OneTime' },
+            { name: 'Subscriptions - Recurring billing and subscriptions', value: 'Subscriptions' }
+          ],
+          default: 'None',
+        },
+      ]);
+
       // Copy the entire base template
       console.log(chalk.blue.bold(`\n🚀 Creating project in ${isCurrentDir ? 'current directory' : `'${projectName}'`}...`));
       console.log(chalk.gray('   📁 Copying base template files...'));
@@ -117,25 +132,135 @@ program
         });
       };
 
+      // Function to merge environment files from multiple modules (deduplicated)
+      const mergeEnvFiles = async (targetDir, selectedModules) => {
+        try {
+          const baseEnvPath = path.join(targetDir, '.env.example');
+
+          // Tracks keys we have already emitted
+          const seenKeys = new Set();
+
+          const extractKey = (line) => {
+            const match = line.match(/^\s*([A-Z0-9_]+)\s*=/);
+            return match ? match[1] : null;
+          };
+
+          const collectUniqueLines = (content) => {
+            const lines = content.split(/\r?\n/);
+            const unique = [];
+            for (const rawLine of lines) {
+              const line = rawLine.trimEnd();
+              if (line.trim() === '' || line.trim().startsWith('#')) {
+                // Skip empty/comment lines for modules; keep structure minimal
+                continue;
+              }
+              const key = extractKey(line);
+              if (key && !seenKeys.has(key)) {
+                unique.push(line);
+                seenKeys.add(key);
+              }
+            }
+            return unique;
+          };
+
+          let output = '';
+
+          // Start with base .env.example (preserve its structure and comments)
+          if (await fs.pathExists(baseEnvPath)) {
+            const baseEnv = await fs.readFile(baseEnvPath, 'utf8');
+            const baseLines = baseEnv.split(/\r?\n/);
+            for (const rawLine of baseLines) {
+              const line = rawLine.trimEnd();
+              output += line + '\n';
+              const key = extractKey(line);
+              if (key) {
+                seenKeys.add(key);
+              }
+            }
+            // Ensure single blank line separation after base
+            output = output.replace(/\n+$/, '\n');
+            output += '\n';
+          }
+
+          // Append each module's unique keys (with a header only if it contributes new keys)
+          for (const module of selectedModules) {
+            const moduleEnvPath = path.join(modulesDir, module, '.env.example');
+            if (!(await fs.pathExists(moduleEnvPath))) continue;
+
+            const moduleEnv = await fs.readFile(moduleEnvPath, 'utf8');
+            const uniqueLines = collectUniqueLines(moduleEnv);
+            if (uniqueLines.length === 0) continue; // nothing new to add
+
+            const moduleName = module.replace(/^(auth-|stripe-)/, '').replace(/-/g, ' ').toUpperCase();
+            output += `# ${moduleName} Configuration\n`;
+            output += uniqueLines.join('\n') + '\n\n';
+          }
+
+          await fs.writeFile(baseEnvPath, output.replace(/\n+$/, '\n'));
+          console.log(chalk.green(`   ✅ Environment variables merged (deduplicated)`));
+        } catch (error) {
+          console.error(chalk.yellow(`   ⚠️  Warning: Could not merge environment files: ${error.message}`));
+        }
+      };
+
+      // Track selected modules for environment merging
+      const selectedModules = [];
+
       console.log(chalk.gray('   🔐 Configuring authentication module...'));
       if (authProvider === 'NextAuth') {
         const nextAuthModuleDir = path.join(modulesDir, 'auth-nextauth');
         await fs.copy(nextAuthModuleDir, targetDir, { overwrite: true });
         ensureDeps({ 'next-auth': '^5.0.0-beta.25' });
+        selectedModules.push('auth-nextauth');
         console.log(chalk.blue('   ✅ NextAuth.js configured'));
       } else if (authProvider === 'Supabase') {
         const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
         await fs.copy(supabaseModuleDir, targetDir, { overwrite: true });
         ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
+        selectedModules.push('auth-supabase');
         console.log(chalk.blue('   ✅ Supabase Auth configured'));
       } else if (authProvider === 'None') {
         const noneModuleDir = path.join(modulesDir, 'auth-none');
         await fs.copy(noneModuleDir, targetDir, { overwrite: true });
+        // Don't add to selectedModules since auth-none has no env file
         console.log(chalk.blue('   ✅ No authentication (can be added later)'));
         // No additional dependencies needed for None
       }
 
-      // Inject auth message and dark mode setting into landing page
+      // Merge selected Stripe module
+      console.log(chalk.gray('   💳 Configuring Stripe integration...'));
+      if (stripeIntegration === 'OneTime') {
+        const stripeOneTimeModuleDir = path.join(modulesDir, 'stripe-one-time');
+        await fs.copy(stripeOneTimeModuleDir, targetDir, { overwrite: true });
+        ensureDeps({ 
+          'stripe': '^16.0.0',
+          '@stripe/stripe-js': '^4.0.0',
+          '@stripe/react-stripe-js': '^2.0.0'
+        });
+        selectedModules.push('stripe-one-time');
+        console.log(chalk.blue('   ✅ Stripe one-time payments configured'));
+      } else if (stripeIntegration === 'Subscriptions') {
+        const stripeSubscriptionsModuleDir = path.join(modulesDir, 'stripe-subscriptions');
+        await fs.copy(stripeSubscriptionsModuleDir, targetDir, { overwrite: true });
+        ensureDeps({ 
+          'stripe': '^16.0.0',
+          '@stripe/stripe-js': '^4.0.0',
+          '@stripe/react-stripe-js': '^2.0.0'
+        });
+        selectedModules.push('stripe-subscriptions');
+        console.log(chalk.blue('   ✅ Stripe subscriptions configured'));
+      } else if (stripeIntegration === 'None') {
+        console.log(chalk.blue('   ✅ No Stripe integration (can be added later)'));
+        // No additional dependencies needed for None
+      }
+
+      // Merge environment variables from all selected modules
+      if (selectedModules.length > 0) {
+        console.log(chalk.gray('   📝 Merging environment variables...'));
+        await mergeEnvFiles(targetDir, selectedModules);
+      }
+
+      // Inject auth message, dark mode setting, and Stripe integration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
       if (await fs.pathExists(pagePath)) {
@@ -145,11 +270,19 @@ program
           : authProvider === 'Supabase'
             ? 'Welcome to your app with Supabase Auth'
             : 'Welcome to your app';
+        const stripeMessage = stripeIntegration === 'OneTime'
+          ? 'One-time payments enabled with Stripe, test it on page <a href="/test-payment" class="underline text-futuristic hover:text-futuristic/80 transition-colors">One-time Payment</a>'
+          : stripeIntegration === 'Subscriptions'
+            ? 'Subscription billing enabled with Stripe, test it on page <a href="/test-subscription" class="underline text-futuristic hover:text-futuristic/80 transition-colors">Test Subscription</a>'
+            : 'No payment integration';
         pageContent = pageContent.replace('__AUTH_MESSAGE__', authMessage);
         pageContent = pageContent.replace('__DARK_MODE_ENABLED__', enableDarkMode);
+        pageContent = pageContent.replace('__STRIPE_INTEGRATION__', stripeMessage);
+        pageContent = pageContent.replace('__STRIPE_INTEGRATION_TYPE__', stripeIntegration);
         await fs.writeFile(pagePath, pageContent, 'utf8');
         console.log(chalk.green('   ✅ Landing page customized'));
         console.log(chalk.blue(`   ✅ Dark mode ${enableDarkMode ? 'enabled' : 'disabled'}`));
+        console.log(chalk.blue(`   ✅ Stripe integration: ${stripeIntegration}`));
       }
 
       // Write updated package.json
@@ -161,6 +294,7 @@ program
       console.log(chalk.green.bold(`\n🎉 Success! Project created successfully!`));
       console.log(chalk.white.bold(`\n📋 Project Configuration:`));
       console.log(chalk.cyan(`   🔐 Authentication: ${authProvider}`));
+      console.log(chalk.cyan(`   💳 Stripe Integration: ${stripeIntegration}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.white.bold(`\n🚀 Next Steps:`));
       if (!isCurrentDir) {
@@ -168,6 +302,10 @@ program
       }
       console.log(chalk.yellow(`   npm install`));
       console.log(chalk.yellow(`   copy .env.example .env.local`));
+      if (selectedModules.length > 0) {
+        console.log(chalk.yellow(`   # Configure your environment variables in .env.local`));
+        console.log(chalk.gray(`   # Includes: ${selectedModules.map(m => m.replace(/^(auth-|stripe-)/, '').replace(/-/g, ' ')).join(', ')}`));
+      }
       console.log(chalk.yellow(`   npm run dev`));
       console.log(chalk.white.bold(`\n💡 Tip: Visit http://localhost:3000 to see your new app!`));
       console.log(chalk.magenta.bold(`\nMade with ♥ by CodeHuddle`));
