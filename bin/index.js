@@ -6,6 +6,101 @@ const { program } = require('commander');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 
+// Utility: read JSON with comments (JSONC) safely
+const readJsonc = async (filePath) => {
+  let text = await fs.readFile(filePath, 'utf8');
+
+  // Strip BOM if present
+  if (text.charCodeAt(0) === 0xfeff) {
+    text = text.slice(1);
+  }
+
+  // State machine to remove comments without touching string contents
+  let out = '';
+  let inString = false;
+  let stringChar = '';
+  let escaped = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inLineComment) {
+      if (ch === '\n') {
+        inLineComment = false;
+        out += ch;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        inBlockComment = false;
+        i++; // skip '/'
+      }
+      continue;
+    }
+
+    if (escaped) {
+      out += ch;
+      escaped = false;
+      continue;
+    }
+
+    if (ch === '\\') {
+      if (inString) {
+        escaped = true;
+      }
+      out += ch;
+      continue;
+    }
+
+    if (inString) {
+      if (ch === stringChar) {
+        inString = false;
+        stringChar = '';
+      }
+      out += ch;
+      continue;
+    }
+
+    // Not in string: detect comment starts
+    if (ch === '/' && next === '/') {
+      inLineComment = true;
+      i++; // skip second '/'
+      continue;
+    }
+    if (ch === '/' && next === '*') {
+      inBlockComment = true;
+      i++; // skip '*'
+      continue;
+    }
+
+    if (ch === '"' || ch === "'") {
+      inString = true;
+      stringChar = ch;
+      out += ch;
+      continue;
+    }
+
+    out += ch;
+  }
+
+  // Remove trailing commas
+  for (let i = 0; i < 3; i++) {
+    out = out.replace(/,\s*(\]|\})/g, '$1');
+  }
+
+  try {
+    return JSON.parse(out);
+  } catch (e) {
+    const preview = out.slice(0, 2000);
+    throw new Error(`Failed to parse JSONC at ${filePath}: ${e.message}\nSnippet:\n${preview}`);
+  }
+};
+
 program
   .argument('[project-name]', 'Name of the project directory (use "." for current directory)')
   .description('🚀 Generate a modern Next.js project with authentication and dark mode options')
@@ -127,6 +222,16 @@ program
           type: 'confirm',
           name: 'includeDashboard',
           message: '📊 Include a Dashboard page (graphs, tables, stats)?',
+          default: false,
+        },
+      ]);
+
+      // Prompt for Storybook module
+      const { includeStorybook } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'includeStorybook',
+          message: '📚 Include Storybook for UI component development?',
           default: false,
         },
       ]);
@@ -315,6 +420,43 @@ program
         console.log(chalk.blue('   ✅ Dashboard page added (visit /dashboard)'));
       }
 
+      // Configure Storybook module (optional)
+      if (includeStorybook) {
+        console.log(chalk.gray('   📚 Configuring Storybook...'));
+        const storybookModuleDir = path.join(modulesDir, 'storybook');
+        // Copy module files but DO NOT overwrite the project's package.json
+        await fs.copy(storybookModuleDir, targetDir, {
+          overwrite: true,
+          filter: (src) => path.basename(src) !== 'package.json',
+        });
+
+        // Merge Storybook scripts and devDependencies into already loaded projectPkg
+        const storybookPkgPath = path.join(storybookModuleDir, 'package.json');
+        if (await fs.pathExists(storybookPkgPath)) {
+          const storybookPkg = await fs.readJson(storybookPkgPath);
+          projectPkg.scripts = projectPkg.scripts || {};
+          if (storybookPkg.scripts) {
+            Object.assign(projectPkg.scripts, storybookPkg.scripts);
+          }
+          projectPkg.devDependencies = projectPkg.devDependencies || {};
+          if (storybookPkg.devDependencies) {
+            Object.assign(projectPkg.devDependencies, storybookPkg.devDependencies);
+          }
+        }
+
+        // Ensure tsconfig includes .storybook files
+        const tsconfigPath = path.join(targetDir, 'tsconfig.json');
+        if (await fs.pathExists(tsconfigPath)) {
+          const tsconfig = await readJsonc(tsconfigPath);
+          tsconfig.include = tsconfig.include || [];
+          if (!tsconfig.include.includes('.storybook/*.ts')) {
+            tsconfig.include.push('.storybook/*.ts');
+          }
+          await fs.writeJson(tsconfigPath, tsconfig, { spaces: 2 });
+        }
+        console.log(chalk.blue('   ✅ Storybook configured (run npm run storybook)'));
+      }
+
       // Inject auth message, dark mode setting, and Stripe integration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
@@ -358,6 +500,7 @@ program
       console.log(chalk.cyan(`   ✉️ Email (Nodemailer): ${includeResend ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   📊 Dashboard: ${includeDashboard ? 'Included' : 'Excluded'}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   📚 Storybook: ${includeStorybook ? 'Included' : 'Excluded'}`));
       console.log(chalk.white.bold(`\n🚀 Next Steps:`));
       if (!isCurrentDir) {
         console.log(chalk.yellow(`   cd ${projectName}`));

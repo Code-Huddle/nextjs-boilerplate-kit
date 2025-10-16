@@ -50,11 +50,6 @@ export default async function DashboardLayout(props: {
         </>
       )}
     >
-      <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded">
-        <p className="text-yellow-800">
-          <strong>Authentication is disabled.</strong> This dashboard is accessible without authentication.
-        </p>
-      </div>
       {props.children}
     </BaseTemplate>
   );

@@ -18,11 +18,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "commit": "cz",
-    "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build",
-    "storybook:serve": "http-server storybook-static --port 6006 --silent",
-    "serve-storybook": "run-s storybook:*",
-    "test-storybook:ci": "start-server-and-test serve-storybook http://127.0.0.1:6006 test-storybook",
+    
     "prepare": "husky",
     "generate:component": "node ./scripts/generate-component.mjs"
   },
@@ -97,15 +93,7 @@
     "@playwright/test": "^1.52.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "@storybook/addon-essentials": "^8.6.14",
-    "@storybook/addon-interactions": "^8.6.14",
-    "@storybook/addon-links": "^8.6.14",
-    "@storybook/addon-onboarding": "^8.6.14",
-    "@storybook/blocks": "^8.6.14",
-    "@storybook/nextjs": "^8.6.14",
-    "@storybook/react": "^8.6.14",
-    "@storybook/test": "^8.6.14",
-    "@storybook/test-runner": "^0.22.0",
+    
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -141,7 +129,7 @@
     "rimraf": "^6.0.1",
     "semantic-release": "^24.2.5",
     "start-server-and-test": "^2.0.12",
-    "storybook": "^8.6.14",
+    
     "tailwindcss": "^4.0.0",
     "typescript": "^5.9.2",
     "vite-tsconfig-paths": "^5.1.4",
