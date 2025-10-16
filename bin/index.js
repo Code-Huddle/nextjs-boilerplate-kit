@@ -121,6 +121,16 @@ program
         },
       ]);
 
+      // Prompt for Dashboard page
+      const { includeDashboard } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'includeDashboard',
+          message: '📊 Include a Dashboard page (graphs, tables, stats)?',
+          default: false,
+        },
+      ]);
+
       // Copy the entire base template
       console.log(chalk.blue.bold(`\n🚀 Creating project in ${isCurrentDir ? 'current directory' : `'${projectName}'`}...`));
       console.log(chalk.gray('   📁 Copying base template files...'));
@@ -283,6 +293,28 @@ program
         console.log(chalk.blue('   ✅ Email module configured (visit /test-email to send test emails)'));
       }
 
+      // Configure Dashboard module
+      if (includeDashboard) {
+        console.log(chalk.gray('   📊 Configuring dashboard page...'));
+        const dashboardModuleDir = path.join(modulesDir, 'dashboard');
+
+        // Remove any existing dashboard page to avoid conflicts
+        const possibleDashboardPages = [
+          path.join(targetDir, 'src', 'app', '[locale]', '(auth)', 'dashboard', 'page.tsx'),
+          path.join(targetDir, 'src', 'app', 'dashboard', 'page.tsx'),
+        ];
+        for (const p of possibleDashboardPages) {
+          if (await fs.pathExists(p)) {
+            await fs.remove(p);
+            console.log(chalk.yellow(`   🗑️ Removed existing dashboard page: ${path.relative(targetDir, p)}`));
+          }
+        }
+
+        // Copy dashboard module files
+        await fs.copy(dashboardModuleDir, targetDir, { overwrite: true });
+        console.log(chalk.blue('   ✅ Dashboard page added (visit /dashboard)'));
+      }
+
       // Inject auth message, dark mode setting, and Stripe integration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
@@ -306,6 +338,7 @@ program
         pageContent = pageContent.replace('__STRIPE_INTEGRATION__', stripeMessage);
         pageContent = pageContent.replace('__STRIPE_INTEGRATION_TYPE__', stripeIntegration);
         pageContent = pageContent.replace('__EMAIL_INTEGRATION__', emailMessage);
+        pageContent = pageContent.replace('__DASHBOARD_ENABLED__', includeDashboard);
         await fs.writeFile(pagePath, pageContent, 'utf8');
         console.log(chalk.green('   ✅ Landing page customized'));
         console.log(chalk.blue(`   ✅ Dark mode ${enableDarkMode ? 'enabled' : 'disabled'}`));
@@ -323,6 +356,7 @@ program
       console.log(chalk.cyan(`   🔐 Authentication: ${authProvider}`));
       console.log(chalk.cyan(`   💳 Stripe Integration: ${stripeIntegration}`));
       console.log(chalk.cyan(`   ✉️ Email (Nodemailer): ${includeResend ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   📊 Dashboard: ${includeDashboard ? 'Included' : 'Excluded'}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.white.bold(`\n🚀 Next Steps:`));
       if (!isCurrentDir) {

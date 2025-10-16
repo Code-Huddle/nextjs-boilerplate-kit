@@ -342,10 +342,6 @@ export function SubscriptionDemo() {
         <CardContent>
           <div className="space-y-3 text-sm text-yellow-700 dark:text-yellow-300">
             <p>
-              <strong>Test Plans:</strong> The plans shown above (Starter, Professional, Enterprise) are for testing purposes only. 
-              They use placeholder price IDs and will not process real payments.
-            </p>
-            <p>
               <strong>Real Payments:</strong> To process real payments, you need to:
             </p>
             <ul className="list-disc list-inside space-y-1 ml-4">

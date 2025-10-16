@@ -78,6 +78,14 @@ export default async function Index(props: IIndexProps) {
                   {t('sign_up_link')}
                 </Link>
               </Button>
+              {__DASHBOARD_ENABLED__ && (
+                <Link
+                  href="/dashboard"
+                  className="text-muted-foreground transition-all duration-300 hover:scale-105 hover:text-foreground"
+                >
+                  Dashboard
+                </Link>
+              )}
               <LocaleSwitcher />
               {__DARK_MODE_ENABLED__ && <DarkModeToggle />}
             </div>
