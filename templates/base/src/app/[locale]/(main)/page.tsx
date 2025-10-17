@@ -44,6 +44,24 @@ export default async function Index(props: IIndexProps) {
   // Get Email-specific content (will be replaced by CLI)
   const emailTechBadge = EmailTechBadge();
 
+  // Generator placeholders (strings) safely handled at runtime
+  const AUTH_MESSAGE = '__AUTH_MESSAGE__';
+  const STRIPE_INTEGRATION_TYPE = '__STRIPE_INTEGRATION_TYPE__';
+  const AUTH_TYPE = '__AUTH_TYPE__';
+  const EMAIL_INTEGRATION = '__EMAIL_INTEGRATION__';
+  const DASHBOARD_MESSAGE = '__DASHBOARD_MESSAGE__';
+  const PWA_MESSAGE = '__PWA_MESSAGE__';
+  const STORYBOOK_MESSAGE = '__STORYBOOK_MESSAGE__';
+  const DARK_MODE_ENABLED = '__DARK_MODE_ENABLED__';
+
+  const hasStripe = STRIPE_INTEGRATION_TYPE.startsWith('__');
+  const hasAuth = !AUTH_TYPE.startsWith('__');
+  const hasEmail = !EMAIL_INTEGRATION.startsWith('__') && EMAIL_INTEGRATION.length > 0;
+  const hasDashboard = !DASHBOARD_MESSAGE.startsWith('__') && DASHBOARD_MESSAGE.length > 0;
+  const hasPwa = !PWA_MESSAGE.startsWith('__') && PWA_MESSAGE.length > 0;
+  const hasStorybook = !STORYBOOK_MESSAGE.startsWith('__') && STORYBOOK_MESSAGE.length > 0;
+  const showDarkToggle = !DARK_MODE_ENABLED.startsWith('__') && DARK_MODE_ENABLED === 'true';
+
   return (
     <div className="geometric-bg min-h-screen bg-background">
       {/* Navigation */}
@@ -79,7 +97,7 @@ export default async function Index(props: IIndexProps) {
                   {t('sign_up_link')}
                 </Link>
               </Button>
-              {__DASHBOARD_ENABLED__ && (
+              {hasDashboard && (
                 <Link
                   href="/dashboard"
                   className="text-muted-foreground transition-all duration-300 hover:scale-105 hover:text-foreground"
@@ -88,7 +106,7 @@ export default async function Index(props: IIndexProps) {
                 </Link>
               )}
               <LocaleSwitcher />
-              {__DARK_MODE_ENABLED__ && <DarkModeToggle />}
+              {showDarkToggle && <DarkModeToggle />}
             </div>
           </div>
         </div>
@@ -122,22 +140,171 @@ export default async function Index(props: IIndexProps) {
             </span>
           </p>
 
-          {/* Auth provider message will be replaced by the CLI after project generation */}
-          <p className="mx-auto mb-6 max-w-4xl text-lg text-muted-foreground">
-            __AUTH_MESSAGE__
-          </p>
-          
-          {/* Stripe integration message will be replaced by the CLI after project generation */}
-          <p 
-            className="mx-auto mb-10 max-w-4xl text-lg text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: '__STRIPE_INTEGRATION__' }}
-          />
+          {/* Integration Cards */}
+          <div className="mx-auto mb-16 max-w-4xl">
+            {/* Welcome Message */}
+            <div className="mb-8 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              {!AUTH_MESSAGE.startsWith('__') && (
+                <h2 className="text-xl font-semibold text-foreground mb-2">{AUTH_MESSAGE}</h2>
+              )}
+              <p className="text-muted-foreground">Your application is configured and ready</p>
+            </div>
 
-          {/* Email integration message will be replaced by the CLI after project generation */}
-          <p 
-            className="mx-auto mb-10 max-w-4xl text-lg text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: '__EMAIL_INTEGRATION__' }}
-          />
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Auth Card */}
+              {hasAuth && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm0 2c-2.761 0-5 2.239-5 5v1h10v-1c0-2.761-2.239-5-5-5z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Authentication</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {AUTH_TYPE === 'None' && 'Authentication is disabled'}
+                        {AUTH_TYPE === 'NextAuth' && 'NextAuth.js configured'}
+                        {AUTH_TYPE === 'Supabase' && 'Supabase Auth configured'}
+                        {AUTH_TYPE === 'SupabaseRoles' && 'Supabase Auth with Roles configured'}
+                      </p>
+                      {AUTH_TYPE === 'None' ? (
+                        <a href="/sign-in" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                          Explore Auth Options
+                          <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </a>
+                      ) : (
+                        <a href="/sign-in" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                          Go to Sign In
+                          <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-primary/10 opacity-20" />
+                </div>
+              )}
+              {/* Stripe Card */}
+              {hasStripe && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/50">
+                      <svg className="h-5 w-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.274 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.573-2.354 1.573-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Stripe Integration</h3>
+                      <p className="text-sm text-muted-foreground mb-3">{STRIPE_INTEGRATION_TYPE === 'Subscriptions' ? 'Subscription billing enabled' : 'One-time payments enabled'}</p>
+                      <a 
+                        href={STRIPE_INTEGRATION_TYPE === 'Subscriptions' ? '/test-subscription' : '/test-payment'}
+                        className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        {STRIPE_INTEGRATION_TYPE === 'Subscriptions' ? 'Test Subscription' : 'Test Payment'}
+                        <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-green-500/10 opacity-20" />
+                </div>
+              )}
+
+              {/* Email Card */}
+              {hasEmail && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/50">
+                      <svg className="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Email Integration</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Email sending enabled with Nodemailer</p>
+                      <a href="/test-email" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                        Test Email
+                        <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-blue-500/10 opacity-20" />
+                </div>
+              )}
+
+              {/* Dashboard Card */}
+              {hasDashboard && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/50">
+                      <svg className="h-5 w-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h18M9 7h12M9 11h12M9 15h12M3 7h4M3 11h4M3 15h4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Dashboard</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Explore analytics and UI widgets</p>
+                      <a href="/dashboard" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                        Open Dashboard
+                        <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-purple-500/10 opacity-20" />
+                </div>
+              )}
+
+              {/* PWA Card */}
+              {hasPwa && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/50">
+                      <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h4l3-6 4 12 3-6h4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">PWA Enabled</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Install the app and enjoy offline support</p>
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-amber-500/10 opacity-20" />
+                </div>
+              )}
+
+              {/* Storybook Card */}
+              {hasStorybook && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-100 dark:bg-pink-900/50">
+                      <svg className="h-5 w-5 text-pink-600 dark:text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Storybook</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Run <code>npm run storybook</code> to explore UI components</p>
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-pink-500/10 opacity-20" />
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* CTA Buttons */}
           <div className="mb-20 flex flex-col justify-center gap-6 sm:flex-row">
@@ -324,7 +491,7 @@ export default async function Index(props: IIndexProps) {
         </div>
       </div>
       {/* PWA Download Prompt */}
-      {__PWA_ENABLED__ && <PWADownloadPrompt />}
+      {hasPwa && <PWADownloadPrompt />}
     </div>
   );
 }

@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase';
 
 export function SignUpForm() {
@@ -30,6 +30,7 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setMessage('');
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -48,7 +49,7 @@ export function SignUpForm() {
       } else {
         setMessage('Successfully signed up! Please check your email to confirm your account.');
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage('An error occurred during sign up');
     } finally {
       setLoading(false);
@@ -56,22 +57,25 @@ export function SignUpForm() {
   };
 
   return (
-    <Card className="border-futuristic group relative mx-auto w-full max-w-md overflow-hidden border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-2xl">
+    <Card className="border-futuristic group relative mx-auto w-full max-w-md overflow-hidden border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 text-center">
         <CardTitle className="text-2xl font-semibold text-foreground">Sign Up</CardTitle>
         <CardDescription className="text-muted-foreground">
-          Create your account to get started.
+          Create your account to get started
         </CardDescription>
       </CardHeader>
 
       <CardContent className="relative z-10 space-y-6">
+        {message && (
+          <Alert variant={message.toLowerCase().includes('error') ? 'destructive' : 'default'}>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName" variant="primary">
-                First Name
-              </Label>
+              <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
                 name="firstName"
@@ -80,12 +84,11 @@ export function SignUpForm() {
                 required
                 value={formData.firstName}
                 onChange={handleInputChange}
+                className="border-futuristic"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName" variant="primary">
-                Last Name
-              </Label>
+              <Label htmlFor="lastName">Last Name</Label>
               <Input
                 id="lastName"
                 name="lastName"
@@ -94,14 +97,13 @@ export function SignUpForm() {
                 required
                 value={formData.lastName}
                 onChange={handleInputChange}
+                className="border-futuristic"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" variant="primary">
-              Email
-            </Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               name="email"
@@ -110,13 +112,12 @@ export function SignUpForm() {
               required
               value={formData.email}
               onChange={handleInputChange}
+              className="border-futuristic"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" variant="primary">
-              Password
-            </Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               name="password"
@@ -125,13 +126,12 @@ export function SignUpForm() {
               required
               value={formData.password}
               onChange={handleInputChange}
+              className="border-futuristic"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" variant="primary">
-              Confirm Password
-            </Label>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
@@ -140,57 +140,21 @@ export function SignUpForm() {
               required
               value={formData.confirmPassword}
               onChange={handleInputChange}
+              className="border-futuristic"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Create Account'}
+          <Button type="submit" className="w-full h-11" variant="futuristic" disabled={loading}>
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Creating account...
+              </div>
+            ) : (
+              'Create Account'
+            )}
           </Button>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border/30" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            className="group relative overflow-hidden"
-            onClick={async () => {
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-              });
-              if (error) setMessage(error.message);
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <div className="relative flex items-center justify-center">
-              <div className="mr-2 text-lg">🚀</div>
-              Google
-            </div>
-          </Button>
-          <Button
-            variant="outline"
-            className="group relative overflow-hidden"
-            onClick={async () => {
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'github',
-              });
-              if (error) setMessage(error.message);
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            <div className="relative flex items-center justify-center">
-              <div className="mr-2 text-lg">💼</div>
-              GitHub
-            </div>
-          </Button>
-        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?
@@ -203,13 +167,6 @@ export function SignUpForm() {
           </Link>
         </p>
 
-        {message && (
-          <div className="mt-4 text-center">
-            <Badge variant={message.includes('error') ? 'destructive' : 'default'}>
-              {message}
-            </Badge>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

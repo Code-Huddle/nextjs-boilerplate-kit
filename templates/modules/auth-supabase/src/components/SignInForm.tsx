@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase';
 
 export function SignInForm() {
@@ -29,9 +29,8 @@ export function SignInForm() {
         setMessage(error.message);
       } else if (data.user) {
         setMessage('Successfully signed in!');
-        // Redirect or update UI as needed
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -39,14 +38,18 @@ export function SignInForm() {
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Sign In with Supabase</CardTitle>
-        <CardDescription>
-          Enter your credentials to access your account
-        </CardDescription>
+    <Card className="border-futuristic group relative mx-auto w-full max-w-md overflow-hidden border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+      <CardHeader className="relative z-10 pb-6 text-center">
+        <CardTitle className="text-2xl font-bold text-foreground">Sign In</CardTitle>
+        <CardDescription className="text-muted-foreground">Access your account</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative z-10 space-y-4">
+        {message && (
+          <Alert variant={message.toLowerCase().includes('error') ? 'destructive' : 'default'}>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={handleSignIn} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -57,6 +60,7 @@ export function SignInForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="border-futuristic"
             />
           </div>
           <div className="space-y-2">
@@ -68,19 +72,20 @@ export function SignInForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="border-futuristic"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <Button type="submit" className="w-full h-11" variant="futuristic" disabled={loading}>
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Signing in...
+              </div>
+            ) : (
+              'Sign In'
+            )}
           </Button>
         </form>
-        {message && (
-          <div className="mt-4">
-            <Badge variant={message.includes('error') ? 'destructive' : 'default'}>
-              {message}
-            </Badge>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

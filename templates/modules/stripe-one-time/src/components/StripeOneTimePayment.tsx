@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import CreditCard from 'lucide-react/dist/esm/icons/credit-card';
+import DollarSign from 'lucide-react/dist/esm/icons/dollar-sign';
+import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
+import Zap from 'lucide-react/dist/esm/icons/zap';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -83,18 +90,34 @@ function PaymentForm({ amount, currency = 'usd', onSuccess, onError }: PaymentFo
       <PaymentElement />
 
       {error && (
-        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-          {error}
+        <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-800 dark:bg-red-950/20">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">Payment Error</p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
       <Button
         type="submit"
         disabled={!stripe || isLoading}
-        className="w-full"
+        className="w-full transition-all duration-200 hover:shadow-lg"
         variant="futuristic"
       >
-        {isLoading ? 'Processing...' : `Pay ${currency.toUpperCase()} ${amount}`}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing Payment...
+          </>
+        ) : (
+          <>
+            <Zap className="mr-2 h-4 w-4" />
+            Pay {currency.toUpperCase()} {amount}
+          </>
+        )}
       </Button>
     </form>
   );
@@ -134,27 +157,50 @@ export function StripeOneTimePayment({
 
   if (!clientSecret) {
     return (
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-futuristic bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>One-Time Payment</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <CreditCard className="h-4 w-4 text-primary" />
+            </div>
+            <span>One-Time Payment</span>
+            <Badge variant="outline" className="text-xs">
+              <Zap className="mr-1 h-3 w-3" />
+              Ready
+            </Badge>
+          </CardTitle>
           <CardDescription>
             Process a single payment using Stripe
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center">
-              <p className="text-2xl font-bold">
-                {currency.toUpperCase()} {amount}
-              </p>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <DollarSign className="h-6 w-6 text-primary" />
+                <p className="text-3xl font-bold text-foreground">
+                  {currency.toUpperCase()} {amount}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">Secure payment processing</p>
             </div>
             <Button
               onClick={createPaymentIntent}
               disabled={isLoading}
-              className="w-full"
+              className="w-full transition-all duration-200 hover:shadow-lg"
               variant="futuristic"
             >
-              {isLoading ? 'Creating Payment...' : 'Create Payment'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating Payment...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Create Payment
+                </>
+              )}
             </Button>
           </div>
         </CardContent>
@@ -163,9 +209,18 @@ export function StripeOneTimePayment({
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border-futuristic bg-card/50 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>Complete Payment</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
+            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          </div>
+          <span>Complete Payment</span>
+          <Badge variant="secondary" className="text-xs">
+            <Zap className="mr-1 h-3 w-3" />
+            Active
+          </Badge>
+        </CardTitle>
         <CardDescription>
           Enter your payment details to complete the transaction
         </CardDescription>

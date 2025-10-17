@@ -133,13 +133,13 @@ export function SignUpForm() {
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
             <Select value={selectedRole} onValueChange={setSelectedRole} disabled={isLoading}>
-              <SelectTrigger className="border-futuristic">
+              <SelectTrigger className="border-futuristic justify-start text-left">
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
               <SelectContent>
                 {USER_ROLES.map((role) => (
-                  <SelectItem key={role.id} value={role.name}>
-                    <div>
+                  <SelectItem key={role.id} value={role.name} className="justify-start text-left">
+                    <div className="text-left">
                       <div className="font-medium">{role.displayName}</div>
                       <div className="text-sm text-muted-foreground">{role.description}</div>
                     </div>

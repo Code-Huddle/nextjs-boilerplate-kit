@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,14 +50,11 @@ export function SignUpForm() {
       </CardHeader>
 
       <CardContent className="relative z-10 space-y-6">
-        <div className="p-4 bg-yellow-100 border border-yellow-400 rounded">
-          <p className="text-yellow-800 text-sm">
-            <strong>Authentication is disabled.</strong> Account creation is not available.
-          </p>
-          <p className="text-yellow-700 text-xs mt-2">
-            To enable authentication, re-run the project creation command and select NextAuth or Supabase.
-          </p>
-        </div>
+        <Alert>
+          <AlertDescription>
+            Authentication is disabled. Account creation is not available. Re-run the generator and choose NextAuth or Supabase to enable it.
+          </AlertDescription>
+        </Alert>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -189,11 +186,9 @@ export function SignUpForm() {
         </p>
 
         {message && (
-          <div className="mt-4 text-center">
-            <Badge variant={message.includes('error') ? 'destructive' : 'default'}>
-              {message}
-            </Badge>
-          </div>
+          <Alert>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>

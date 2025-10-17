@@ -566,13 +566,33 @@ program
         const emailMessage = includeResend
           ? 'Email sending enabled with Nodemailer, test it on page <a href="/test-email" class="underline text-futuristic hover:text-futuristic/80 transition-colors">Test Email</a>'
           : '';
+        const authType = authProvider === 'NextAuth'
+          ? 'NextAuth'
+          : authProvider === 'Supabase'
+            ? (enableRoleBasedAuth ? 'SupabaseRoles' : 'Supabase')
+            : 'None';
         pageContent = pageContent.replace('__AUTH_MESSAGE__', authMessage);
+        pageContent = pageContent.replace('__AUTH_TYPE__', authType);
         pageContent = pageContent.replace('__DARK_MODE_ENABLED__', enableDarkMode);
         pageContent = pageContent.replace('__STRIPE_INTEGRATION__', stripeMessage);
         pageContent = pageContent.replace('__STRIPE_INTEGRATION_TYPE__', stripeIntegration);
         pageContent = pageContent.replace('__EMAIL_INTEGRATION__', emailMessage);
         pageContent = pageContent.replace('__DASHBOARD_ENABLED__', includeDashboard);
         pageContent = pageContent.replace('__PWA_ENABLED__', includePWA);
+
+        // Inject module messages (Dashboard, PWA, Storybook)
+        const dashboardMsg = includeDashboard
+          ? 'Dashboard module enabled. Explore it on the <a href="/dashboard" class="underline text-futuristic hover:text-futuristic/80 transition-colors">Dashboard</a> page.'
+          : '';
+        const pwaMsg = includePWA
+          ? 'PWA enabled. You can install the app from the prompt and enjoy offline support.'
+          : '';
+        const storybookMsg = includeStorybook
+          ? 'Storybook included. Run <code>npm run storybook</code> to explore UI components.'
+          : '';
+        pageContent = pageContent.replace('__DASHBOARD_MESSAGE__', dashboardMsg);
+        pageContent = pageContent.replace('__PWA_MESSAGE__', pwaMsg);
+        pageContent = pageContent.replace('__STORYBOOK_MESSAGE__', storybookMsg);
         await fs.writeFile(pagePath, pageContent, 'utf8');
         console.log(chalk.green('   ✅ Landing page customized'));
         console.log(chalk.blue(`   ✅ Dark mode ${enableDarkMode ? 'enabled' : 'disabled'}`));

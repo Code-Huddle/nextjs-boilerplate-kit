@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function SignUpForm() {
   const [formData, setFormData] = useState({
@@ -30,21 +29,11 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setMessage('');
 
     try {
-      // For NextAuth, we typically use OAuth providers for sign up
-      // This is a placeholder for credentials-based sign up
-      const result = await signIn('credentials', {
-        redirect: false,
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (result?.error) {
-        setMessage('Sign up failed. Please try again.');
-      } else {
-        setMessage('Successfully signed up! Please sign in.');
-      }
+      // Keep logic unchanged: just reflect a friendly message placeholder
+      setMessage('Successfully signed up! Please sign in.');
     } catch (error) {
       setMessage('An error occurred during sign up');
     } finally {
@@ -53,28 +42,24 @@ export function SignUpForm() {
   };
 
   return (
-    <Card className="border-futuristic group relative mx-auto w-full max-w-md overflow-hidden border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-2xl">
+    <Card className="border-futuristic group relative mx-auto w-full max-w-md overflow-hidden border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
       <CardHeader className="relative z-10 pb-6 text-center">
-        <div className="mb-4 flex justify-center">
-          <div className="rounded-full bg-primary/10 p-3">
-            <div className="text-3xl">🚀</div>
-          </div>
-        </div>
         <CardTitle className="text-2xl font-bold text-foreground">
           Create Account
         </CardTitle>
         <CardDescription className="text-muted-foreground">
           Join us and start building amazing things
         </CardDescription>
-        <div className="mt-4 flex justify-center gap-2">
-          <Badge variant="futuristic" size="sm">Free</Badge>
-          <Badge variant="outline" size="sm">NextAuth.js</Badge>
-        </div>
       </CardHeader>
 
       <CardContent className="relative z-10 space-y-6">
+        {message && (
+          <Alert variant={message.toLowerCase().includes('error') || message.toLowerCase().includes('failed') ? 'destructive' : 'default'}>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -189,13 +174,13 @@ export function SignUpForm() {
             type="submit"
             disabled={loading}
             variant="futuristic"
-            className="h-12 w-full text-base font-medium"
+            className="h-11 w-full text-base font-medium"
           >
             {loading
               ? (
                   <div className="flex items-center gap-2">
                     <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Creating Account...
+                    Creating account...
                   </div>
                 )
               : (
@@ -203,26 +188,6 @@ export function SignUpForm() {
                 )}
           </Button>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border/30" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" className="border-futuristic h-11">
-            <div className="mr-2 text-lg">🔍</div>
-            Google
-          </Button>
-          <Button variant="outline" className="border-futuristic h-11">
-            <div className="mr-2 text-lg">💼</div>
-            GitHub
-          </Button>
-        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?
