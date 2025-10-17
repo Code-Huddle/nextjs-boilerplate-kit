@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthFeatureCard } from '@/components/AuthFeatureCard';
 import { AuthTechBadge } from '@/components/AuthTechBadge';
-import { StripeFeatureCard, StripeTechBadge, StripeFeatureCardWithTest } from '@/components/StripeFeatureCard';
+import { StripeTechBadge } from '@/components/StripeFeatureCard';
 import { EmailTechBadge } from '@/components/EmailTechBadge';
 import { PWADownloadPrompt } from '@/components/PWADownloadPrompt';
 
@@ -39,7 +39,6 @@ export default async function Index(props: IIndexProps) {
   
   // Get Stripe-specific content (will be replaced by CLI)
   const stripeTechBadge = StripeTechBadge({ integrationType: '__STRIPE_INTEGRATION_TYPE__' });
-  const stripeFeatureCardWithTest = StripeFeatureCardWithTest({ integrationType: '__STRIPE_INTEGRATION_TYPE__' });
   
   // Get Email-specific content (will be replaced by CLI)
   const emailTechBadge = EmailTechBadge();
@@ -54,7 +53,7 @@ export default async function Index(props: IIndexProps) {
   const STORYBOOK_MESSAGE = '__STORYBOOK_MESSAGE__';
   const DARK_MODE_ENABLED = '__DARK_MODE_ENABLED__';
 
-  const hasStripe = STRIPE_INTEGRATION_TYPE.startsWith('__');
+  const hasStripe = !STRIPE_INTEGRATION_TYPE.startsWith('__') && (STRIPE_INTEGRATION_TYPE === 'OneTime' || STRIPE_INTEGRATION_TYPE === 'Subscriptions');
   const hasAuth = !AUTH_TYPE.startsWith('__');
   const hasEmail = !EMAIL_INTEGRATION.startsWith('__') && EMAIL_INTEGRATION.length > 0;
   const hasDashboard = !DASHBOARD_MESSAGE.startsWith('__') && DASHBOARD_MESSAGE.length > 0;
@@ -350,7 +349,6 @@ export default async function Index(props: IIndexProps) {
                 gradient: 'from-black to-gray-800',
               },
               authFeatureCard,
-              stripeFeatureCardWithTest,
               {
                 title: 'TypeScript',
                 description: 'Fully typed with TypeScript for better development experience and fewer runtime errors.',

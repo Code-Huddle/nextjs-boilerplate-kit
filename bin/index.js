@@ -225,7 +225,7 @@ program
         {
           type: 'confirm',
           name: 'includeResend',
-          message: '✉️ Include Email module (Nodemailer) for transactional emails?',
+          message: '📩 Include Email module (Nodemailer) for transactional emails?',
           default: false,
         },
       ]);
@@ -345,37 +345,31 @@ program
       // Track selected modules for environment merging
       const selectedModules = [];
 
-      console.log(chalk.gray('   🔐 Configuring authentication module...'));
+      console.log(chalk.gray('   🔐 Configuring authentication...'));
       if (authProvider === 'NextAuth') {
         const nextAuthModuleDir = path.join(modulesDir, 'auth-nextauth');
         await fs.copy(nextAuthModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 'next-auth': '^5.0.0-beta.25' });
         selectedModules.push('auth-nextauth');
-        console.log(chalk.blue('   ✅ NextAuth.js configured'));
       } else if (authProvider === 'Supabase') {
         if (enableRoleBasedAuth) {
           const supabaseRolesModuleDir = path.join(modulesDir, 'auth-supabase-roles');
           await fs.copy(supabaseRolesModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
           ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
           selectedModules.push('auth-supabase-roles');
-          console.log(chalk.blue('   ✅ Supabase Auth with Role-Based Access configured'));
         } else {
-          const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
+        const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
           await fs.copy(supabaseModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-          ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
-          selectedModules.push('auth-supabase');
-          console.log(chalk.blue('   ✅ Supabase Auth configured'));
+        ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
+        selectedModules.push('auth-supabase');
         }
       } else if (authProvider === 'None') {
         const noneModuleDir = path.join(modulesDir, 'auth-none');
         await fs.copy(noneModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        // Don't add to selectedModules since auth-none has no env file
-        console.log(chalk.blue('   ✅ No authentication (can be added later)'));
-        // No additional dependencies needed for None
       }
 
       // Merge selected Stripe module
-      console.log(chalk.gray('   💳 Configuring Stripe integration...'));
+      console.log(chalk.gray('   💳 Configuring payments...'));
       if (stripeIntegration === 'OneTime') {
         const stripeOneTimeModuleDir = path.join(modulesDir, 'stripe-one-time');
         await fs.copy(stripeOneTimeModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
@@ -385,7 +379,6 @@ program
           '@stripe/react-stripe-js': '^2.0.0'
         });
         selectedModules.push('stripe-one-time');
-        console.log(chalk.blue('   ✅ Stripe one-time payments configured'));
       } else if (stripeIntegration === 'Subscriptions') {
         const stripeSubscriptionsModuleDir = path.join(modulesDir, 'stripe-subscriptions');
         await fs.copy(stripeSubscriptionsModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
@@ -395,10 +388,6 @@ program
           '@stripe/react-stripe-js': '^2.0.0'
         });
         selectedModules.push('stripe-subscriptions');
-        console.log(chalk.blue('   ✅ Stripe subscriptions configured'));
-      } else if (stripeIntegration === 'None') {
-        console.log(chalk.blue('   ✅ No Stripe integration (can be added later)'));
-        // No additional dependencies needed for None
       }
 
       // Merge environment variables from all selected modules
@@ -434,20 +423,17 @@ program
 
       // Configure Email (Nodemailer) module
       if (includeResend) {
-        console.log(chalk.gray('   ✉️ Configuring email module (Nodemailer)...'));
+        console.log(chalk.gray('   📩 Configuring email...'));
         const emailModuleDir = path.join(modulesDir, 'nodemailer-email');
         await fs.copy(emailModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 'nodemailer': '^6.9.13' });
         selectedModules.push('nodemailer-email');
-        // Merge env again to include resend entries
-        console.log(chalk.gray('   📝 Merging environment variables (Email)...'));
         await mergeEnvFiles(targetDir, selectedModules);
-        console.log(chalk.blue('   ✅ Email module configured (visit /test-email to send test emails)'));
       }
 
       // Configure Dashboard module
       if (includeDashboard) {
-        console.log(chalk.gray('   📊 Configuring dashboard page...'));
+        console.log(chalk.gray('   📊 Configuring dashboard...'));
         const dashboardModuleDir = path.join(modulesDir, 'dashboard');
 
         // Remove any existing dashboard page to avoid conflicts
@@ -458,13 +444,11 @@ program
         for (const p of possibleDashboardPages) {
           if (await fs.pathExists(p)) {
             await fs.remove(p);
-            console.log(chalk.yellow(`   🗑️ Removed existing dashboard page: ${path.relative(targetDir, p)}`));
           }
         }
 
         // Copy dashboard module files
         await fs.copy(dashboardModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        console.log(chalk.blue('   ✅ Dashboard page added (visit /dashboard)'));
       }
 
       // Configure Storybook module (optional)
@@ -501,7 +485,6 @@ program
           }
           await fs.writeJson(tsconfigPath, tsconfig, { spaces: 2 });
         }
-        console.log(chalk.blue('   ✅ Storybook configured (run npm run storybook)'));
       }
 
       // Configure PWA (optional)
@@ -540,24 +523,21 @@ program
           }
 
           await fs.writeFile(projectNextConfigPath, cfg, 'utf8');
-          console.log(chalk.blue('   ✅ next-pwa integrated into next.config.ts'));
         }
-
-        console.log(chalk.blue('   ✅ PWA files added (manifest, service worker, registration helper)'));
       }
 
-      // Inject auth message, dark mode setting, and Stripe integration into landing page
+      // Inject configuration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
       if (await fs.pathExists(pagePath)) {
         let pageContent = await fs.readFile(pagePath, 'utf8');
-         const authMessage = authProvider === 'NextAuth'
-           ? 'Welcome to your app with NextAuth'
-           : authProvider === 'Supabase'
+        const authMessage = authProvider === 'NextAuth'
+          ? 'Welcome to your app with NextAuth'
+          : authProvider === 'Supabase'
              ? enableRoleBasedAuth 
                ? 'Welcome to your app with Supabase Auth and Role-Based Access Control'
                : 'Welcome to your app with Supabase Auth'
-             : 'Welcome to your app';
+            : 'Welcome to your app';
         const stripeMessage = stripeIntegration === 'OneTime'
           ? 'One-time payments enabled with Stripe, test it on page <a href="/test-payment" class="underline text-futuristic hover:text-futuristic/80 transition-colors">One-time Payment</a>'
           : stripeIntegration === 'Subscriptions'
@@ -571,14 +551,14 @@ program
           : authProvider === 'Supabase'
             ? (enableRoleBasedAuth ? 'SupabaseRoles' : 'Supabase')
             : 'None';
-        pageContent = pageContent.replace('__AUTH_MESSAGE__', authMessage);
-        pageContent = pageContent.replace('__AUTH_TYPE__', authType);
-        pageContent = pageContent.replace('__DARK_MODE_ENABLED__', enableDarkMode);
-        pageContent = pageContent.replace('__STRIPE_INTEGRATION__', stripeMessage);
-        pageContent = pageContent.replace('__STRIPE_INTEGRATION_TYPE__', stripeIntegration);
-        pageContent = pageContent.replace('__EMAIL_INTEGRATION__', emailMessage);
-        pageContent = pageContent.replace('__DASHBOARD_ENABLED__', includeDashboard);
-        pageContent = pageContent.replace('__PWA_ENABLED__', includePWA);
+        pageContent = pageContent.replaceAll('__AUTH_MESSAGE__', authMessage);
+        pageContent = pageContent.replaceAll('__AUTH_TYPE__', authType);
+        pageContent = pageContent.replaceAll('__DARK_MODE_ENABLED__', enableDarkMode);
+        pageContent = pageContent.replaceAll('__STRIPE_INTEGRATION__', stripeMessage);
+        pageContent = pageContent.replaceAll('__STRIPE_INTEGRATION_TYPE__', stripeIntegration);
+        pageContent = pageContent.replaceAll('__EMAIL_INTEGRATION__', emailMessage);
+        pageContent = pageContent.replaceAll('__DASHBOARD_ENABLED__', includeDashboard);
+        pageContent = pageContent.replaceAll('__PWA_ENABLED__', includePWA);
 
         // Inject module messages (Dashboard, PWA, Storybook)
         const dashboardMsg = includeDashboard
@@ -590,42 +570,46 @@ program
         const storybookMsg = includeStorybook
           ? 'Storybook included. Run <code>npm run storybook</code> to explore UI components.'
           : '';
-        pageContent = pageContent.replace('__DASHBOARD_MESSAGE__', dashboardMsg);
-        pageContent = pageContent.replace('__PWA_MESSAGE__', pwaMsg);
-        pageContent = pageContent.replace('__STORYBOOK_MESSAGE__', storybookMsg);
+        pageContent = pageContent.replaceAll('__DASHBOARD_MESSAGE__', dashboardMsg);
+        pageContent = pageContent.replaceAll('__PWA_MESSAGE__', pwaMsg);
+        pageContent = pageContent.replaceAll('__STORYBOOK_MESSAGE__', storybookMsg);
         await fs.writeFile(pagePath, pageContent, 'utf8');
-        console.log(chalk.green('   ✅ Landing page customized'));
-        console.log(chalk.blue(`   ✅ Dark mode ${enableDarkMode ? 'enabled' : 'disabled'}`));
-        console.log(chalk.blue(`   ✅ Stripe integration: ${stripeIntegration}`));
       }
 
       // Write updated package.json
-      console.log(chalk.gray('   📦 Updating package dependencies...'));
+      console.log(chalk.gray('   📦 Updating dependencies...'));
       await fs.writeJson(projectPackageJsonPath, projectPkg, { spaces: 2 });
-      console.log(chalk.green('   ✅ Dependencies updated'));
 
       // Success message with better formatting
-      console.log(chalk.green.bold(`\n🎉 Success! Project created successfully!`));
-      console.log(chalk.white.bold(`\n📋 Project Configuration:`));
-       console.log(chalk.cyan(`   🔐 Authentication: ${authProvider}${enableRoleBasedAuth ? ' (with Roles)' : ''}`));
-      console.log(chalk.cyan(`   💳 Stripe Integration: ${stripeIntegration}`));
-      console.log(chalk.cyan(`   ✉️ Email (Nodemailer): ${includeResend ? 'Enabled' : 'Disabled'}`));
-      console.log(chalk.cyan(`   📊 Dashboard: ${includeDashboard ? 'Included' : 'Excluded'}`));
+      console.log(chalk.green.bold(`\n🎉 Project created successfully!`));
+      
+      // Configuration summary
+      console.log(chalk.white.bold(`\n📋 Configuration Summary:`));
+      const authDisplay = authProvider === 'Supabase' && enableRoleBasedAuth 
+        ? 'Supabase (with Roles)' 
+        : authProvider;
+      console.log(chalk.cyan(`   🔐 Auth: ${authDisplay}`));
+      console.log(chalk.cyan(`   💳 Payments: ${stripeIntegration}`));
+      console.log(chalk.cyan(`   📩 Email: ${includeResend ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   📊 Dashboard: ${includeDashboard ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   📱 PWA: ${includePWA ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   📚 Storybook: ${includeStorybook ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
-      console.log(chalk.cyan(`   📚 Storybook: ${includeStorybook ? 'Included' : 'Excluded'}`));
+      
+      // Next steps
       console.log(chalk.white.bold(`\n🚀 Next Steps:`));
       if (!isCurrentDir) {
         console.log(chalk.yellow(`   cd ${projectName}`));
       }
       console.log(chalk.yellow(`   npm install`));
-      console.log(chalk.yellow(`   copy .env.example .env.local`));
+      console.log(chalk.yellow(`   cp .env.example .env.local`));
       if (selectedModules.length > 0) {
-        console.log(chalk.yellow(`   # Configure your environment variables in .env.local`));
-        console.log(chalk.gray(`   # Includes: ${selectedModules.map(m => m.replace(/^(auth-|stripe-)/, '').replace(/-/g, ' ')).join(', ')}`));
+        console.log(chalk.gray(`   # Configure environment variables in .env.local`));
       }
       console.log(chalk.yellow(`   npm run dev`));
-      console.log(chalk.white.bold(`\n💡 Tip: Visit http://localhost:3000 to see your new app!`));
+      console.log(chalk.white.bold(`\n💡 Visit http://localhost:3000 to see your app!`));
       console.log(chalk.magenta.bold(`\nMade with ♥ by CodeHuddle`));
+      console.log(chalk.gray(`   🌟 Open source • Join our amazing community!`));
     } catch (err) {
       console.error(chalk.red.bold('\n❌ Error generating project!'));
       console.error(chalk.red(`   ${err.message}`));
