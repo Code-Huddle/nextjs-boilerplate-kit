@@ -1,134 +1,155 @@
 # 🚀 create-codehuddle-nextjs
 
-> **A powerful CLI tool to generate modern Next.js applications with enterprise-grade features and best practices**
+[![npm version](https://img.shields.io/npm/v/create-codehuddle-nextjs.svg?style=flat-square)](https://www.npmjs.com/package/create-codehuddle-nextjs)
+[![Downloads](https://img.shields.io/npm/dm/create-codehuddle-nextjs.svg?style=flat-square)](https://www.npmjs.com/package/create-codehuddle-nextjs)
+[![License](https://img.shields.io/npm/l/create-codehuddle-nextjs.svg?style=flat-square)](https://github.com/Code-Huddle/create-codehuddle-nextjs/blob/main/LICENSE)
+[![Node.js Version](https://img.shields.io/node/v/create-codehuddle-nextjs.svg?style=flat-square)](https://nodejs.org/)
 
-## ✨ Features
+> **The ultimate CLI tool for generating modern, production-ready Next.js applications with enterprise-grade features, modular architecture, and best practices built-in.**
 
-### 🏗️ **Modern Architecture**
-- **Next.js 15** with App Router and Turbo mode
-- **React 19** with latest features
-- **TypeScript** for type safety
-- **Tailwind CSS v4** for styling
-- **Server Components** and Client Components
+## ✨ What Makes This Special?
 
-### 🔐 **Modular Authentication System**
-- **Choose your auth provider**: NextAuth.js, Supabase, or None
-- **Interactive CLI selection** during project creation
-- **Protected routes** and middleware for each provider
-- **Session management** with provider-specific implementations
-- **Environment-based configuration** per auth type
+**create-codehuddle-nextjs** is not just another Next.js starter template. It's a **modular, interactive CLI tool** that lets you build exactly what you need, when you need it. Choose your authentication, payments, features, and more through an intuitive command-line interface.
 
-### 💳 **Modular Stripe Integration**
-- **Choose your payment type**: One-time payments, Subscriptions, or None
-- **Interactive CLI selection** during project creation
-- **Complete payment flows** with success/cancel pages
-- **Test payment pages** for easy development and testing
-- **Interactive landing page links** to test payment pages
-- **Environment-based configuration** with merged variables
-- **Auth-protected payment routes** for security
-
-### 🌙 **Optional Dark Mode**
-- **Toggle-enabled dark mode** with CSS variables
-- **System preference detection** and localStorage persistence
-- **Smooth theme transitions** with modern glassmorphism effects
-- **Conditional inclusion** - only adds dark mode toggle if enabled
-
-### 🎨 **UI & Styling**
-- **Radix UI** components for accessibility
-- **shadcn/ui** component library
-- **Lucide React** icons
-- **Dark/Light mode** support
-- **Responsive design** out of the box
-
-### 🌍 **Internationalization**
-- **next-intl** for i18n support
-- **Multiple language** support
-- **Locale-based routing**
-- **Dynamic translations**
-
-### 📊 **State Management & Data**
-- **Zustand** for client state
-- **TanStack Query** for server state
-- **React Hook Form** with Zod validation
-- **Prisma** ORM ready
-
-### 🧪 **Testing & Quality**
-- **Vitest** for unit testing
-- **Playwright** for E2E testing
-- **Storybook** for component development
-- **ESLint** with strict rules
-- **Prettier** for code formatting
-
-### 🚀 **Developer Experience**
-- **Hot reload** with Turbo
-- **TypeScript** strict mode
-- **Husky** git hooks
-- **Commitizen** for conventional commits
-- **Semantic release** automation
-- **Component generator** script
-- **Global error handling** with custom error pages
-- **404 not-found pages** with user-friendly navigation
-
-### 📈 **Production Ready**
-- **Bundle analysis** with @next/bundle-analyzer
-- **Performance monitoring** ready
-- **Docker** configuration
-- **CI/CD** templates
-- **SEO optimization**
+### 🎯 **Interactive Project Generation**
+```bash
+npx create-codehuddle-nextjs my-app
+# ✨ Interactive prompts guide you through:
+# 🔐 Authentication: NextAuth.js, Supabase, or None
+# 💳 Payments: One-time, Subscriptions, or None  
+# 📊 Dashboard: Include analytics dashboard
+# 📱 PWA: Progressive Web App features
+# 📚 Storybook: Component development
+# 🌙 Dark Mode: Theme switching
+```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - **Node.js** >= 20.0.0
-- **npm** or **yarn**
+- **npm**, **yarn**, or **pnpm**
 
-### Create a New Project
+### Create Your Project
 
 ```bash
-# Create a new project
+# Create a new project with interactive setup
 npx create-codehuddle-nextjs my-awesome-app
 
 # Or create in current directory
 npx create-codehuddle-nextjs .
 ```
 
-**🎯 Project Configuration**: During project creation, you'll be prompted to configure:
-
-**Authentication Provider:**
-- **NextAuth** - Complete authentication with OAuth providers and credentials
-- **Supabase** - Authentication with Supabase Auth and real-time features  
-- **None** - No authentication (add your own later)
-
-**Stripe Integration:**
-- **One-time payments** - Process single payments with Stripe Checkout
-- **Subscriptions** - Handle recurring billing with subscription management
-- **None** - No payment integration (add your own later)
-
-**Dark Mode:**
-- **Enable** - Includes dark mode toggle button in header with CSS variables
-- **Disable** - Light theme only (no dark mode toggle)
-
-### Setup and Run
+### Setup & Run
 
 ```bash
-# Navigate to your project
 cd my-awesome-app
-
-# Install dependencies
 npm install
-
-# Copy environment variables (includes auth + payment configs)
 cp .env.example .env.local
-
-# Start development server
 npm run dev
 ```
 
-**📝 Environment Setup**: The `.env.example` file will contain the appropriate environment variables for your selected authentication provider and Stripe integration (if any).
+**🎉 That's it!** Visit [http://localhost:3000](http://localhost:3000) to see your application.
 
-**🎯 Interactive Landing Page**: When you select Stripe integration, the landing page will include clickable links to test your payment functionality directly from the homepage.
+## 🏗️ Architecture & Features
 
-Visit [http://localhost:3000](http://localhost:3000) to see your application!
+### 🔐 **Modular Authentication System**
+
+Choose from multiple authentication providers, each with complete implementations:
+
+| Provider | Features | Best For |
+|----------|----------|----------|
+| **NextAuth.js** | OAuth, credentials, session management | Full-featured apps with multiple providers |
+| **Supabase** | Real-time auth, database integration | Modern apps with real-time features |
+| **Supabase + Roles** | Role-based access control (Admin/User) | Enterprise applications |
+| **None** | No authentication | Simple apps or custom auth later |
+
+**Example CLI Flow:**
+```bash
+🔐 Choose your authentication provider:
+❯ NextAuth.js - Complete auth with OAuth providers
+  Supabase Auth - Real-time auth with database  
+  None - Add authentication later
+```
+
+### 💳 **Flexible Payment Integration**
+
+Integrated Stripe payments with complete flows:
+
+| Integration | Features | Pages Included |
+|-------------|----------|----------------|
+| **One-time Payments** | Single payments, purchases | `/test-payment`, `/payment/success`, `/payment/cancel` |
+| **Subscriptions** | Recurring billing, subscription management | `/test-subscription`, `/payment/success`, `/payment/cancel` |
+| **None** | No payment integration | - |
+
+**Interactive Landing Page:** When you select Stripe integration, your landing page automatically includes clickable links to test payment functionality.
+
+### 📊 **Optional Dashboard Module**
+
+Modern analytics dashboard with:
+- **KPI Cards** with metrics and trends
+- **Interactive Charts** using Recharts
+- **Activity Timeline** for user actions
+- **Sales Table** with data visualization
+- **Responsive Design** with sidebar navigation
+
+### 📱 **Progressive Web App (PWA)**
+
+Complete PWA implementation:
+- **Web App Manifest** for app-like experience
+- **Service Worker** for offline functionality
+- **Install Prompt** component for app installation
+- **Offline Support** with caching strategies
+
+### 📚 **Storybook Integration**
+
+Component development environment:
+- **Pre-configured** Storybook setup
+- **Component Stories** for UI development
+- **Interactive Documentation** for your design system
+- **Visual Testing** capabilities
+
+### 🌙 **Smart Dark Mode**
+
+Intelligent theme system:
+- **System Preference Detection** 
+- **localStorage Persistence**
+- **Smooth Transitions** with CSS variables
+- **Conditional Inclusion** - only adds toggle if enabled
+
+## 🛠️ Technology Stack
+
+### **Core Framework**
+- **Next.js 15** - Latest React framework with App Router
+- **React 19** - Latest React with concurrent features
+- **TypeScript** - Full type safety
+- **Tailwind CSS v4** - Utility-first styling
+
+### **UI & Components**
+- **shadcn/ui** - Beautiful, accessible components
+- **Radix UI** - Low-level UI primitives
+- **Lucide React** - Beautiful icon library
+- **Class Variance Authority** - Component variants
+
+### **State Management**
+- **Zustand** - Lightweight state management
+- **TanStack Query** - Server state management
+- **React Hook Form** - Performant forms
+- **Zod** - TypeScript-first validation
+
+### **Development Tools**
+- **Vitest** - Fast unit testing
+- **Playwright** - E2E testing
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
+- **Husky** - Git hooks
+- **Commitizen** - Conventional commits
+
+### **Production Ready**
+- **Bundle Analysis** with @next/bundle-analyzer
+- **Docker** configuration
+- **CI/CD** templates
+- **SEO Optimization**
+- **Performance Monitoring** ready
 
 ## 📁 Project Structure
 
@@ -137,10 +158,20 @@ my-awesome-app/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── [locale]/          # Internationalization
-│   │   ├── api/               # API routes
-│   │   └── globals.css        # Global styles
+│   │   │   ├── (auth)/        # Authentication routes
+│   │   │   │   ├── sign-in/   # Sign in pages
+│   │   │   │   ├── sign-up/   # Sign up pages
+│   │   │   │   ├── dashboard/ # Dashboard (if enabled)
+│   │   │   │   ├── admin/     # Admin routes (Supabase Roles)
+│   │   │   │   └── user/      # User routes (Supabase Roles)
+│   │   │   ├── test-payment/  # Stripe test pages
+│   │   │   ├── test-subscription/ # Subscription test
+│   │   │   └── test-email/    # Email testing
+│   │   └── api/               # API routes
 │   ├── components/            # Reusable components
-│   │   └── ui/               # shadcn/ui components
+│   │   ├── ui/               # shadcn/ui components
+│   │   ├── auth/             # Authentication components
+│   │   └── dashboard/        # Dashboard components
 │   ├── lib/                  # Utility libraries
 │   ├── hooks/                # Custom React hooks
 │   ├── stores/               # Zustand stores
@@ -153,7 +184,7 @@ my-awesome-app/
 └── docs/                    # Documentation
 ```
 
-## 🛠️ Available Scripts
+## 🎯 Available Scripts
 
 | Script | Description |
 |--------|-------------|
@@ -162,178 +193,157 @@ my-awesome-app/
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
 | `npm run lint:fix` | Fix ESLint errors |
-| `npm run test` | Run unit tests |
-| `npm run test:e2e` | Run E2E tests |
-| `npm run storybook` | Start Storybook |
+| `npm run test` | Run unit tests with Vitest |
+| `npm run test:e2e` | Run E2E tests with Playwright |
+| `npm run storybook` | Start Storybook development |
 | `npm run generate:component` | Generate new component |
+| `npm run build-stats` | Build with bundle analysis |
 
-## 🎯 What's Included
+## 🌍 Internationalization
 
-### 🔧 **Core Technologies**
-- **Next.js 15** - React framework with App Router
-- **React 19** - Latest React with concurrent features
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS v4** - Utility-first CSS framework
+Built-in i18n support with **next-intl**:
+- **Multiple Languages** - English, French, and more
+- **Locale-based Routing** - `/en/`, `/fr/` paths
+- **Dynamic Translations** - Server and client components
+- **SEO-friendly** - Proper meta tags per locale
 
-### 📦 **Key Dependencies**
-- **Authentication** - NextAuth.js, Supabase Auth, or custom solution
-- **Payments** - Stripe integration for one-time payments and subscriptions
-- **TanStack Query** - Server state management
-- **React Hook Form** - Performant forms
-- **Zod** - TypeScript-first schema validation
-- **Prisma** - Database ORM
-- **Radix UI** - Accessible component primitives
+## 🧪 Testing Strategy
 
-### 🧪 **Testing Stack**
-- **Vitest** - Fast unit testing
-- **Playwright** - E2E testing
-- **Storybook** - Component development
-- **Testing Library** - React component testing
+Comprehensive testing setup:
 
-### 🎨 **UI Components**
-- **shadcn/ui** - Beautiful, accessible components
-- **Lucide React** - Beautiful icons
-- **Radix UI** - Low-level UI primitives
-- **Tailwind CSS** - Utility classes
-
-## 🔧 Configuration
-
-### Environment Variables
-
-The `.env.example` file will be automatically generated based on your selected authentication provider:
-
-#### **NextAuth Configuration**
-```env
-# NextAuth.js Configuration
-NEXTAUTH_SECRET="your-secret-key-here"
-NEXTAUTH_URL="http://localhost:3000"
-
-# OAuth Providers
-AUTH_GITHUB_ID="your-github-client-id"
-AUTH_GITHUB_SECRET="your-github-client-secret"
-AUTH_GOOGLE_ID="your-google-client-id"
-AUTH_GOOGLE_SECRET="your-google-client-secret"
-
-# API Configuration
-NEXT_PUBLIC_SERVER_URL="https://your-api-url.com/api"
-```
-
-#### **Supabase Configuration**
-```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL="your-supabase-project-url"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-
-# Optional: For server-side operations
-SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
-```
-
-#### **No Authentication**
-```env
-# General Configuration
-NODE_ENV="development"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
-
-#### **Stripe One-Time Payments Configuration**
-```env
-# Stripe Configuration for One-Time Payments
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
-
-# App Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Stripe Settings
-STRIPE_CURRENCY=usd
-STRIPE_SUCCESS_URL=http://localhost:3000/payment/success
-STRIPE_CANCEL_URL=http://localhost:3000/payment/cancel
-```
-
-#### **Stripe Subscriptions Configuration**
-```env
-# Stripe Configuration for Subscriptions
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
-
-# App Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Stripe Settings
-STRIPE_CURRENCY=usd
-STRIPE_SUCCESS_URL=http://localhost:3000/payment/success
-STRIPE_CANCEL_URL=http://localhost:3000/payment/cancel
-
-# Subscription-specific settings
-STRIPE_PRICE_ID_MONTHLY=price_your_monthly_price_id_here
-STRIPE_PRICE_ID_YEARLY=price_your_yearly_price_id_here
-```
-
-### Customization
-
-The boilerplate is designed to be easily customizable:
-
-1. **Components**: Modify or add components in `src/components/`
-2. **Styles**: Customize Tailwind config in `tailwind.config.js`
-3. **Features**: Enable/disable features via environment variables
-4. **Themes**: Customize the theme in `src/styles/`
-5. **Authentication**: Switch auth providers by re-running the CLI or manually updating components
-
-### 🧪 **Testing Payments**
-
-When you select a Stripe integration, test pages are automatically included:
-
-#### **One-Time Payments**
-- **Test Page**: `/test-payment` - Interactive payment testing interface
-- **Demo Component**: Quick amount selection ($9.99, $29.99, $49.99, $99.99)
-- **Test Cards**: Built-in test card numbers for different scenarios
-- **Success/Cancel Pages**: `/payment/success` and `/payment/cancel`
-
-#### **Subscriptions**
-- **Test Page**: `/test-subscription` - Subscription plan testing interface
-- **Demo Component**: Plan selection (Starter, Professional, Enterprise)
-- **Subscription Management**: Demo of subscription management interface
-- **Success/Cancel Pages**: `/payment/success` and `/payment/cancel`
-
-#### **Test Card Numbers**
+### **Unit Testing** (Vitest)
 ```bash
-# Successful payments
-4242 4242 4242 4242  # Visa
-5555 5555 5555 4444  # Mastercard
-3782 822463 10005    # American Express
-
-# Failed payments
-4000 0000 0000 0002  # Declined
-4000 0000 0000 9995  # Insufficient funds
-4000 0000 0000 0069  # Expired card
+npm run test
+# Fast unit tests with React Testing Library
 ```
 
-### 🔄 **Changing Authentication Providers**
+### **E2E Testing** (Playwright)
+```bash
+npm run test:e2e
+# End-to-end testing across browsers
+```
 
-If you want to switch authentication providers after project creation:
+### **Component Testing** (Storybook)
+```bash
+npm run storybook
+# Visual component development and testing
+```
 
-1. **Re-run the CLI**: Delete the project and create a new one with your preferred auth provider
-2. **Manual Migration**: Replace auth-specific files and update dependencies manually
-3. **Hybrid Approach**: Keep the base template and manually add your preferred auth solution
+## 🔧 Configuration Examples
 
-## 📚 Documentation
+### **Environment Variables**
+The CLI automatically generates `.env.example` with the right variables for your selected modules:
 
-- [React Query Setup Guide](./templates/base/docs/REACT_QUERY_SETUP.md)
-- [Tailwind v4 Migration](./templates/base/TAILWIND_V4_MIGRATION.md)
-- [Component Development with Storybook](./templates/base/.storybook/README.md)
+```bash
+# Authentication (NextAuth.js)
+NEXTAUTH_SECRET=your-secret-here
+NEXTAUTH_URL=http://localhost:3000
 
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+
+# Email (Nodemailer)
+RESEND_API_KEY=re_...
+```
+
+### **Module Selection Example**
+```bash
+🌟 Welcome to create-codehuddle-nextjs!
+
+🔐 Choose your authentication provider:
+❯ NextAuth.js - Complete auth with OAuth providers
+
+👥 Enable Role-Based Authentication (Admin/User roles)?
+❯ No
+
+🌙 Enable dark mode toggle in your app?
+❯ Yes
+
+💳 Choose your Stripe integration:
+❯ One-time payments - Single payments and purchases
+
+📩 Include Email module (Nodemailer) for transactional emails?
+❯ Yes
+
+📊 Include a Dashboard page (graphs, tables, stats)?
+❯ Yes
+
+📚 Include Storybook for UI component development?
+❯ Yes
+
+📱 Include PWA (Progressive Web App) support?
+❯ Yes
+
+📋 Configuration Summary:
+   🔐 Auth: NextAuth
+   💳 Payments: OneTime
+   📩 Email: Enabled
+   📊 Dashboard: Enabled
+   📱 PWA: Enabled
+   📚 Storybook: Enabled
+   🌙 Dark Mode: Enabled
+```
+
+## 🚀 Production Deployment
+
+### **Vercel** (Recommended)
+```bash
+# Deploy to Vercel
+npx vercel
+
+# Set environment variables in Vercel dashboard
+```
+
+### **Docker**
+```bash
+# Build Docker image
+docker build -t my-app .
+
+# Run container
+docker run -p 3000:3000 my-app
+```
+
+### **Other Platforms**
+- **Netlify** - Static site generation
+- **Railway** - Full-stack deployment
+- **AWS** - Container deployment
+- **DigitalOcean** - App Platform
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [Next.js](https://nextjs.org/) team for the amazing framework
-- [Vercel](https://vercel.com/) for hosting and deployment
-- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
-- [Radix UI](https://www.radix-ui.com/) for accessible primitives
+- **Next.js Team** - For the amazing framework
+- **Vercel** - For hosting and deployment
+- **shadcn/ui** - For beautiful components
+- **Radix UI** - For accessible primitives
+- **Tailwind CSS** - For utility-first styling
+
+## 📞 Support
+
+- **Documentation** - [Full documentation](https://github.com/Code-Huddle/create-codehuddle-nextjs/wiki)
+- **Issues** - [GitHub Issues](https://github.com/Code-Huddle/create-codehuddle-nextjs/issues)
+- **Discussions** - [GitHub Discussions](https://github.com/Code-Huddle/create-codehuddle-nextjs/discussions)
+- **Email** - harisahmed629@gmail.com
+
+---
 
 <div align="center">
 
-**Built with ❤️ by [Code Huddle](https://code-huddle.com)**
+**💜 Made with ♥ by CodeHuddle**  
+**🚀 Happy coding • Join our amazing community!**
+
+[⭐ Star us on GitHub](https://github.com/Code-Huddle/create-codehuddle-nextjs) • [📦 NPM Package](https://www.npmjs.com/package/create-codehuddle-nextjs) • [🐦 Follow us](https://twitter.com/codehuddle)
 
 </div>
