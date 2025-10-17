@@ -343,6 +343,33 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
+## 👥 Developers
+
+Meet the team behind create-codehuddle-nextjs:
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://linkedin.com/in/kashiekzmi">
+        <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+      </a>
+      <br />
+      <strong>Kashif Abbas Kazmi</strong>
+      <br />
+      <em>Software Engineer</em>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/haris-ahmed-software-engineer/">
+        <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+      </a>
+      <br />
+      <strong>Haris Ahmed</strong>
+      <br />
+      <em>Software Engineer</em>
+    </td>
+  </tr>
+</table>
+
 ## 🙏 Acknowledgments
 
 - **Next.js Team** - For the amazing framework
@@ -350,13 +377,6 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - **shadcn/ui** - For beautiful components
 - **Radix UI** - For accessible primitives
 - **Tailwind CSS** - For utility-first styling
-
-## 📞 Support
-
-- **Documentation** - [Full documentation](https://github.com/Code-Huddle/create-codehuddle-nextjs/wiki)
-- **Issues** - [GitHub Issues](https://github.com/Code-Huddle/create-codehuddle-nextjs/issues)
-- **Discussions** - [GitHub Discussions](https://github.com/Code-Huddle/create-codehuddle-nextjs/discussions)
-- **Email** - harisahmed629@gmail.com
 
 ---
 
