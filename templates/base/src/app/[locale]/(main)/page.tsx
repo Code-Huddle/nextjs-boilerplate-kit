@@ -10,6 +10,7 @@ import { AuthFeatureCard } from '@/components/AuthFeatureCard';
 import { AuthTechBadge } from '@/components/AuthTechBadge';
 import { StripeFeatureCard, StripeTechBadge, StripeFeatureCardWithTest } from '@/components/StripeFeatureCard';
 import { EmailTechBadge } from '@/components/EmailTechBadge';
+import { PWADownloadPrompt } from '@/components/PWADownloadPrompt';
 
 type IIndexProps = {
   params: Promise<{ locale: string }>;
@@ -322,6 +323,8 @@ export default async function Index(props: IIndexProps) {
           </p>
         </div>
       </div>
+      {/* PWA Download Prompt */}
+      {__PWA_ENABLED__ && <PWADownloadPrompt />}
     </div>
   );
 }

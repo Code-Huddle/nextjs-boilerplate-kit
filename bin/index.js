@@ -250,6 +250,16 @@ program
         },
       ]);
 
+      // Prompt for PWA support
+      const { includePWA } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'includePWA',
+          message: '📱 Include PWA (Progressive Web App) support?',
+          default: false,
+        },
+      ]);
+
       // Copy the entire base template
       console.log(chalk.blue.bold(`\n🚀 Creating project in ${isCurrentDir ? 'current directory' : `'${projectName}'`}...`));
       console.log(chalk.gray('   📁 Copying base template files...'));
@@ -494,6 +504,48 @@ program
         console.log(chalk.blue('   ✅ Storybook configured (run npm run storybook)'));
       }
 
+      // Configure PWA (optional)
+      if (includePWA) {
+        console.log(chalk.gray('   📱 Configuring PWA...'));
+        const pwaModuleDir = path.join(modulesDir, 'pwa');
+        await fs.copy(pwaModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
+        // Ensure next-pwa is installed
+        ensureDeps({ 'next-pwa': '^5.6.0' });
+
+        // Smoothly wrap next.config.ts with next-pwa
+        const projectNextConfigPath = path.join(targetDir, 'next.config.ts');
+        if (await fs.pathExists(projectNextConfigPath)) {
+          let cfg = await fs.readFile(projectNextConfigPath, 'utf8');
+
+          // Add import if missing
+          if (!cfg.includes("from 'next-pwa'")) {
+            cfg = `import withPWA from 'next-pwa';\n` + cfg;
+          }
+
+          // Add configured wrapper const if missing
+          if (!cfg.includes('const withPWAConfigured')) {
+            cfg = cfg.replace(
+              /export default\s+/, 
+              "const withPWAConfigured = withPWA({ dest: 'public', register: true, skipWaiting: true, disable: process.env.NODE_ENV === 'development' });\n\nexport default "
+            );
+          }
+
+          // Wrap the export call: export default withPWAConfigured(<existingExportExpression>);
+          if (!cfg.includes('export default withPWAConfigured(')) {
+            cfg = cfg.replace(/export default\s*([\s\S]*?);\s*$/m, (m, expr) => {
+              // Trim potential trailing commas/spaces that can break wrapping
+              const cleaned = expr.replace(/,\s*\)$/g, ')');
+              return `export default withPWAConfigured(${cleaned});`;
+            });
+          }
+
+          await fs.writeFile(projectNextConfigPath, cfg, 'utf8');
+          console.log(chalk.blue('   ✅ next-pwa integrated into next.config.ts'));
+        }
+
+        console.log(chalk.blue('   ✅ PWA files added (manifest, service worker, registration helper)'));
+      }
+
       // Inject auth message, dark mode setting, and Stripe integration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
@@ -520,6 +572,7 @@ program
         pageContent = pageContent.replace('__STRIPE_INTEGRATION_TYPE__', stripeIntegration);
         pageContent = pageContent.replace('__EMAIL_INTEGRATION__', emailMessage);
         pageContent = pageContent.replace('__DASHBOARD_ENABLED__', includeDashboard);
+        pageContent = pageContent.replace('__PWA_ENABLED__', includePWA);
         await fs.writeFile(pagePath, pageContent, 'utf8');
         console.log(chalk.green('   ✅ Landing page customized'));
         console.log(chalk.blue(`   ✅ Dark mode ${enableDarkMode ? 'enabled' : 'disabled'}`));
