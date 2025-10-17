@@ -29,14 +29,72 @@ npx create-codehuddle-nextjs my-app
 - **Node.js** >= 20.0.0
 - **npm**, **yarn**, or **pnpm**
 
-### Create Your Project
+### Complete CLI Flow
+
+Run the command and follow the interactive prompts:
 
 ```bash
-# Create a new project with interactive setup
 npx create-codehuddle-nextjs my-awesome-app
+```
 
-# Or create in current directory
-npx create-codehuddle-nextjs .
+**Here's the complete interactive flow you'll experience:**
+
+```bash
+🌟 Welcome to create-codehuddle-nextjs!
+   Let's create your modern Next.js application
+
+🔐 Choose your authentication provider:
+❯ NextAuth.js - Complete auth with OAuth providers
+  Supabase Auth - Real-time auth with database
+  None - Add authentication later
+
+👥 Enable Role-Based Authentication (Admin/User roles)?
+❯ No
+
+🌙 Enable dark mode toggle in your app?
+❯ Yes
+
+💳 Choose your Stripe integration:
+❯ None - Add payments later
+  One-time payments - Single payments and purchases
+  Subscriptions - Recurring billing and subscriptions
+
+📩 Include Email module (Nodemailer) for transactional emails?
+❯ Yes
+
+📊 Include a Dashboard page (graphs, tables, stats)?
+❯ Yes
+
+📚 Include Storybook for UI component development?
+❯ Yes
+
+📱 Include PWA (Progressive Web App) support?
+❯ Yes
+
+🚀 Creating project in 'my-awesome-app'...
+
+🎉 Project created successfully!
+
+📋 Configuration Summary:
+   🔐 Auth: NextAuth
+   💳 Payments: None
+   📩 Email: Enabled
+   📊 Dashboard: Enabled
+   📱 PWA: Enabled
+   📚 Storybook: Enabled
+   🌙 Dark Mode: Enabled
+
+🚀 Next Steps:
+   cd my-awesome-app
+   npm install
+   cp .env.example .env.local
+   # Configure environment variables in .env.local
+   npm run dev
+
+💡 Tip: Visit http://localhost:3000 to see your app!
+
+Made with 💜 by CodeHuddle
+Lets build the future together!⚡
 ```
 
 ### Setup & Run
@@ -251,43 +309,6 @@ STRIPE_SECRET_KEY=sk_test_...
 RESEND_API_KEY=re_...
 ```
 
-### **Module Selection Example**
-```bash
-🌟 Welcome to create-codehuddle-nextjs!
-
-🔐 Choose your authentication provider:
-❯ NextAuth.js - Complete auth with OAuth providers
-
-👥 Enable Role-Based Authentication (Admin/User roles)?
-❯ No
-
-🌙 Enable dark mode toggle in your app?
-❯ Yes
-
-💳 Choose your Stripe integration:
-❯ One-time payments - Single payments and purchases
-
-📩 Include Email module (Nodemailer) for transactional emails?
-❯ Yes
-
-📊 Include a Dashboard page (graphs, tables, stats)?
-❯ Yes
-
-📚 Include Storybook for UI component development?
-❯ Yes
-
-📱 Include PWA (Progressive Web App) support?
-❯ Yes
-
-📋 Configuration Summary:
-   🔐 Auth: NextAuth
-   💳 Payments: OneTime
-   📩 Email: Enabled
-   📊 Dashboard: Enabled
-   📱 PWA: Enabled
-   📚 Storybook: Enabled
-   🌙 Dark Mode: Enabled
-```
 
 ## 🚀 Production Deployment
 
