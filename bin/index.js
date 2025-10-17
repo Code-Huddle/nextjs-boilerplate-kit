@@ -181,6 +181,20 @@ program
         },
       ]);
 
+      // Prompt for role-based authentication if Supabase is selected
+      let enableRoleBasedAuth = false;
+      if (authProvider === 'Supabase') {
+        const { includeRoleBasedAuth } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'includeRoleBasedAuth',
+            message: '👥 Enable Role-Based Authentication (Admin/User roles)?',
+            default: false,
+          },
+        ]);
+        enableRoleBasedAuth = includeRoleBasedAuth;
+      }
+
       // Prompt for dark mode choice
       const { enableDarkMode } = await inquirer.prompt([
         {
@@ -257,12 +271,10 @@ program
         });
       };
 
-      // Function to merge environment files from multiple modules (deduplicated)
+      // Function to merge environment files from base + selected modules (deduplicated, preserves base)
       const mergeEnvFiles = async (targetDir, selectedModules) => {
         try {
           const baseEnvPath = path.join(targetDir, '.env.example');
-
-          // Tracks keys we have already emitted
           const seenKeys = new Set();
 
           const extractKey = (line) => {
@@ -270,59 +282,51 @@ program
             return match ? match[1] : null;
           };
 
-          const collectUniqueLines = (content) => {
-            const lines = content.split(/\r?\n/);
+          const normalizeEol = (s) => s.replace(/\r\n/g, '\n');
+
+          // 1) Start with base .env.example (preserve comments/ordering exactly)
+          let output = '';
+          if (await fs.pathExists(baseEnvPath)) {
+            const baseEnvRaw = await fs.readFile(baseEnvPath, 'utf8');
+            const baseEnv = normalizeEol(baseEnvRaw);
+            output = baseEnv.endsWith('\n') ? baseEnv : baseEnv + '\n';
+            // Record keys already present in base
+            for (const line of output.split('\n')) {
+              const key = extractKey(line);
+              if (key) seenKeys.add(key);
+            }
+            // ensure a blank line after base content
+            if (!output.endsWith('\n\n')) output += '\n';
+          }
+
+          // 2) Append each module's unique keys (no comments), grouping per module
+          for (const moduleName of selectedModules) {
+            const moduleEnvPath = path.join(modulesDir, moduleName, '.env.example');
+            if (!(await fs.pathExists(moduleEnvPath))) continue;
+
+            const moduleEnvRaw = await fs.readFile(moduleEnvPath, 'utf8');
+            const moduleEnv = normalizeEol(moduleEnvRaw);
+            const lines = moduleEnv.split('\n');
             const unique = [];
             for (const rawLine of lines) {
-              const line = rawLine.trimEnd();
-              if (line.trim() === '' || line.trim().startsWith('#')) {
-                // Skip empty/comment lines for modules; keep structure minimal
-                continue;
-              }
+              const line = rawLine.trim();
+              if (!line || line.startsWith('#')) continue;
               const key = extractKey(line);
               if (key && !seenKeys.has(key)) {
                 unique.push(line);
                 seenKeys.add(key);
               }
             }
-            return unique;
-          };
-
-          let output = '';
-
-          // Start with base .env.example (preserve its structure and comments)
-          if (await fs.pathExists(baseEnvPath)) {
-            const baseEnv = await fs.readFile(baseEnvPath, 'utf8');
-            const baseLines = baseEnv.split(/\r?\n/);
-            for (const rawLine of baseLines) {
-              const line = rawLine.trimEnd();
-              output += line + '\n';
-              const key = extractKey(line);
-              if (key) {
-                seenKeys.add(key);
-              }
+            if (unique.length > 0) {
+              const header = moduleName.replace(/^(auth-|stripe-)/, '').replace(/-/g, ' ').toUpperCase();
+              output += `# ${header} Configuration\n` + unique.join('\n') + '\n\n';
             }
-            // Ensure single blank line separation after base
-            output = output.replace(/\n+$/, '\n');
-            output += '\n';
           }
 
-          // Append each module's unique keys (with a header only if it contributes new keys)
-          for (const module of selectedModules) {
-            const moduleEnvPath = path.join(modulesDir, module, '.env.example');
-            if (!(await fs.pathExists(moduleEnvPath))) continue;
-
-            const moduleEnv = await fs.readFile(moduleEnvPath, 'utf8');
-            const uniqueLines = collectUniqueLines(moduleEnv);
-            if (uniqueLines.length === 0) continue; // nothing new to add
-
-            const moduleName = module.replace(/^(auth-|stripe-)/, '').replace(/-/g, ' ').toUpperCase();
-            output += `# ${moduleName} Configuration\n`;
-            output += uniqueLines.join('\n') + '\n\n';
-          }
-
-          await fs.writeFile(baseEnvPath, output.replace(/\n+$/, '\n'));
-          console.log(chalk.green(`   ✅ Environment variables merged (deduplicated)`));
+          // 3) Trim trailing newlines to a single \n
+          const finalOutput = output.replace(/\n+$/, '\n');
+          await fs.writeFile(baseEnvPath, finalOutput, 'utf8');
+          console.log(chalk.green('   ✅ Environment variables merged (base + modules, deduped)'));
         } catch (error) {
           console.error(chalk.yellow(`   ⚠️  Warning: Could not merge environment files: ${error.message}`));
         }
@@ -334,19 +338,27 @@ program
       console.log(chalk.gray('   🔐 Configuring authentication module...'));
       if (authProvider === 'NextAuth') {
         const nextAuthModuleDir = path.join(modulesDir, 'auth-nextauth');
-        await fs.copy(nextAuthModuleDir, targetDir, { overwrite: true });
+        await fs.copy(nextAuthModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 'next-auth': '^5.0.0-beta.25' });
         selectedModules.push('auth-nextauth');
         console.log(chalk.blue('   ✅ NextAuth.js configured'));
       } else if (authProvider === 'Supabase') {
-        const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
-        await fs.copy(supabaseModuleDir, targetDir, { overwrite: true });
-        ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
-        selectedModules.push('auth-supabase');
-        console.log(chalk.blue('   ✅ Supabase Auth configured'));
+        if (enableRoleBasedAuth) {
+          const supabaseRolesModuleDir = path.join(modulesDir, 'auth-supabase-roles');
+          await fs.copy(supabaseRolesModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
+          ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
+          selectedModules.push('auth-supabase-roles');
+          console.log(chalk.blue('   ✅ Supabase Auth with Role-Based Access configured'));
+        } else {
+          const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
+          await fs.copy(supabaseModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
+          ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
+          selectedModules.push('auth-supabase');
+          console.log(chalk.blue('   ✅ Supabase Auth configured'));
+        }
       } else if (authProvider === 'None') {
         const noneModuleDir = path.join(modulesDir, 'auth-none');
-        await fs.copy(noneModuleDir, targetDir, { overwrite: true });
+        await fs.copy(noneModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         // Don't add to selectedModules since auth-none has no env file
         console.log(chalk.blue('   ✅ No authentication (can be added later)'));
         // No additional dependencies needed for None
@@ -356,7 +368,7 @@ program
       console.log(chalk.gray('   💳 Configuring Stripe integration...'));
       if (stripeIntegration === 'OneTime') {
         const stripeOneTimeModuleDir = path.join(modulesDir, 'stripe-one-time');
-        await fs.copy(stripeOneTimeModuleDir, targetDir, { overwrite: true });
+        await fs.copy(stripeOneTimeModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 
           'stripe': '^16.0.0',
           '@stripe/stripe-js': '^4.0.0',
@@ -366,7 +378,7 @@ program
         console.log(chalk.blue('   ✅ Stripe one-time payments configured'));
       } else if (stripeIntegration === 'Subscriptions') {
         const stripeSubscriptionsModuleDir = path.join(modulesDir, 'stripe-subscriptions');
-        await fs.copy(stripeSubscriptionsModuleDir, targetDir, { overwrite: true });
+        await fs.copy(stripeSubscriptionsModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 
           'stripe': '^16.0.0',
           '@stripe/stripe-js': '^4.0.0',
@@ -385,11 +397,36 @@ program
         await mergeEnvFiles(targetDir, selectedModules);
       }
 
+      // Ensure Supabase env keys are present when Supabase (with or without roles) is selected
+      if (authProvider === 'Supabase') {
+        const envExamplePath = path.join(targetDir, '.env.example');
+        let envContent = '';
+        if (await fs.pathExists(envExamplePath)) {
+          envContent = await fs.readFile(envExamplePath, 'utf8');
+        }
+        const requiredKeys = [
+          'NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url',
+          'NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key',
+        ];
+        let appended = false;
+        for (const line of requiredKeys) {
+          const key = line.split('=')[0];
+          if (!new RegExp(`^${key}=`, 'm').test(envContent)) {
+            envContent += (envContent.endsWith('\n') ? '' : '\n') + line + '\n';
+            appended = true;
+          }
+        }
+        if (appended) {
+          await fs.writeFile(envExamplePath, envContent.replace(/\n+$/, '\n'), 'utf8');
+          console.log(chalk.green('   ✅ Supabase env keys ensured in .env.example'));
+        }
+      }
+
       // Configure Email (Nodemailer) module
       if (includeResend) {
         console.log(chalk.gray('   ✉️ Configuring email module (Nodemailer)...'));
         const emailModuleDir = path.join(modulesDir, 'nodemailer-email');
-        await fs.copy(emailModuleDir, targetDir, { overwrite: true });
+        await fs.copy(emailModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 'nodemailer': '^6.9.13' });
         selectedModules.push('nodemailer-email');
         // Merge env again to include resend entries
@@ -416,7 +453,7 @@ program
         }
 
         // Copy dashboard module files
-        await fs.copy(dashboardModuleDir, targetDir, { overwrite: true });
+        await fs.copy(dashboardModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         console.log(chalk.blue('   ✅ Dashboard page added (visit /dashboard)'));
       }
 
@@ -427,7 +464,7 @@ program
         // Copy module files but DO NOT overwrite the project's package.json
         await fs.copy(storybookModuleDir, targetDir, {
           overwrite: true,
-          filter: (src) => path.basename(src) !== 'package.json',
+          filter: (src) => !['package.json', '.env.example'].includes(path.basename(src)),
         });
 
         // Merge Storybook scripts and devDependencies into already loaded projectPkg
@@ -462,11 +499,13 @@ program
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
       if (await fs.pathExists(pagePath)) {
         let pageContent = await fs.readFile(pagePath, 'utf8');
-        const authMessage = authProvider === 'NextAuth'
-          ? 'Welcome to your app with NextAuth'
-          : authProvider === 'Supabase'
-            ? 'Welcome to your app with Supabase Auth'
-            : 'Welcome to your app';
+         const authMessage = authProvider === 'NextAuth'
+           ? 'Welcome to your app with NextAuth'
+           : authProvider === 'Supabase'
+             ? enableRoleBasedAuth 
+               ? 'Welcome to your app with Supabase Auth and Role-Based Access Control'
+               : 'Welcome to your app with Supabase Auth'
+             : 'Welcome to your app';
         const stripeMessage = stripeIntegration === 'OneTime'
           ? 'One-time payments enabled with Stripe, test it on page <a href="/test-payment" class="underline text-futuristic hover:text-futuristic/80 transition-colors">One-time Payment</a>'
           : stripeIntegration === 'Subscriptions'
@@ -495,7 +534,7 @@ program
       // Success message with better formatting
       console.log(chalk.green.bold(`\n🎉 Success! Project created successfully!`));
       console.log(chalk.white.bold(`\n📋 Project Configuration:`));
-      console.log(chalk.cyan(`   🔐 Authentication: ${authProvider}`));
+       console.log(chalk.cyan(`   🔐 Authentication: ${authProvider}${enableRoleBasedAuth ? ' (with Roles)' : ''}`));
       console.log(chalk.cyan(`   💳 Stripe Integration: ${stripeIntegration}`));
       console.log(chalk.cyan(`   ✉️ Email (Nodemailer): ${includeResend ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   📊 Dashboard: ${includeDashboard ? 'Included' : 'Excluded'}`));
