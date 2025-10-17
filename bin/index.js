@@ -607,9 +607,9 @@ program
         console.log(chalk.gray(`   # Configure environment variables in .env.local`));
       }
       console.log(chalk.yellow(`   npm run dev`));
-      console.log(chalk.white.bold(`\n💡 Visit http://localhost:3000 to see your app!`));
-      console.log(chalk.magenta.bold(`\nMade with ♥ by CodeHuddle`));
-      console.log(chalk.gray(`   🌟 Open source • Join our amazing community!`));
+      console.log(chalk.white.bold(`\n💡 Tip: Visit http://localhost:3000 to see your app!`));
+      console.log(chalk.magenta.bold(`\nMade with 💜 by CodeHuddle`));
+      console.log(chalk.gray(`Let's build the future together!⚡\n`));
     } catch (err) {
       console.error(chalk.red.bold('\n❌ Error generating project!'));
       console.error(chalk.red(`   ${err.message}`));
