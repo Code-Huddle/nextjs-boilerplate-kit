@@ -1,6 +1,6 @@
 {
   "name": "create-codehuddle-nextjs",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "A customizable Next.js boilerplate by Code Huddle",
   "main": "bin/index.js",
   "bin": {
