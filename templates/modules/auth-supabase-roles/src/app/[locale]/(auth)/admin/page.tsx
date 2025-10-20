@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminSidebar from '@/components/AdminSidebar';
 import { AdminStatsCard } from '@/components/AdminStatsCard';
 import { RecentActivity } from '@/components/RecentActivity';
+import { RolesDarkModeToggle } from '@/components/RolesDarkModeToggle';
 import Users from 'lucide-react/dist/esm/icons/users';
 import Shield from 'lucide-react/dist/esm/icons/shield';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
@@ -56,16 +57,17 @@ export default function AdminPage() {
                 Welcome back! Here's what's happening with your system.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="destructive" className="px-3 py-1">
-                <Shield className="h-3 w-3 mr-1" />
-                Admin
-              </Badge>
-              <Button variant="futuristic" size="sm">
-                <Activity className="h-4 w-4 mr-2" />
-                Generate Report
-              </Button>
-            </div>
+             <div className="flex items-center gap-2">
+               <Badge variant="destructive" className="px-3 py-1">
+                 <Shield className="h-3 w-3 mr-1" />
+                 Admin
+               </Badge>
+               <RolesDarkModeToggle />
+               <Button variant="futuristic" size="sm">
+                 <Activity className="h-4 w-4 mr-2" />
+                 Generate Report
+               </Button>
+             </div>
           </div>
 
           {/* Stats Grid */}

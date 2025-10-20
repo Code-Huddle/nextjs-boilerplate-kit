@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { UserStatsCard } from '@/components/UserStatsCard';
+import { RolesDarkModeToggle } from '@/components/RolesDarkModeToggle';
 import FolderOpen from 'lucide-react/dist/esm/icons/folder-open';
 import Bell from 'lucide-react/dist/esm/icons/bell';
 import HardDrive from 'lucide-react/dist/esm/icons/hard-drive';
@@ -55,16 +56,17 @@ export default function UserPage() {
               Welcome back! Here's an overview of your account and activities.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="px-3 py-1">
-              <User className="h-3 w-3 mr-1" />
-              User
-            </Badge>
-            <Button variant="futuristic" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-          </div>
+           <div className="flex items-center gap-2">
+             <Badge variant="secondary" className="px-3 py-1">
+               <User className="h-3 w-3 mr-1" />
+               User
+             </Badge>
+             <RolesDarkModeToggle />
+             <Button variant="futuristic" size="sm">
+               <Settings className="h-4 w-4 mr-2" />
+               Settings
+             </Button>
+           </div>
         </div>
 
         {/* Stats Grid */}
