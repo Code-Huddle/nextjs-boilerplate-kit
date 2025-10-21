@@ -34,13 +34,29 @@ export default function TestEmailPage() {
                 <Mail className="h-4 w-4" /> Instructions
               </CardTitle>
               <CardDescription>
-                Define <code>RESEND_API_KEY</code> and <code>RESEND_FROM_EMAIL</code> in your environment. Then use the form to send a test email.
+                Configure your SMTP settings in your environment variables. Then use the form to send a test email.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 pt-0 text-sm text-muted-foreground">
-              <p>• Enter multiple recipients separated by commas.</p>
-              <p>• Toggle the sample template to preview a styled transactional email.</p>
-              <p>• This tool is intended for local/staging testing.</p>
+            <CardContent className="space-y-4 pt-0 text-sm text-muted-foreground">
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">Required Environment Variables:</p>
+                <div className="rounded-md bg-muted/50 p-3 font-mono text-xs">
+                  <div>SMTP_HOST="smtp.yourprovider.com"</div>
+                  <div>SMTP_PORT="587" <span className="text-muted-foreground"># 465 for SSL</span></div>
+                  <div>SMTP_SECURE="false" <span className="text-muted-foreground"># true if using port 465</span></div>
+                  <div className="text-muted-foreground"># SMTP authentication (if required by your provider)</div>
+                  <div>SMTP_USER="your-smtp-username"</div>
+                  <div>SMTP_PASS="your-smtp-password"</div>
+                  <div className="text-muted-foreground"># From address for outgoing emails</div>
+                  <div>EMAIL_FROM="no-reply@yourdomain.com"</div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">Usage Tips:</p>
+                <p>• Enter multiple recipients separated by commas.</p>
+                <p>• Toggle the sample template to preview a styled transactional email.</p>
+                <p>• This tool is intended for local/staging testing.</p>
+              </div>
             </CardContent>
           </Card>
 
