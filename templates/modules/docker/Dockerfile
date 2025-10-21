@@ -1,3 +1,6 @@
+# Generic Dockerfile for Next.js applications
+# This is a template file - customize as needed for your specific requirements
+
 # Use Node 20 base image
 FROM node:20-alpine AS deps
 WORKDIR /app

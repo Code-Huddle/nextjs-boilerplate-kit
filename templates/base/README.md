@@ -88,22 +88,6 @@ npm run dev
 
 Open http://localhost:3000 with your favorite browser to see your project.
 
-### Docker
-
-To build and run the app in production mode with Docker:
-
-```bash
-docker build -t nextjs-boilerplate .
-docker run -p 3000:3000 nextjs-boilerplate
-```
-
-For local development with hot reload, use Docker Compose:
-
-```bash
-docker compose up
-```
-
-Make sure to create a `.env` file based on `.env.example` before starting the containers.
 
 ### Set up authentication
 

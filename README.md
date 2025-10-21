@@ -20,6 +20,7 @@ npx create-codehuddle-nextjs my-app
 # 📊 Dashboard: Include analytics dashboard
 # 📱 PWA: Progressive Web App features
 # 📚 Storybook: Component development
+# 🐳 Docker: Containerization
 # 🌙 Dark Mode: Theme switching
 ```
 
@@ -71,6 +72,9 @@ npx create-codehuddle-nextjs my-awesome-app
 📱 Include PWA (Progressive Web App) support?
 ❯ Yes
 
+🐳 Include Docker configuration for containerization?
+❯ Yes
+
 🚀 Creating project in 'my-awesome-app'...
 
 🎉 Project created successfully!
@@ -82,6 +86,7 @@ npx create-codehuddle-nextjs my-awesome-app
    📊 Dashboard: Enabled
    📱 PWA: Enabled
    📚 Storybook: Enabled
+   🐳 Docker: Enabled
    🌙 Dark Mode: Enabled
 
 🚀 Next Steps:
@@ -165,6 +170,14 @@ Component development environment:
 - **Component Stories** for UI development
 - **Interactive Documentation** for your design system
 - **Visual Testing** capabilities
+
+### 🐳 **Docker Containerization**
+
+Production-ready containerization:
+- **Multi-stage Build** for optimized images
+- **Development Environment** with hot reloading
+- **Production Configuration** for deployment
+- **Generic Templates** - easily customizable
 
 ### 🌙 **Smart Dark Mode**
 

@@ -260,6 +260,16 @@ program
         },
       ]);
 
+      // Prompt for Docker support
+      const { includeDocker } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'includeDocker',
+          message: '🐳 Include Docker configuration for containerization?',
+          default: false,
+        },
+      ]);
+
       // Copy the entire base template
       console.log(chalk.blue.bold(`\n🚀 Creating project in ${isCurrentDir ? 'current directory' : `'${projectName}'`}...`));
       console.log(chalk.gray('   📁 Copying base template files...'));
@@ -526,6 +536,14 @@ program
         }
       }
 
+      // Configure Docker (optional)
+      if (includeDocker) {
+        console.log(chalk.gray('   🐳 Configuring Docker...'));
+        const dockerModuleDir = path.join(modulesDir, 'docker');
+        await fs.copy(dockerModuleDir, targetDir, { overwrite: true });
+        console.log(chalk.green('   ✅ Docker configuration added'));
+      }
+
       // Inject configuration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
@@ -570,9 +588,13 @@ program
         const storybookMsg = includeStorybook
           ? 'Storybook included. Run <code>npm run storybook</code> to explore UI components.'
           : '';
+        const dockerMsg = includeDocker
+          ? 'Docker configuration included. Use <code>docker-compose up</code> for development or <code>docker build</code> for production.'
+          : '';
         pageContent = pageContent.replaceAll('__DASHBOARD_MESSAGE__', dashboardMsg);
         pageContent = pageContent.replaceAll('__PWA_MESSAGE__', pwaMsg);
         pageContent = pageContent.replaceAll('__STORYBOOK_MESSAGE__', storybookMsg);
+        pageContent = pageContent.replaceAll('__DOCKER_MESSAGE__', dockerMsg);
         await fs.writeFile(pagePath, pageContent, 'utf8');
       }
 
@@ -594,6 +616,7 @@ program
       console.log(chalk.cyan(`   📊 Dashboard: ${includeDashboard ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   📱 PWA: ${includePWA ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   📚 Storybook: ${includeStorybook ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   🐳 Docker: ${includeDocker ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
       
       // Next steps

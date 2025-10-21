@@ -51,6 +51,7 @@ export default async function Index(props: IIndexProps) {
   const DASHBOARD_MESSAGE = '__DASHBOARD_MESSAGE__';
   const PWA_MESSAGE = '__PWA_MESSAGE__';
   const STORYBOOK_MESSAGE = '__STORYBOOK_MESSAGE__';
+  const DOCKER_MESSAGE = '__DOCKER_MESSAGE__';
   const DARK_MODE_ENABLED = '__DARK_MODE_ENABLED__';
 
   const hasStripe = !STRIPE_INTEGRATION_TYPE.startsWith('__') && (STRIPE_INTEGRATION_TYPE === 'OneTime' || STRIPE_INTEGRATION_TYPE === 'Subscriptions');
@@ -59,6 +60,7 @@ export default async function Index(props: IIndexProps) {
   const hasDashboard = !DASHBOARD_MESSAGE.startsWith('__') && DASHBOARD_MESSAGE.length > 0;
   const hasPwa = !PWA_MESSAGE.startsWith('__') && PWA_MESSAGE.length > 0;
   const hasStorybook = !STORYBOOK_MESSAGE.startsWith('__') && STORYBOOK_MESSAGE.length > 0;
+  const hasDocker = !DOCKER_MESSAGE.startsWith('__') && DOCKER_MESSAGE.length > 0;
   const showDarkToggle = !DARK_MODE_ENABLED.startsWith('__') && DARK_MODE_ENABLED === 'true';
 
   return (
@@ -300,6 +302,27 @@ export default async function Index(props: IIndexProps) {
                     </div>
                   </div>
                   <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-pink-500/10 opacity-20" />
+                </div>
+              )}
+
+              {/* Docker Card */}
+              {hasDocker && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-100 dark:bg-cyan-900/50">
+                      <svg className="h-5 w-5 text-cyan-600 dark:text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Docker Configuration</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Containerization ready with Dockerfile and docker-compose.yml</p>
+                      <div className="text-xs text-muted-foreground">
+                        <code>docker-compose up</code> for development
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-cyan-500/10 opacity-20" />
                 </div>
               )}
             </div>
