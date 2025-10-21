@@ -106,7 +106,7 @@ program
   .description('🚀 Generate a modern Next.js project with authentication and dark mode options')
   .action(async (projectName) => {
     // Welcome message
-    console.log(chalk.cyan.bold('\n🌟 Welcome to create-codehuddle-nextjs!'));
+    console.log(chalk.cyan.bold('\n🌟 Welcome to nextjs-boilerplate-kit!'));
     console.log(chalk.gray('   Let\'s create your modern Next.js application\n'));
 
     // Prompt for project name if not provided

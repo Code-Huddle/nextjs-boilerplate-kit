@@ -1,19 +1,19 @@
-# 🚀 create-codehuddle-nextjs
+# 🚀 nextjs-boilerplate-kit
 
-[![npm version](https://img.shields.io/npm/v/create-codehuddle-nextjs.svg?style=flat-square)](https://www.npmjs.com/package/create-codehuddle-nextjs)
-[![Downloads](https://img.shields.io/npm/dm/create-codehuddle-nextjs.svg?style=flat-square)](https://www.npmjs.com/package/create-codehuddle-nextjs)
-[![License](https://img.shields.io/npm/l/create-codehuddle-nextjs.svg?style=flat-square)](https://github.com/Code-Huddle/create-codehuddle-nextjs/blob/main/LICENSE)
-[![Node.js Version](https://img.shields.io/node/v/create-codehuddle-nextjs.svg?style=flat-square)](https://nodejs.org/)
+[![npm version](https://img.shields.io/npm/v/nextjs-boilerplate-kit.svg?style=flat-square)](https://www.npmjs.com/package/nextjs-boilerplate-kit)
+[![Downloads](https://img.shields.io/npm/dm/nextjs-boilerplate-kit.svg?style=flat-square)](https://www.npmjs.com/package/nextjs-boilerplate-kit)
+[![License](https://img.shields.io/npm/l/nextjs-boilerplate-kit.svg?style=flat-square)](https://github.com/Code-Huddle/nextjs-boilerplate-kit/blob/main/LICENSE)
+[![Node.js Version](https://img.shields.io/node/v/nextjs-boilerplate-kit.svg?style=flat-square)](https://nodejs.org/)
 
 > **The ultimate CLI tool for generating modern, production-ready Next.js applications with enterprise-grade features, modular architecture, and best practices built-in.**
 
 ## ✨ What Makes This Special?
 
-**create-codehuddle-nextjs** is not just another Next.js starter template. It's a **modular, interactive CLI tool** that lets you build exactly what you need, when you need it. Choose your authentication, payments, features, and more through an intuitive command-line interface.
+**nextjs-boilerplate-kit** is not just another Next.js starter template. It's a **modular, interactive CLI tool** that lets you build exactly what you need, when you need it. Choose your authentication, payments, features, and more through an intuitive command-line interface.
 
 ### 🎯 **Interactive Project Generation**
 ```bash
-npx create-codehuddle-nextjs my-app
+npx nextjs-boilerplate-kit my-app
 # ✨ Interactive prompts guide you through:
 # 🔐 Authentication: NextAuth.js, Supabase, or None
 # 💳 Payments: One-time, Subscriptions, or None  
@@ -36,13 +36,13 @@ npx create-codehuddle-nextjs my-app
 Run the command and follow the interactive prompts:
 
 ```bash
-npx create-codehuddle-nextjs my-awesome-app
+npx nextjs-boilerplate-kit my-awesome-app
 ```
 
 **Here's the complete interactive flow you'll experience:**
 
 ```bash
-🌟 Welcome to create-codehuddle-nextjs!
+🌟 Welcome to nextjs-boilerplate-kit!
    Let's create your modern Next.js application
 
 🔐 Choose your authentication provider:
@@ -372,7 +372,7 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## 👥 Developers
 
-Meet the team behind create-codehuddle-nextjs:
+Meet the team behind nextjs-boilerplate-kit:
 
 <table>
   <tr>
@@ -412,6 +412,6 @@ Meet the team behind create-codehuddle-nextjs:
 **💜 Made with ♥ by CodeHuddle**  
 **🚀 Happy coding • Join our amazing community!**
 
-[⭐ Star us on GitHub](https://github.com/Code-Huddle/create-codehuddle-nextjs) • [📦 NPM Package](https://www.npmjs.com/package/create-codehuddle-nextjs) • [🐦 Follow us](https://twitter.com/codehuddle)
+[⭐ Star us on GitHub](https://github.com/Code-Huddle/nextjs-boilerplate-kit) • [📦 NPM Package](https://www.npmjs.com/package/nextjs-boilerplate-kit) • [🐦 Follow us](https://twitter.com/codehuddle)
 
 </div>

@@ -2,7 +2,7 @@
   "name": "@codehuddle/storybook-module",
   "private": true,
   "version": "0.0.0",
-  "description": "Optional Storybook module for create-codehuddle-nextjs",
+  "description": "Optional Storybook module for nextjs-boilerplate-kit",
   "scripts": {
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
