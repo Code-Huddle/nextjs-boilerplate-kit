@@ -1,6 +1,6 @@
 {
   "name": "create-codehuddle-nextjs",
-  "version": "1.4.9",
+  "version": "1.4.10",
   "description": "🚀 Interactive CLI tool to generate modern Next.js 15 apps with authentication, payments, dashboard, PWA, and more. Choose your stack with TypeScript, Tailwind CSS, shadcn/ui, and enterprise features.",
   "main": "bin/index.js",
   "bin": {
