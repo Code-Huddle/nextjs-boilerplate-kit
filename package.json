@@ -1,6 +1,6 @@
 {
   "name": "nextjs-boilerplate-kit",
-  "version": "1.4.14",
+  "version": "1.4.15",
   "description": "🚀 Interactive CLI tool to generate modern Next.js 15 apps with authentication, payments, dashboard, PWA, and more. Choose your stack with TypeScript, Tailwind CSS, shadcn/ui, and enterprise features.",
   "main": "bin/index.js",
   "bin": {
