@@ -92,8 +92,7 @@
     "@percy/playwright": "^1.0.8",
     "@playwright/test": "^1.52.0",
     "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    
+    "@semantic-release/git": "^10.0.1",    
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -105,7 +104,6 @@
     "@vitest/coverage-v8": "^3.1.4",
     "@vitest/expect": "^3.1.4",
     "autoprefixer": "^10.4.21",
-    "checkly": "^6.4.0",
     "commitizen": "^4.3.1",
     "cross-env": "^10.0.0",
     "cssnano": "^7.1.1",
