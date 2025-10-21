@@ -270,6 +270,16 @@ program
         },
       ]);
 
+      // Prompt for Sentry support
+      const { includeSentry } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'includeSentry',
+          message: '🔍 Include Sentry for error monitoring and performance tracking?',
+          default: false,
+        },
+      ]);
+
       // Copy the entire base template
       console.log(chalk.blue.bold(`\n🚀 Creating project in ${isCurrentDir ? 'current directory' : `'${projectName}'`}...`));
       console.log(chalk.gray('   📁 Copying base template files...'));
@@ -544,6 +554,70 @@ program
         console.log(chalk.green('   ✅ Docker configuration added'));
       }
 
+      // Configure Sentry (optional)
+      if (includeSentry) {
+        console.log(chalk.gray('   🔍 Configuring Sentry...'));
+        const sentryModuleDir = path.join(modulesDir, 'sentry');
+        await fs.copy(sentryModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
+        // Ensure Sentry is installed
+        ensureDeps({ '@sentry/nextjs': '^8.0.0' });
+        selectedModules.push('sentry');
+        // Merge environment variables again to include Sentry
+        await mergeEnvFiles(targetDir, selectedModules);
+
+        // Smoothly wrap next.config.ts with Sentry
+        const projectNextConfigPath = path.join(targetDir, 'next.config.ts');
+        if (await fs.pathExists(projectNextConfigPath)) {
+          let cfg = await fs.readFile(projectNextConfigPath, 'utf8');
+
+          // Add Sentry import if missing
+          if (!cfg.includes("from '@sentry/nextjs'")) {
+            cfg = `import { withSentryConfig } from '@sentry/nextjs';\n` + cfg;
+          }
+
+          // Add Sentry configuration if missing
+          if (!cfg.includes('const sentryWebpackPluginOptions')) {
+            // Add Sentry configuration before the export statement
+            cfg = cfg.replace(
+              /export default\s+/,
+              `const sentryWebpackPluginOptions = {
+  // Suppresses source map uploading logs during build
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+};
+
+const sentryNextjsOptions = {
+  // Upload a larger set of source maps for prettier stack traces
+  widenClientFileUpload: true,
+  // Automatically annotate React components to show their full name in breadcrumbs
+  reactComponentAnnotation: { enabled: true },
+  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
+  tunnelRoute: '/monitoring',
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
+  // Disable Sentry telemetry
+  telemetry: false,
+};
+
+export default `
+            );
+          }
+
+          // Wrap the export call with Sentry
+          if (!cfg.includes('withSentryConfig(')) {
+            cfg = cfg.replace(/export default\s*([\s\S]*?);\s*$/m, (m, expr) => {
+              // Trim potential trailing commas/spaces that can break wrapping
+              const cleaned = expr.replace(/,\s*\)$/g, ')');
+              return `export default withSentryConfig(${cleaned}, sentryWebpackPluginOptions, sentryNextjsOptions);`;
+            });
+          }
+
+          await fs.writeFile(projectNextConfigPath, cfg, 'utf8');
+        }
+        console.log(chalk.green('   ✅ Sentry configuration added'));
+      }
+
       // Inject configuration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
@@ -591,10 +665,14 @@ program
         const dockerMsg = includeDocker
           ? 'Docker configuration included. Use <code>docker-compose up</code> for development or <code>docker build</code> for production.'
           : '';
+        const sentryMsg = includeSentry
+          ? 'Sentry monitoring enabled. Configure <code>NEXT_PUBLIC_SENTRY_DSN</code> in your environment variables.'
+          : '';
         pageContent = pageContent.replaceAll('__DASHBOARD_MESSAGE__', dashboardMsg);
         pageContent = pageContent.replaceAll('__PWA_MESSAGE__', pwaMsg);
         pageContent = pageContent.replaceAll('__STORYBOOK_MESSAGE__', storybookMsg);
         pageContent = pageContent.replaceAll('__DOCKER_MESSAGE__', dockerMsg);
+        pageContent = pageContent.replaceAll('__SENTRY_MESSAGE__', sentryMsg);
         await fs.writeFile(pagePath, pageContent, 'utf8');
       }
 
@@ -617,6 +695,7 @@ program
       console.log(chalk.cyan(`   📱 PWA: ${includePWA ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   📚 Storybook: ${includeStorybook ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   🐳 Docker: ${includeDocker ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   🔍 Sentry: ${includeSentry ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
       
       // Next steps

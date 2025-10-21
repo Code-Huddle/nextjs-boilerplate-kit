@@ -52,6 +52,7 @@ export default async function Index(props: IIndexProps) {
   const PWA_MESSAGE = '__PWA_MESSAGE__';
   const STORYBOOK_MESSAGE = '__STORYBOOK_MESSAGE__';
   const DOCKER_MESSAGE = '__DOCKER_MESSAGE__';
+  const SENTRY_MESSAGE = '__SENTRY_MESSAGE__';
   const DARK_MODE_ENABLED = '__DARK_MODE_ENABLED__';
 
   const hasStripe = !STRIPE_INTEGRATION_TYPE.startsWith('__') && (STRIPE_INTEGRATION_TYPE === 'OneTime' || STRIPE_INTEGRATION_TYPE === 'Subscriptions');
@@ -61,6 +62,7 @@ export default async function Index(props: IIndexProps) {
   const hasPwa = !PWA_MESSAGE.startsWith('__') && PWA_MESSAGE.length > 0;
   const hasStorybook = !STORYBOOK_MESSAGE.startsWith('__') && STORYBOOK_MESSAGE.length > 0;
   const hasDocker = !DOCKER_MESSAGE.startsWith('__') && DOCKER_MESSAGE.length > 0;
+  const hasSentry = !SENTRY_MESSAGE.startsWith('__') && SENTRY_MESSAGE.length > 0;
   const showDarkToggle = !DARK_MODE_ENABLED.startsWith('__') && DARK_MODE_ENABLED === 'true';
 
   return (
@@ -323,6 +325,27 @@ export default async function Index(props: IIndexProps) {
                     </div>
                   </div>
                   <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-cyan-500/10 opacity-20" />
+                </div>
+              )}
+
+              {/* Sentry Card */}
+              {hasSentry && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/50">
+                      <svg className="h-5 w-5 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Sentry Monitoring</h3>
+                      <p className="text-sm text-muted-foreground mb-3">Error tracking and performance monitoring enabled</p>
+                      <div className="text-xs text-muted-foreground">
+                        Configure <code>NEXT_PUBLIC_SENTRY_DSN</code> in your environment
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-orange-500/10 opacity-20" />
                 </div>
               )}
             </div>

@@ -21,6 +21,7 @@ npx create-codehuddle-nextjs my-app
 # 📱 PWA: Progressive Web App features
 # 📚 Storybook: Component development
 # 🐳 Docker: Containerization
+# 🔍 Sentry: Error monitoring
 # 🌙 Dark Mode: Theme switching
 ```
 
@@ -75,6 +76,9 @@ npx create-codehuddle-nextjs my-awesome-app
 🐳 Include Docker configuration for containerization?
 ❯ Yes
 
+🔍 Include Sentry for error monitoring and performance tracking?
+❯ Yes
+
 🚀 Creating project in 'my-awesome-app'...
 
 🎉 Project created successfully!
@@ -87,6 +91,7 @@ npx create-codehuddle-nextjs my-awesome-app
    📱 PWA: Enabled
    📚 Storybook: Enabled
    🐳 Docker: Enabled
+   🔍 Sentry: Enabled
    🌙 Dark Mode: Enabled
 
 🚀 Next Steps:
@@ -178,6 +183,15 @@ Production-ready containerization:
 - **Development Environment** with hot reloading
 - **Production Configuration** for deployment
 - **Generic Templates** - easily customizable
+
+### 🔍 **Sentry Error Monitoring**
+
+Comprehensive error tracking and performance monitoring:
+- **Error Tracking** with automatic error capture
+- **Performance Monitoring** for optimization insights
+- **Source Maps** for detailed stack traces
+- **Session Replay** for debugging user interactions
+- **Custom Configuration** - easily customizable
 
 ### 🌙 **Smart Dark Mode**
 
