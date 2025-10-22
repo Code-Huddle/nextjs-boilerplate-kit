@@ -54,7 +54,11 @@ CORE APPLICATION CONFIGURATION
   Supabase Auth - Real-time auth with database
   None - Add authentication later
 
-📁 Choose your ORM (Object-Relational Mapping):
+👥 Enable Role-Based Authentication (Admin/User roles)? (if Supabase selected)
+❯ Yes
+  No
+
+📁 Choose your ORM (Object-Relational Mapping): (hidden if Supabase selected)
 ❯ None - Add database operations later
   Drizzle - Lightweight, type-safe TypeScript ORM
   Prisma - Powerful database toolkit with introspection
@@ -100,13 +104,16 @@ DEVELOPMENT & DEPLOYMENT
 ❯ Yes
   No
 
+🔍 Include Sentry for error monitoring and performance tracking?
+❯ Yes
+  No
+
 🚀 Creating project in 'my-awesome-app'...
 
 🎉 Project created successfully!
 
 📋 Configuration Summary:
    🔐 Auth: NextAuth
-   📁 ORM: None
    💳 Payments: None
    📩 Email: Enabled
    📊 Dashboard: Enabled
@@ -114,6 +121,7 @@ DEVELOPMENT & DEPLOYMENT
    📚 Storybook: Enabled
    🐳 Docker: Enabled
    🔍 Sentry: Enabled
+   📁 ORM: None
    🌙 Dark Mode: Enabled
 
 🚀 Next Steps:
@@ -161,26 +169,32 @@ Choose from multiple authentication providers, each with complete implementation
   None - Add authentication later
 ```
 
-### 📁 **Database ORM Integration**
+### 📁 **Smart Database ORM Integration**
 
-Choose your preferred Object-Relational Mapping solution:
+Intelligent ORM selection with modern test interfaces:
 
 | ORM | Features | Use Case |
 |-----|----------|----------|
-| **Drizzle** | Lightweight, type-safe TypeScript ORM | Fast, minimal database operations |
-| **Prisma** | Powerful database toolkit with introspection | Feature-rich applications with complex queries |
-| **None** | No database operations | Simple apps or custom database setup later |
+| **Drizzle** | Lightweight, type-safe TypeScript ORM with zero runtime overhead | Fast, minimal database operations |
+| **Prisma** | Powerful database toolkit with introspection and migrations | Feature-rich applications with complex queries |
+| **None** | No database operations (auto-selected with Supabase Auth) | Simple apps or custom database setup later |
+
+**Smart Logic:**
+- **Supabase Auth** → Automatically selects None ORM (Supabase handles database)
+- **Other Auth** → Shows ORM selection prompt
+- **Modern Test Pages** with setup instructions and interactive CRUD operations
 
 **Features Included:**
-- **Complete CRUD Operations** with React Query hooks
-- **API Routes** for all database operations (`/api/users`, `/api/posts`)
-- **Test Pages** with modern UI for database testing (`/test-orm`)
+- **Users-Only CRUD** operations with React Query hooks
+- **API Routes** for user management (`/api/users`)
+- **Modern Test Pages** with setup instructions (`/test-orm`)
 - **Type-Safe Queries** with full TypeScript support
 - **Database Schema** definitions and migrations
+- **Setup Instructions** for each ORM with proper commands
 
 **Example CLI Flow:**
 ```bash
-📁 Choose your ORM (Object-Relational Mapping):
+📁 Choose your ORM (Object-Relational Mapping): (hidden if Supabase selected)
 ❯ None - Add database operations later
   Drizzle - Lightweight, type-safe TypeScript ORM
   Prisma - Powerful database toolkit with introspection
@@ -269,11 +283,13 @@ Intelligent theme system:
 - **Zod** - TypeScript-first validation
 
 ### **Database & ORM**
-- **Drizzle ORM** - Lightweight, type-safe TypeScript ORM
-- **Prisma** - Powerful database toolkit with introspection
+- **Drizzle ORM** - Lightweight, type-safe TypeScript ORM with zero runtime overhead
+- **Prisma** - Powerful database toolkit with introspection and migrations
 - **PostgreSQL** - Primary database support
+- **Smart ORM Selection** - Auto-selects None ORM when Supabase Auth is chosen
 - **Database Migrations** - Schema versioning and updates
 - **Type-Safe Queries** - Full TypeScript integration
+- **Modern Test Pages** - Interactive database testing with setup instructions
 
 ### **Development Tools**
 - **Vitest** - Fast unit testing
