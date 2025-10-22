@@ -45,16 +45,23 @@ npx nextjs-boilerplate-kit my-awesome-app
 🌟 Welcome to nextjs-boilerplate-kit!
    Let's create your modern Next.js application
 
+===============================
+CORE APPLICATION CONFIGURATION
+===============================
+
 🔐 Choose your authentication provider:
 ❯ NextAuth.js - Complete auth with OAuth providers
   Supabase Auth - Real-time auth with database
   None - Add authentication later
 
-👥 Enable Role-Based Authentication (Admin/User roles)?
-❯ No
+📁 Choose your ORM (Object-Relational Mapping):
+❯ None - Add database operations later
+  Drizzle - Lightweight, type-safe TypeScript ORM
+  Prisma - Powerful database toolkit with introspection
 
-🌙 Enable dark mode toggle in your app?
-❯ Yes
+===============================
+PAYMENT & COMMUNICATION
+===============================
 
 💳 Choose your Stripe integration:
 ❯ None - Add payments later
@@ -63,21 +70,35 @@ npx nextjs-boilerplate-kit my-awesome-app
 
 📩 Include Email module (Nodemailer) for transactional emails?
 ❯ Yes
+  No
+
+===============================
+UI & USER EXPERIENCE
+===============================
+
+🌙 Enable dark mode toggle in your app?
+❯ Yes
+  No
 
 📊 Include a Dashboard page (graphs, tables, stats)?
 ❯ Yes
-
-📚 Include Storybook for UI component development?
-❯ Yes
+  No
 
 📱 Include PWA (Progressive Web App) support?
 ❯ Yes
+  No
+
+===============================
+DEVELOPMENT & DEPLOYMENT
+===============================
+
+📚 Include Storybook for UI component development?
+❯ Yes
+  No
 
 🐳 Include Docker configuration for containerization?
 ❯ Yes
-
-🔍 Include Sentry for error monitoring and performance tracking?
-❯ Yes
+  No
 
 🚀 Creating project in 'my-awesome-app'...
 
@@ -85,6 +106,7 @@ npx nextjs-boilerplate-kit my-awesome-app
 
 📋 Configuration Summary:
    🔐 Auth: NextAuth
+   📁 ORM: None
    💳 Payments: None
    📩 Email: Enabled
    📊 Dashboard: Enabled
@@ -137,6 +159,31 @@ Choose from multiple authentication providers, each with complete implementation
 ❯ NextAuth.js - Complete auth with OAuth providers
   Supabase Auth - Real-time auth with database  
   None - Add authentication later
+```
+
+### 📁 **Database ORM Integration**
+
+Choose your preferred Object-Relational Mapping solution:
+
+| ORM | Features | Use Case |
+|-----|----------|----------|
+| **Drizzle** | Lightweight, type-safe TypeScript ORM | Fast, minimal database operations |
+| **Prisma** | Powerful database toolkit with introspection | Feature-rich applications with complex queries |
+| **None** | No database operations | Simple apps or custom database setup later |
+
+**Features Included:**
+- **Complete CRUD Operations** with React Query hooks
+- **API Routes** for all database operations (`/api/users`, `/api/posts`)
+- **Test Pages** with modern UI for database testing (`/test-orm`)
+- **Type-Safe Queries** with full TypeScript support
+- **Database Schema** definitions and migrations
+
+**Example CLI Flow:**
+```bash
+📁 Choose your ORM (Object-Relational Mapping):
+❯ None - Add database operations later
+  Drizzle - Lightweight, type-safe TypeScript ORM
+  Prisma - Powerful database toolkit with introspection
 ```
 
 ### 💳 **Flexible Payment Integration**
@@ -220,6 +267,13 @@ Intelligent theme system:
 - **TanStack Query** - Server state management
 - **React Hook Form** - Performant forms
 - **Zod** - TypeScript-first validation
+
+### **Database & ORM**
+- **Drizzle ORM** - Lightweight, type-safe TypeScript ORM
+- **Prisma** - Powerful database toolkit with introspection
+- **PostgreSQL** - Primary database support
+- **Database Migrations** - Schema versioning and updates
+- **Type-Safe Queries** - Full TypeScript integration
 
 ### **Development Tools**
 - **Vitest** - Fast unit testing

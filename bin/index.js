@@ -166,6 +166,10 @@ program
     }
 
     try {
+      // ===============================
+      // CORE APPLICATION CONFIGURATION
+      // ===============================
+      
       // Prompt for authentication choice
       const { authProvider } = await inquirer.prompt([
         {
@@ -195,16 +199,29 @@ program
         enableRoleBasedAuth = includeRoleBasedAuth;
       }
 
-      // Prompt for dark mode choice
-      const { enableDarkMode } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'enableDarkMode',
-          message: '🌙 Enable dark mode toggle in your app?',
-          default: true,
-        },
-      ]);
+      // Prompt for ORM choice unless Supabase auth is selected
+      let ormChoice = 'None';
+      if (authProvider !== 'Supabase') {
+        const ormAnswer = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'ormChoice',
+            message: '📁 Choose your ORM (Object-Relational Mapping):',
+            choices: [
+              { name: 'None - Add database operations later', value: 'None' },
+              { name: 'Drizzle - Lightweight, type-safe TypeScript ORM', value: 'Drizzle' },
+              { name: 'Prisma - Powerful database toolkit with introspection', value: 'Prisma' }
+            ],
+            default: 'None',
+          },
+        ]);
+        ormChoice = ormAnswer.ormChoice;
+      }
 
+      // ===============================
+      // PAYMENT & COMMUNICATION
+      // ===============================
+      
       // Prompt for Stripe integration choice
       const { stripeIntegration } = await inquirer.prompt([
         {
@@ -230,6 +247,20 @@ program
         },
       ]);
 
+      // ===============================
+      // UI & USER EXPERIENCE
+      // ===============================
+      
+      // Prompt for dark mode choice
+      const { enableDarkMode } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'enableDarkMode',
+          message: '🌙 Enable dark mode toggle in your app?',
+          default: true,
+        },
+      ]);
+
       // Prompt for Dashboard page
       const { includeDashboard } = await inquirer.prompt([
         {
@@ -240,22 +271,26 @@ program
         },
       ]);
 
-      // Prompt for Storybook module
-      const { includeStorybook } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'includeStorybook',
-          message: '📚 Include Storybook for UI component development?',
-          default: false,
-        },
-      ]);
-
       // Prompt for PWA support
       const { includePWA } = await inquirer.prompt([
         {
           type: 'confirm',
           name: 'includePWA',
           message: '📱 Include PWA (Progressive Web App) support?',
+          default: false,
+        },
+      ]);
+
+      // ===============================
+      // DEVELOPMENT & DEPLOYMENT
+      // ===============================
+      
+      // Prompt for Storybook module
+      const { includeStorybook } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'includeStorybook',
+          message: '📚 Include Storybook for UI component development?',
           default: false,
         },
       ]);
@@ -365,6 +400,10 @@ program
       // Track selected modules for environment merging
       const selectedModules = [];
 
+      // ===============================
+      // CORE APPLICATION CONFIGURATION
+      // ===============================
+      
       console.log(chalk.gray('   🔐 Configuring authentication...'));
       if (authProvider === 'NextAuth') {
         const nextAuthModuleDir = path.join(modulesDir, 'auth-nextauth');
@@ -388,6 +427,35 @@ program
         await fs.copy(noneModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
       }
 
+      // Configure ORM module
+      if (ormChoice !== 'None') {
+        console.log(chalk.gray(`   📁 Configuring ${ormChoice} ORM...`));
+        const ormModuleDir = path.join(modulesDir, `orm-${ormChoice.toLowerCase()}`);
+        await fs.copy(ormModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
+        
+        if (ormChoice === 'Drizzle') {
+          ensureDeps({ 
+            'drizzle-orm': '^0.36.4',
+            'drizzle-kit': '^0.28.0',
+            'postgres': '^3.4.4'
+          });
+          selectedModules.push('orm-drizzle');
+        } else if (ormChoice === 'Prisma') {
+          ensureDeps({ 
+            '@prisma/client': '^5.22.0',
+            'prisma': '^5.22.0'
+          });
+          selectedModules.push('orm-prisma');
+        }
+        
+        await mergeEnvFiles(targetDir, selectedModules);
+        console.log(chalk.green(`   ✅ ${ormChoice} ORM configuration added`));
+      }
+
+      // ===============================
+      // PAYMENT & COMMUNICATION
+      // ===============================
+      
       // Merge selected Stripe module
       console.log(chalk.gray('   💳 Configuring payments...'));
       if (stripeIntegration === 'OneTime') {
@@ -451,6 +519,10 @@ program
         await mergeEnvFiles(targetDir, selectedModules);
       }
 
+      // ===============================
+      // UI & USER EXPERIENCE
+      // ===============================
+      
       // Configure Dashboard module
       if (includeDashboard) {
         console.log(chalk.gray('   📊 Configuring dashboard...'));
@@ -469,42 +541,6 @@ program
 
         // Copy dashboard module files
         await fs.copy(dashboardModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-      }
-
-      // Configure Storybook module (optional)
-      if (includeStorybook) {
-        console.log(chalk.gray('   📚 Configuring Storybook...'));
-        const storybookModuleDir = path.join(modulesDir, 'storybook');
-        // Copy module files but DO NOT overwrite the project's package.json
-        await fs.copy(storybookModuleDir, targetDir, {
-          overwrite: true,
-          filter: (src) => !['package.json', '.env.example'].includes(path.basename(src)),
-        });
-
-        // Merge Storybook scripts and devDependencies into already loaded projectPkg
-        const storybookPkgPath = path.join(storybookModuleDir, 'package.json');
-        if (await fs.pathExists(storybookPkgPath)) {
-          const storybookPkg = await fs.readJson(storybookPkgPath);
-          projectPkg.scripts = projectPkg.scripts || {};
-          if (storybookPkg.scripts) {
-            Object.assign(projectPkg.scripts, storybookPkg.scripts);
-          }
-          projectPkg.devDependencies = projectPkg.devDependencies || {};
-          if (storybookPkg.devDependencies) {
-            Object.assign(projectPkg.devDependencies, storybookPkg.devDependencies);
-          }
-        }
-
-        // Ensure tsconfig includes .storybook files
-        const tsconfigPath = path.join(targetDir, 'tsconfig.json');
-        if (await fs.pathExists(tsconfigPath)) {
-          const tsconfig = await readJsonc(tsconfigPath);
-          tsconfig.include = tsconfig.include || [];
-          if (!tsconfig.include.includes('.storybook/*.ts')) {
-            tsconfig.include.push('.storybook/*.ts');
-          }
-          await fs.writeJson(tsconfigPath, tsconfig, { spaces: 2 });
-        }
       }
 
       // Configure PWA (optional)
@@ -543,6 +579,46 @@ program
           }
 
           await fs.writeFile(projectNextConfigPath, cfg, 'utf8');
+        }
+      }
+
+      // ===============================
+      // DEVELOPMENT & DEPLOYMENT
+      // ===============================
+      
+      // Configure Storybook module (optional)
+      if (includeStorybook) {
+        console.log(chalk.gray('   📚 Configuring Storybook...'));
+        const storybookModuleDir = path.join(modulesDir, 'storybook');
+        // Copy module files but DO NOT overwrite the project's package.json
+        await fs.copy(storybookModuleDir, targetDir, {
+          overwrite: true,
+          filter: (src) => !['package.json', '.env.example'].includes(path.basename(src)),
+        });
+
+        // Merge Storybook scripts and devDependencies into already loaded projectPkg
+        const storybookPkgPath = path.join(storybookModuleDir, 'package.json');
+        if (await fs.pathExists(storybookPkgPath)) {
+          const storybookPkg = await fs.readJson(storybookPkgPath);
+          projectPkg.scripts = projectPkg.scripts || {};
+          if (storybookPkg.scripts) {
+            Object.assign(projectPkg.scripts, storybookPkg.scripts);
+          }
+          projectPkg.devDependencies = projectPkg.devDependencies || {};
+          if (storybookPkg.devDependencies) {
+            Object.assign(projectPkg.devDependencies, storybookPkg.devDependencies);
+          }
+        }
+
+        // Ensure tsconfig includes .storybook files
+        const tsconfigPath = path.join(targetDir, 'tsconfig.json');
+        if (await fs.pathExists(tsconfigPath)) {
+          const tsconfig = await readJsonc(tsconfigPath);
+          tsconfig.include = tsconfig.include || [];
+          if (!tsconfig.include.includes('.storybook/*.ts')) {
+            tsconfig.include.push('.storybook/*.ts');
+          }
+          await fs.writeJson(tsconfigPath, tsconfig, { spaces: 2 });
         }
       }
 
@@ -618,6 +694,31 @@ export default `
         console.log(chalk.green('   ✅ Sentry configuration added'));
       }
 
+      // Configure ORM module
+      if (ormChoice !== 'None') {
+        console.log(chalk.gray(`   📁 Configuring ${ormChoice} ORM...`));
+        const ormModuleDir = path.join(modulesDir, `orm-${ormChoice.toLowerCase()}`);
+        await fs.copy(ormModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
+        
+        if (ormChoice === 'Drizzle') {
+          ensureDeps({ 
+            'drizzle-orm': '^0.36.4',
+            'drizzle-kit': '^0.28.0',
+            'postgres': '^3.4.4'
+          });
+          selectedModules.push('orm-drizzle');
+        } else if (ormChoice === 'Prisma') {
+          ensureDeps({ 
+            '@prisma/client': '^5.22.0',
+            'prisma': '^5.22.0'
+          });
+          selectedModules.push('orm-prisma');
+        }
+        
+        await mergeEnvFiles(targetDir, selectedModules);
+        console.log(chalk.green(`   ✅ ${ormChoice} ORM configuration added`));
+      }
+
       // Inject configuration into landing page
       console.log(chalk.gray('   📝 Customizing landing page...'));
       const pagePath = path.join(targetDir, 'src', 'app', '[locale]', '(main)', 'page.tsx');
@@ -668,11 +769,16 @@ export default `
         const sentryMsg = includeSentry
           ? 'Sentry monitoring enabled. Configure <code>NEXT_PUBLIC_SENTRY_DSN</code> in your environment variables.'
           : '';
+        const ormMsg = ormChoice !== 'None'
+          ? `${ormChoice} ORM enabled. Test database operations on the <a href="/test-orm" class="underline text-futuristic hover:text-futuristic/80 transition-colors">Test ORM</a> page.`
+          : 'No ORM selected. Database operations are not configured.';
         pageContent = pageContent.replaceAll('__DASHBOARD_MESSAGE__', dashboardMsg);
         pageContent = pageContent.replaceAll('__PWA_MESSAGE__', pwaMsg);
         pageContent = pageContent.replaceAll('__STORYBOOK_MESSAGE__', storybookMsg);
         pageContent = pageContent.replaceAll('__DOCKER_MESSAGE__', dockerMsg);
         pageContent = pageContent.replaceAll('__SENTRY_MESSAGE__', sentryMsg);
+        pageContent = pageContent.replaceAll('__ORM_MESSAGE__', ormMsg);
+        pageContent = pageContent.replaceAll('__ORM_TYPE__', ormChoice);
         await fs.writeFile(pagePath, pageContent, 'utf8');
       }
 
@@ -696,6 +802,7 @@ export default `
       console.log(chalk.cyan(`   📚 Storybook: ${includeStorybook ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   🐳 Docker: ${includeDocker ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   🔍 Sentry: ${includeSentry ? 'Enabled' : 'Disabled'}`));
+      console.log(chalk.cyan(`   📁 ORM: ${ormChoice}`));
       console.log(chalk.cyan(`   🌙 Dark Mode: ${enableDarkMode ? 'Enabled' : 'Disabled'}`));
       
       // Next steps

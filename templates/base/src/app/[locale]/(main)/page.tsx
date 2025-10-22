@@ -53,6 +53,8 @@ export default async function Index(props: IIndexProps) {
   const STORYBOOK_MESSAGE = '__STORYBOOK_MESSAGE__';
   const DOCKER_MESSAGE = '__DOCKER_MESSAGE__';
   const SENTRY_MESSAGE = '__SENTRY_MESSAGE__';
+  const ORM_MESSAGE = '__ORM_MESSAGE__';
+  const ORM_TYPE = '__ORM_TYPE__';
   const DARK_MODE_ENABLED = '__DARK_MODE_ENABLED__';
 
   const hasStripe = !STRIPE_INTEGRATION_TYPE.startsWith('__') && (STRIPE_INTEGRATION_TYPE === 'OneTime' || STRIPE_INTEGRATION_TYPE === 'Subscriptions');
@@ -63,6 +65,7 @@ export default async function Index(props: IIndexProps) {
   const hasStorybook = !STORYBOOK_MESSAGE.startsWith('__') && STORYBOOK_MESSAGE.length > 0;
   const hasDocker = !DOCKER_MESSAGE.startsWith('__') && DOCKER_MESSAGE.length > 0;
   const hasSentry = !SENTRY_MESSAGE.startsWith('__') && SENTRY_MESSAGE.length > 0;
+  const hasOrm = !ORM_MESSAGE.startsWith('__') && ORM_MESSAGE.length > 0 && ORM_TYPE !== 'None';
   const showDarkToggle = !DARK_MODE_ENABLED.startsWith('__') && DARK_MODE_ENABLED === 'true';
 
   return (
@@ -346,6 +349,36 @@ export default async function Index(props: IIndexProps) {
                     </div>
                   </div>
                   <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-orange-500/10 opacity-20" />
+                </div>
+              )}
+
+              {/* ORM Card */}
+              {hasOrm && (
+                <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/50">
+                      <svg className="h-5 w-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground mb-1">Database ORM</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {ORM_TYPE === 'None' && 'No ORM selected'}
+                        {ORM_TYPE === 'Drizzle' && 'Drizzle ORM configured'}
+                        {ORM_TYPE === 'Prisma' && 'Prisma ORM configured'}
+                      </p>
+                      {ORM_TYPE !== 'None' && (
+                        <a href="/test-orm" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                          Test Database Operations
+                          <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="absolute -right-2 -top-2 h-16 w-16 rounded-full bg-indigo-500/10 opacity-20" />
                 </div>
               )}
             </div>
