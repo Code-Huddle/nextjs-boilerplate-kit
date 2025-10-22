@@ -16,13 +16,16 @@
 npx nextjs-boilerplate-kit my-app
 # ✨ Interactive prompts guide you through:
 # 🔐 Authentication: NextAuth.js, Supabase, or None
+# 👥 Role-Based Auth: Admin/User roles (if Supabase selected)
+# 📁 ORM: Drizzle, Prisma, or None (hidden if Supabase selected)
 # 💳 Payments: One-time, Subscriptions, or None  
-# 📊 Dashboard: Include analytics dashboard
+# 📩 Email: Nodemailer for transactional emails
+# 🌙 Dark Mode: Theme switching
+# 📊 Dashboard: Analytics dashboard
 # 📱 PWA: Progressive Web App features
 # 📚 Storybook: Component development
 # 🐳 Docker: Containerization
 # 🔍 Sentry: Error monitoring
-# 🌙 Dark Mode: Theme switching
 ```
 
 ## 🚀 Quick Start
