@@ -210,7 +210,8 @@ program
             choices: [
               { name: 'None - Add database operations later', value: 'None' },
               { name: 'Drizzle - Lightweight, type-safe TypeScript ORM', value: 'Drizzle' },
-              { name: 'Prisma - Powerful database toolkit with introspection', value: 'Prisma' }
+              { name: 'Prisma - Powerful database toolkit with introspection', value: 'Prisma' },
+              { name: 'Mongoose - MongoDB object modeling with TypeScript', value: 'Mongoose' }
             ],
             default: 'None',
           },
@@ -446,6 +447,11 @@ program
             'prisma': '^5.22.0'
           });
           selectedModules.push('orm-prisma');
+        } else if (ormChoice === 'Mongoose') {
+          ensureDeps({ 
+            'mongoose': '^8.0.0'
+          });
+          selectedModules.push('orm-mongoose');
         }
         
         await mergeEnvFiles(targetDir, selectedModules);
@@ -713,6 +719,11 @@ export default `
             'prisma': '^5.22.0'
           });
           selectedModules.push('orm-prisma');
+        } else if (ormChoice === 'Mongoose') {
+          ensureDeps({ 
+            'mongoose': '^8.0.0'
+          });
+          selectedModules.push('orm-mongoose');
         }
         
         await mergeEnvFiles(targetDir, selectedModules);

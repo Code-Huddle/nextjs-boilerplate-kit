@@ -17,7 +17,7 @@ npx nextjs-boilerplate-kit my-app
 # ✨ Interactive prompts guide you through:
 # 🔐 Authentication: NextAuth.js, Supabase, or None
 # 👥 Role-Based Auth: Admin/User roles (if Supabase selected)
-# 📁 ORM: Drizzle, Prisma, or None (hidden if Supabase selected)
+# 📁 ORM: Drizzle, Prisma, Mongoose, or None (hidden if Supabase selected)
 # 💳 Payments: One-time, Subscriptions, or None  
 # 📩 Email: Nodemailer for transactional emails
 # 🌙 Dark Mode: Theme switching
@@ -65,6 +65,7 @@ CORE APPLICATION CONFIGURATION
 ❯ None - Add database operations later
   Drizzle - Lightweight, type-safe TypeScript ORM
   Prisma - Powerful database toolkit with introspection
+  Mongoose - MongoDB object modeling with TypeScript
 
 ===============================
 PAYMENT & COMMUNICATION
@@ -180,6 +181,7 @@ Intelligent ORM selection with modern test interfaces:
 |-----|----------|----------|
 | **Drizzle** | Lightweight, type-safe TypeScript ORM with zero runtime overhead | Fast, minimal database operations |
 | **Prisma** | Powerful database toolkit with introspection and migrations | Feature-rich applications with complex queries |
+| **Mongoose** | MongoDB object modeling with TypeScript support and schema validation | MongoDB applications with flexible schema design |
 | **None** | No database operations (auto-selected with Supabase Auth) | Simple apps or custom database setup later |
 
 **Smart Logic:**
@@ -201,6 +203,7 @@ Intelligent ORM selection with modern test interfaces:
 ❯ None - Add database operations later
   Drizzle - Lightweight, type-safe TypeScript ORM
   Prisma - Powerful database toolkit with introspection
+  Mongoose - MongoDB object modeling with TypeScript
 ```
 
 ### 💳 **Flexible Payment Integration**
@@ -288,7 +291,9 @@ Intelligent theme system:
 ### **Database & ORM**
 - **Drizzle ORM** - Lightweight, type-safe TypeScript ORM with zero runtime overhead
 - **Prisma** - Powerful database toolkit with introspection and migrations
-- **PostgreSQL** - Primary database support
+- **Mongoose** - MongoDB object modeling with TypeScript support and schema validation
+- **PostgreSQL** - Primary database support for Drizzle and Prisma
+- **MongoDB** - NoSQL database support for Mongoose
 - **Smart ORM Selection** - Auto-selects None ORM when Supabase Auth is chosen
 - **Database Migrations** - Schema versioning and updates
 - **Type-Safe Queries** - Full TypeScript integration
@@ -407,6 +412,9 @@ STRIPE_SECRET_KEY=sk_test_...
 
 # Email (Nodemailer)
 SMTP_HOST="smtp_...
+
+# Mongoose (MongoDB)
+MONGODB_URI="mongodb://localhost:27017/nextjs-app"
 ```
 
 

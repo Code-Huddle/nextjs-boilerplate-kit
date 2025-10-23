@@ -367,6 +367,7 @@ export default async function Index(props: IIndexProps) {
                         {ORM_TYPE === 'None' && 'No ORM selected'}
                         {ORM_TYPE === 'Drizzle' && 'Drizzle ORM configured'}
                         {ORM_TYPE === 'Prisma' && 'Prisma ORM configured'}
+                        {ORM_TYPE === 'Mongoose' && 'Mongoose ORM configured'}
                       </p>
                       {ORM_TYPE !== 'None' && (
                         <a href="/test-orm" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
