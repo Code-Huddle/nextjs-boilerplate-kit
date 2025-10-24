@@ -445,11 +445,11 @@ docker run -p 3000:3000 my-app
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](https://github.com/Code-Huddle/nextjs-boilerplate-kit) for details.
 
 ## 📄 License
 
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the ISC License - see the [LICENSE](https://github.com/Code-Huddle/nextjs-boilerplate-kit) file for details.
 
 ## 👥 Developers
 
@@ -493,6 +493,6 @@ Meet the team behind nextjs-boilerplate-kit:
 **💜 Made with ♥ by CodeHuddle**  
 **🚀 Happy coding • Join our amazing community!**
 
-[⭐ Star us on GitHub](https://github.com/Code-Huddle/nextjs-boilerplate-kit) • [📦 NPM Package](https://www.npmjs.com/package/nextjs-boilerplate-kit) • [🐦 Follow us](https://twitter.com/codehuddle)
+[⭐ Star us on GitHub](https://github.com/Code-Huddle/nextjs-boilerplate-kit) • [📦 NPM Package](https://www.npmjs.com/package/nextjs-boilerplate-kit) • [🌐 Code Huddle](https://www.code-huddle.com/)
 
 </div>
