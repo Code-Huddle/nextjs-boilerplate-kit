@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,23 +26,6 @@ import Eye from 'lucide-react/dist/esm/icons/eye';
 import User from 'lucide-react/dist/esm/icons/user';
 
 export default function UserPage() {
-  const router = useRouter();
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    try {
-      const role = typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
-      if (role === 'admin') {
-        router.replace('/admin');
-      } else {
-        setReady(true);
-      }
-    } catch {
-      setReady(true);
-    }
-  }, [router]);
-
-  if (!ready) return null;
 
   return (
     <div className="min-h-screen bg-background">

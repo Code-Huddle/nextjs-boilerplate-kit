@@ -14,6 +14,7 @@ import EyeOff from 'lucide-react/dist/esm/icons/eye-off';
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import { signUpWithRole } from '@/lib/supabase';
 import { USER_ROLES } from '@/lib/roles';
+import { getUserData } from '@/lib/cookies';
 
 export function SignUpForm() {
   const [email, setEmail] = useState('');

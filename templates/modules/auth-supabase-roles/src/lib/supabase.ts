@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { User } from '@/types/auth';
+import { setUserData, clearUserData, getUserData } from './cookies';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -20,9 +21,14 @@ export const signUpWithRole = async (email: string, password: string, role: User
 
     if (error) throw error;
 
-    // Store role in localStorage for immediate access
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userRole', role);
+    // Store user data in cookies for middleware access
+    if (data.user && typeof window !== 'undefined') {
+      setUserData({
+        role,
+        id: data.user.id,
+        email: data.user.email || email,
+        name: data.user.user_metadata?.name || data.user.user_metadata?.full_name,
+      });
     }
 
     return { data, error: null };
@@ -40,11 +46,17 @@ export const signInWithEmail = async (email: string, password: string) => {
 
     if (error) throw error;
 
-    // Get user role from metadata or localStorage
-    const role = data.user?.user_metadata?.role || localStorage.getItem('userRole') || 'user';
+    // Get user role from metadata or cookies
+    const role = data.user?.user_metadata?.role || getUserData()?.role || 'user';
     
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userRole', role);
+    // Store user data in cookies for middleware access
+    if (data.user && typeof window !== 'undefined') {
+      setUserData({
+        role,
+        id: data.user.id,
+        email: data.user.email || email,
+        name: data.user.user_metadata?.name || data.user.user_metadata?.full_name,
+      });
     }
 
     return { data, error: null };
@@ -57,8 +69,9 @@ export const signOut = async () => {
   try {
     const { error } = await supabase.auth.signOut();
     
+    // Clear user data from cookies
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('userRole');
+      clearUserData();
     }
     
     if (error) throw error;
@@ -74,7 +87,7 @@ export const getCurrentUser = async () => {
     
     if (error) throw error;
     
-    const role = user?.user_metadata?.role || localStorage.getItem('userRole') || 'user';
+    const role = user?.user_metadata?.role || getUserData()?.role || 'user';
     
     return { user: { ...user, role }, error: null };
   } catch (error: any) {

@@ -417,6 +417,14 @@ program
           await fs.copy(supabaseRolesModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
           ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
           selectedModules.push('auth-supabase-roles');
+          
+          // Replace base middleware with auth-supabase-roles middleware
+          const baseMiddlewarePath = path.join(targetDir, 'src', 'middleware.ts');
+          const authRolesMiddlewarePath = path.join(supabaseRolesModuleDir, 'src', 'middleware.ts');
+          if (await fs.pathExists(authRolesMiddlewarePath)) {
+            await fs.copy(authRolesMiddlewarePath, baseMiddlewarePath, { overwrite: true });
+            console.log(chalk.green('   ✅ Role-based middleware configured'));
+          }
         } else {
         const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
           await fs.copy(supabaseModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });

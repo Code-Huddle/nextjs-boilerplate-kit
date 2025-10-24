@@ -11,6 +11,7 @@ import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import Eye from 'lucide-react/dist/esm/icons/eye';
 import EyeOff from 'lucide-react/dist/esm/icons/eye-off';
 import { signInWithEmail } from '@/lib/supabase';
+import { getUserData } from '@/lib/cookies';
 
 export function SignInForm() {
   const [email, setEmail] = useState('');
@@ -40,7 +41,8 @@ export function SignInForm() {
       }
 
       if (data.user) {
-        const role = (typeof window !== 'undefined' ? localStorage.getItem('userRole') : null) || 'user';
+        const userData = getUserData();
+        const role = userData?.role || 'user';
         router.push(role === 'admin' ? '/admin' : '/user');
         router.refresh();
       }
