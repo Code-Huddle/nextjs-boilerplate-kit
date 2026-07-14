@@ -3,7 +3,8 @@ import CreditCard from 'lucide-react/dist/esm/icons/credit-card';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import User from 'lucide-react/dist/esm/icons/user';
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {

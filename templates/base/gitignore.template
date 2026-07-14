@@ -1,0 +1,40 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# databases
+*.db
+
+# builds and generated output
+/.next
+/out
+/build
+/coverage
+/storybook-static
+/test-results
+/playwright-report
+/playwright/.cache
+.swc/
+
+# environment and secrets
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+*.pem
+
+# deployment and local tools
+.vercel
+.vscode/
+local/
+
+# operating-system and debug files
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import Mail from 'lucide-react/dist/esm/icons/mail';
 import Plus from 'lucide-react/dist/esm/icons/plus';
-import React from 'react';
 import { Button } from '@/components/ui/button';
 
 /**

@@ -14,9 +14,6 @@ export default async function DashboardLayout(props: {
     namespace: 'DashboardLayout',
   });
 
-  // No authentication check - auth is disabled
-  const session = null;
-
   return (
     <BaseTemplate
       leftNav={(

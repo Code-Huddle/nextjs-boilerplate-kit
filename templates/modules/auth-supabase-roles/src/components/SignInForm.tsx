@@ -11,7 +11,6 @@ import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import Eye from 'lucide-react/dist/esm/icons/eye';
 import EyeOff from 'lucide-react/dist/esm/icons/eye-off';
 import { signInWithEmail } from '@/lib/supabase';
-import { getUserData } from '@/lib/cookies';
 
 export function SignInForm() {
   const [email, setEmail] = useState('');
@@ -41,12 +40,11 @@ export function SignInForm() {
       }
 
       if (data.user) {
-        const userData = getUserData();
-        const role = userData?.role || 'user';
+        const role = data.user.app_metadata?.role === 'admin' ? 'admin' : 'user';
         router.push(role === 'admin' ? '/admin' : '/user');
         router.refresh();
       }
-    } catch (err: any) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

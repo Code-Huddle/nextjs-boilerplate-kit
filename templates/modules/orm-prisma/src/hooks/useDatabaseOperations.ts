@@ -1,6 +1,6 @@
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { useQueryClient } from '@tanstack/react-query';
-import type { User } from '@prisma/client';
+import type { User } from '@/generated/prisma/client';
 
 // Users hooks
 export function useUsers() {

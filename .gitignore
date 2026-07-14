@@ -205,3 +205,4 @@ coverage/
 
 # Local Netlify folder
 .netlify
+.matrix/

@@ -10,7 +10,12 @@ export const Env = createEnv({
     LOGTAIL_SOURCE_TOKEN: z.string().optional(),
   },
   client: {
-    NEXT_PUBLIC_APP_URL: z.string().optional(),
+    NEXT_PUBLIC_APP_NAME: z.string().min(1).optional(),
+    NEXT_PUBLIC_APP_DESCRIPTION: z.string().min(1).optional(),
+    NEXT_PUBLIC_APP_URL: z.url().optional(),
+    NEXT_PUBLIC_API_URL: z.url().optional(),
+    NEXT_PUBLIC_TWITTER_HANDLE: z.string().optional(),
+    NEXT_PUBLIC_GA_ID: z.string().optional(),
     // Remove Clerk:
     // NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
     // NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1),
@@ -25,7 +30,12 @@ export const Env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
 
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
+    NEXT_PUBLIC_APP_DESCRIPTION: process.env.NEXT_PUBLIC_APP_DESCRIPTION,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_TWITTER_HANDLE: process.env.NEXT_PUBLIC_TWITTER_HANDLE,
+    NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
     // Remove Clerk:
     // NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     // NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,

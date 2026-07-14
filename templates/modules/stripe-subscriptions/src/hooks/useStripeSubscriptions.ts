@@ -1,105 +1,41 @@
 import { useCallback } from 'react';
 import { useApi, useApiMutation } from '@/hooks/useApi';
 
-type CreateCustomerVars = { email: string; name?: string };
-type CreateCustomerRes = { customerId: string; email: string };
+type Empty = Record<string, never>;
+type Subscription = { id: string; status: string; cancelAtPeriodEnd: boolean } | null;
+type Price = { id: string; unit_amount: number | null; currency: string; product: { name: string } | null } | null;
 
-type CheckoutSessionVars = { priceId: string; customerId: string; successUrl?: string; cancelUrl?: string };
-type CheckoutSessionRes = { sessionId?: string; url?: string; error?: string };
-
-type PortalSessionVars = { customerId: string; returnUrl?: string };
-type PortalSessionRes = { url?: string; error?: string };
-
-type CancelSubscriptionVars = { subscriptionId: string };
-type CancelSubscriptionRes = { subscriptionId: string; status: string; cancelAtPeriodEnd: boolean };
-
-type SubscriptionItem = {
-  price: {
-    id: string;
-    nickname?: string;
-    unit_amount?: number;
-    currency: string;
-    recurring: { interval: string };
-  };
-};
-
-export type SubscriptionRes = {
-  id: string;
-  status: string;
-  current_period_end: number;
-  cancel_at_period_end: boolean;
-  items: { data: SubscriptionItem[] };
-} | null;
-
-async function postStripe<T>(body: unknown): Promise<T> {
-  const res = await fetch('/api/stripe/[...stripe]', {
+async function postStripe<T>(body: object): Promise<T> {
+  const response = await fetch('/api/stripe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const data = await res.json();
-  if (!res.ok || data?.error) {
-    throw new Error(data?.error || 'Request failed');
-  }
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Stripe request failed');
   return data as T;
 }
 
-export function useCreateCustomer(options?: { onSuccess?: (data: CreateCustomerRes, vars: CreateCustomerVars) => void }) {
-  return useApiMutation<CreateCustomerRes, CreateCustomerVars>(
-    (vars) => postStripe<CreateCustomerRes>({ action: 'create-customer', ...vars }),
-    { onSuccess: options?.onSuccess }
+export function useCreateCheckoutSession() {
+  return useApiMutation<{ url: string | null }, { plan: 'monthly' | 'yearly' }>(
+    vars => postStripe({ action: 'checkout', plan: vars.plan }),
   );
 }
 
-export function useCreateCheckoutSession(options?: { onSuccess?: (data: CheckoutSessionRes, vars: CheckoutSessionVars) => void }) {
-  return useApiMutation<CheckoutSessionRes, CheckoutSessionVars>(
-    (vars) => postStripe<CheckoutSessionRes>({ action: 'create-checkout-session', ...vars }),
-    { onSuccess: options?.onSuccess }
-  );
+export function useCreatePortalSession() {
+  return useApiMutation<{ url: string }, Empty>(() => postStripe({ action: 'portal' }));
 }
 
-export function useCreatePortalSession(options?: { onSuccess?: (data: PortalSessionRes, vars: PortalSessionVars) => void }) {
-  return useApiMutation<PortalSessionRes, PortalSessionVars>(
-    (vars) => postStripe<PortalSessionRes>({ action: 'create-portal-session', ...vars }),
-    { onSuccess: options?.onSuccess }
-  );
+export function useCancelSubscription() {
+  return useApiMutation<{ subscription: Subscription }, Empty>(() => postStripe({ action: 'cancel' }));
 }
 
-export function useCancelSubscription(options?: { onSuccess?: (data: CancelSubscriptionRes, vars: CancelSubscriptionVars) => void }) {
-  return useApiMutation<CancelSubscriptionRes, CancelSubscriptionVars>(
-    (vars) => postStripe<CancelSubscriptionRes>({ action: 'cancel-subscription', ...vars }),
-    { onSuccess: options?.onSuccess }
-  );
+export function useSubscriptionStatus() {
+  const queryFn = useCallback(async () => (await postStripe<{ subscription: Subscription }>({ action: 'status' })).subscription, []);
+  return useApi<Subscription>(['stripe', 'subscription'], queryFn, { enabled: true });
 }
-
-export function useSubscriptionStatus(customerId?: string) {
-  const queryFn = useCallback(async () => {
-    const data = await postStripe<{ subscription: SubscriptionRes }>({ action: 'get-subscription-status', customerId });
-    return data.subscription;
-  }, [customerId]);
-
-  return useApi<SubscriptionRes>(
-    ['stripe', 'subscription', customerId || 'none'],
-    queryFn,
-    { enabled: Boolean(customerId) }
-  );
-}
-
-type EnvPrice = {
-  id: string;
-  unit_amount: number | null;
-  currency: string;
-  recurring?: { interval: string } | null;
-  product: { id: string; name: string; description?: string | null } | null;
-} | null;
 
 export function useSubscriptionConfig() {
-  const queryFn = useCallback(async () => {
-    const data = await postStripe<{ config: { monthly: EnvPrice; yearly: EnvPrice } }>({ action: 'get-subscription-config' });
-    return data.config;
-  }, []);
-
-  return useApi<{ monthly: EnvPrice; yearly: EnvPrice }>(['stripe', 'subscription-config'], queryFn, { enabled: true });
+  const queryFn = useCallback(() => postStripe<{ config: { monthly: Price; yearly: Price } }>({ action: 'config' }).then(data => data.config), []);
+  return useApi<{ monthly: Price; yearly: Price }>(['stripe', 'subscription-config'], queryFn, { enabled: true });
 }
-
-

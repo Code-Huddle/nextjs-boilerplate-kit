@@ -1,6 +1,8 @@
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { useQueryClient } from '@tanstack/react-query';
-import type { User, NewUser } from '@/lib/schema';
+import type { User } from '@/lib/schema';
+
+type UserInput = { name: string; email: string };
 
 // Users hooks
 export function useUsers() {
@@ -14,7 +16,7 @@ export function useUsers() {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   
-  return useApiMutation<User, NewUser>(async (userData) => {
+  return useApiMutation<User, UserInput>(async (userData) => {
     const response = await fetch('/api/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -33,7 +35,7 @@ export function useCreateUser() {
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   
-  return useApiMutation<User, { id: number; data: Partial<NewUser> }>(async ({ id, data }) => {
+  return useApiMutation<User, { id: number; data: Partial<UserInput> }>(async ({ id, data }) => {
     const response = await fetch(`/api/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

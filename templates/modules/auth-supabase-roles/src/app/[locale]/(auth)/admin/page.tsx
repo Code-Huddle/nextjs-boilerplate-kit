@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,6 @@ import Database from 'lucide-react/dist/esm/icons/database';
 import Activity from 'lucide-react/dist/esm/icons/activity';
 import Clock from 'lucide-react/dist/esm/icons/clock';
 import UserCheck from 'lucide-react/dist/esm/icons/user-check';
-import UserX from 'lucide-react/dist/esm/icons/user-x';
 import Server from 'lucide-react/dist/esm/icons/server';
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 

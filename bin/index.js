@@ -1,10 +1,28 @@
 #!/usr/bin/env node
 
-const fs = require('fs-extra');
-const path = require('path');
-const { program } = require('commander');
-const inquirer = require('inquirer');
-const chalk = require('chalk');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import chalk from 'chalk';
+import { Command } from 'commander';
+import fs from 'fs-extra';
+import inquirer from 'inquirer';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const program = new Command();
+
+const parseBoolean = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (['true', '1', 'yes'].includes(value.toLowerCase())) return true;
+  if (['false', '0', 'no'].includes(value.toLowerCase())) return false;
+  throw new Error(`Expected a boolean value, received "${value}"`);
+};
+
+const pick = async (provided, fallback, prompt) => {
+  if (provided !== undefined) return provided;
+  if (fallback !== undefined) return fallback;
+  const answer = await inquirer.prompt([prompt]);
+  return answer[prompt.name];
+};
 
 // Utility: read JSON with comments (JSONC) safely
 const readJsonc = async (filePath) => {
@@ -104,7 +122,19 @@ const readJsonc = async (filePath) => {
 program
   .argument('[project-name]', 'Name of the project directory (use "." for current directory)')
   .description('🚀 Generate a modern Next.js project with authentication and dark mode options')
-  .action(async (projectName) => {
+  .option('--yes', 'Run non-interactively using secure defaults')
+  .option('--auth <provider>', 'Authentication: nextauth, supabase, or none')
+  .option('--roles <boolean>', 'Enable Supabase app_metadata roles', parseBoolean)
+  .option('--orm <orm>', 'ORM: none, drizzle, prisma, or mongoose')
+  .option('--payments <mode>', 'Payments: none, one-time, or subscriptions')
+  .option('--email <boolean>', 'Include the protected email module', parseBoolean)
+  .option('--dark-mode <boolean>', 'Include dark mode', parseBoolean)
+  .option('--dashboard <boolean>', 'Include dashboard', parseBoolean)
+  .option('--pwa <boolean>', 'Include PWA assets', parseBoolean)
+  .option('--storybook <boolean>', 'Include Storybook', parseBoolean)
+  .option('--docker <boolean>', 'Include Docker assets', parseBoolean)
+  .option('--sentry <boolean>', 'Include Sentry', parseBoolean)
+  .action(async (projectName, options) => {
     // Welcome message
     console.log(chalk.cyan.bold('\n🌟 Welcome to nextjs-boilerplate-kit!'));
     console.log(chalk.gray('   Let\'s create your modern Next.js application\n'));
@@ -128,6 +158,10 @@ program
         },
       ]);
       projectName = answers.projectName;
+    }
+
+    if (projectName !== '.' && !/^[a-zA-Z0-9_-]+$/.test(projectName)) {
+      throw new Error('Project name can only contain letters, numbers, hyphens, or underscores.');
     }
 
     // Determine target directory
@@ -170,9 +204,10 @@ program
       // CORE APPLICATION CONFIGURATION
       // ===============================
       
-      // Prompt for authentication choice
-      const { authProvider } = await inquirer.prompt([
-        {
+      const authValues = { nextauth: 'NextAuth', supabase: 'Supabase', none: 'None' };
+      const authOption = options.auth?.toLowerCase();
+      if (authOption && !authValues[authOption]) throw new Error(`Unsupported auth provider: ${options.auth}`);
+      const authProvider = await pick(authOption ? authValues[authOption] : undefined, options.yes ? 'NextAuth' : undefined, {
           type: 'list',
           name: 'authProvider',
           message: '🔐 Choose your authentication provider:',
@@ -182,28 +217,25 @@ program
             { name: 'None - Add authentication later', value: 'None' }
           ],
           default: 'NextAuth',
-        },
-      ]);
+      });
 
       // Prompt for role-based authentication if Supabase is selected
       let enableRoleBasedAuth = false;
       if (authProvider === 'Supabase') {
-        const { includeRoleBasedAuth } = await inquirer.prompt([
-          {
+        enableRoleBasedAuth = await pick(options.roles, options.yes ? false : undefined, {
             type: 'confirm',
             name: 'includeRoleBasedAuth',
             message: '👥 Enable Role-Based Authentication (Admin/User roles)?',
             default: false,
-          },
-        ]);
-        enableRoleBasedAuth = includeRoleBasedAuth;
+        });
       }
 
-      // Prompt for ORM choice unless Supabase auth is selected
+      // Prompt for ORM choice independently of authentication.
       let ormChoice = 'None';
-      if (authProvider !== 'Supabase') {
-        const ormAnswer = await inquirer.prompt([
-          {
+      const ormValues = { none: 'None', drizzle: 'Drizzle', prisma: 'Prisma', mongoose: 'Mongoose' };
+      const ormOption = options.orm?.toLowerCase();
+      if (ormOption && !ormValues[ormOption]) throw new Error(`Unsupported ORM: ${options.orm}`);
+      ormChoice = await pick(ormOption ? ormValues[ormOption] : undefined, options.yes ? 'None' : undefined, {
             type: 'list',
             name: 'ormChoice',
             message: '📁 Choose your ORM (Object-Relational Mapping):',
@@ -214,18 +246,17 @@ program
               { name: 'Mongoose - MongoDB object modeling with TypeScript', value: 'Mongoose' }
             ],
             default: 'None',
-          },
-        ]);
-        ormChoice = ormAnswer.ormChoice;
-      }
+      });
 
       // ===============================
       // PAYMENT & COMMUNICATION
       // ===============================
       
       // Prompt for Stripe integration choice
-      const { stripeIntegration } = await inquirer.prompt([
-        {
+      const paymentValues = { none: 'None', 'one-time': 'OneTime', onetime: 'OneTime', subscriptions: 'Subscriptions' };
+      const paymentOption = options.payments?.toLowerCase();
+      if (paymentOption && !paymentValues[paymentOption]) throw new Error(`Unsupported payment mode: ${options.payments}`);
+      const stripeIntegration = await pick(paymentOption ? paymentValues[paymentOption] : undefined, options.yes ? 'None' : undefined, {
           type: 'list',
           name: 'stripeIntegration',
           message: '💳 Choose your Stripe integration:',
@@ -235,91 +266,94 @@ program
             { name: 'Subscriptions - Recurring billing and subscriptions', value: 'Subscriptions' }
           ],
           default: 'None',
-        },
-      ]);
+      });
 
       // Prompt for Email (Nodemailer) module
-      const { includeResend } = await inquirer.prompt([
-        {
+      const includeResend = await pick(options.email, options.yes ? false : undefined, {
           type: 'confirm',
           name: 'includeResend',
           message: '📩 Include Email module (Nodemailer) for transactional emails?',
           default: false,
-        },
-      ]);
+      });
 
       // ===============================
       // UI & USER EXPERIENCE
       // ===============================
       
       // Prompt for dark mode choice
-      const { enableDarkMode } = await inquirer.prompt([
-        {
+      const enableDarkMode = await pick(options.darkMode, options.yes ? true : undefined, {
           type: 'confirm',
           name: 'enableDarkMode',
           message: '🌙 Enable dark mode toggle in your app?',
           default: true,
-        },
-      ]);
+      });
 
       // Prompt for Dashboard page
-      const { includeDashboard } = await inquirer.prompt([
-        {
+      const includeDashboard = await pick(options.dashboard, options.yes ? false : undefined, {
           type: 'confirm',
           name: 'includeDashboard',
           message: '📊 Include a Dashboard page (graphs, tables, stats)?',
           default: false,
-        },
-      ]);
+      });
 
       // Prompt for PWA support
-      const { includePWA } = await inquirer.prompt([
-        {
+      const includePWA = await pick(options.pwa, options.yes ? false : undefined, {
           type: 'confirm',
           name: 'includePWA',
           message: '📱 Include PWA (Progressive Web App) support?',
           default: false,
-        },
-      ]);
+      });
 
       // ===============================
       // DEVELOPMENT & DEPLOYMENT
       // ===============================
       
       // Prompt for Storybook module
-      const { includeStorybook } = await inquirer.prompt([
-        {
+      const includeStorybook = await pick(options.storybook, options.yes ? false : undefined, {
           type: 'confirm',
           name: 'includeStorybook',
           message: '📚 Include Storybook for UI component development?',
           default: false,
-        },
-      ]);
+      });
 
       // Prompt for Docker support
-      const { includeDocker } = await inquirer.prompt([
-        {
+      const includeDocker = await pick(options.docker, options.yes ? false : undefined, {
           type: 'confirm',
           name: 'includeDocker',
           message: '🐳 Include Docker configuration for containerization?',
           default: false,
-        },
-      ]);
+      });
 
       // Prompt for Sentry support
-      const { includeSentry } = await inquirer.prompt([
-        {
+      const includeSentry = await pick(options.sentry, options.yes ? false : undefined, {
           type: 'confirm',
           name: 'includeSentry',
           message: '🔍 Include Sentry for error monitoring and performance tracking?',
           default: false,
-        },
-      ]);
+      });
 
       // Copy the entire base template
       console.log(chalk.blue.bold(`\n🚀 Creating project in ${isCurrentDir ? 'current directory' : `'${projectName}'`}...`));
       console.log(chalk.gray('   📁 Copying base template files...'));
-      await fs.copy(templateDir, targetDir, { overwrite: false });
+      await fs.copy(templateDir, targetDir, {
+        overwrite: false,
+        filter: (src) => {
+          const relative = path.relative(templateDir, src);
+          return !relative.startsWith(path.join('public', 'assets', 'images'));
+        },
+      });
+
+      // npm excludes nested dotfiles such as .gitignore and .npmrc from package
+      // tarballs. Ship publish-safe aliases and restore the intended names here.
+      for (const [sourceName, targetName] of [
+        ['gitignore.template', '.gitignore'],
+        ['npmrc.template', '.npmrc'],
+      ]) {
+        const source = path.join(targetDir, sourceName);
+        if (await fs.pathExists(source)) {
+          await fs.move(source, path.join(targetDir, targetName), { overwrite: true });
+        }
+      }
       console.log(chalk.green('   ✅ Base template copied successfully'));
 
       // Merge selected auth module
@@ -334,6 +368,13 @@ program
         projectPkg.dependencies = projectPkg.dependencies || {};
         Object.entries(deps).forEach(([name, version]) => {
           projectPkg.dependencies[name] = version;
+        });
+      };
+
+      const ensureDevDeps = (deps) => {
+        projectPkg.devDependencies = projectPkg.devDependencies || {};
+        Object.entries(deps).forEach(([name, version]) => {
+          projectPkg.devDependencies[name] = version;
         });
       };
 
@@ -409,27 +450,19 @@ program
       if (authProvider === 'NextAuth') {
         const nextAuthModuleDir = path.join(modulesDir, 'auth-nextauth');
         await fs.copy(nextAuthModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        ensureDeps({ 'next-auth': '^5.0.0-beta.25' });
+        ensureDeps({ 'next-auth': '5.0.0-beta.31' });
         selectedModules.push('auth-nextauth');
       } else if (authProvider === 'Supabase') {
         if (enableRoleBasedAuth) {
           const supabaseRolesModuleDir = path.join(modulesDir, 'auth-supabase-roles');
           await fs.copy(supabaseRolesModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-          ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
+          ensureDeps({ '@supabase/ssr': '^0.12.3', '@supabase/supabase-js': '^2.110.5' });
           selectedModules.push('auth-supabase-roles');
-          
-          // Replace base middleware with auth-supabase-roles middleware
-          const baseMiddlewarePath = path.join(targetDir, 'src', 'middleware.ts');
-          const authRolesMiddlewarePath = path.join(supabaseRolesModuleDir, 'src', 'middleware.ts');
-          if (await fs.pathExists(authRolesMiddlewarePath)) {
-            await fs.copy(authRolesMiddlewarePath, baseMiddlewarePath, { overwrite: true });
-            console.log(chalk.green('   ✅ Role-based middleware configured'));
-          }
         } else {
-        const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
+          const supabaseModuleDir = path.join(modulesDir, 'auth-supabase');
           await fs.copy(supabaseModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        ensureDeps({ '@supabase/supabase-js': '^2.47.10' });
-        selectedModules.push('auth-supabase');
+          ensureDeps({ '@supabase/ssr': '^0.12.3', '@supabase/supabase-js': '^2.110.5' });
+          selectedModules.push('auth-supabase');
         }
       } else if (authProvider === 'None') {
         const noneModuleDir = path.join(modulesDir, 'auth-none');
@@ -444,21 +477,19 @@ program
         
         if (ormChoice === 'Drizzle') {
           ensureDeps({ 
-            'drizzle-orm': '^0.36.4',
-            'drizzle-kit': '^0.28.0',
+            'drizzle-orm': '^0.45.2',
             'postgres': '^3.4.4'
           });
+          ensureDevDeps({ 'drizzle-kit': '^0.31.10' });
           selectedModules.push('orm-drizzle');
         } else if (ormChoice === 'Prisma') {
-          ensureDeps({ 
-            '@prisma/client': '^5.22.0',
-            'prisma': '^5.22.0'
-          });
+          ensureDeps({ '@prisma/adapter-pg': '^7.8.0', '@prisma/client': '^7.8.0', 'pg': '^8.16.3' });
+          ensureDevDeps({ '@types/pg': '^8.15.5', 'dotenv': '^17.2.3', 'prisma': '^7.8.0' });
+          projectPkg.scripts = projectPkg.scripts || {};
+          projectPkg.scripts.postinstall = 'prisma generate';
           selectedModules.push('orm-prisma');
         } else if (ormChoice === 'Mongoose') {
-          ensureDeps({ 
-            'mongoose': '^8.0.0'
-          });
+          ensureDeps({ 'mongoose': '^9.7.4' });
           selectedModules.push('orm-mongoose');
         }
         
@@ -476,18 +507,18 @@ program
         const stripeOneTimeModuleDir = path.join(modulesDir, 'stripe-one-time');
         await fs.copy(stripeOneTimeModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 
-          'stripe': '^16.0.0',
-          '@stripe/stripe-js': '^4.0.0',
-          '@stripe/react-stripe-js': '^2.0.0'
+          'stripe': '^22.3.1',
+          '@stripe/stripe-js': '^9.9.0',
+          '@stripe/react-stripe-js': '^6.7.0'
         });
         selectedModules.push('stripe-one-time');
       } else if (stripeIntegration === 'Subscriptions') {
         const stripeSubscriptionsModuleDir = path.join(modulesDir, 'stripe-subscriptions');
         await fs.copy(stripeSubscriptionsModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         ensureDeps({ 
-          'stripe': '^16.0.0',
-          '@stripe/stripe-js': '^4.0.0',
-          '@stripe/react-stripe-js': '^2.0.0'
+          'stripe': '^22.3.1',
+          '@stripe/stripe-js': '^9.9.0',
+          '@stripe/react-stripe-js': '^6.7.0'
         });
         selectedModules.push('stripe-subscriptions');
       }
@@ -507,7 +538,7 @@ program
         }
         const requiredKeys = [
           'NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url',
-          'NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key',
+          'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key',
         ];
         let appended = false;
         for (const line of requiredKeys) {
@@ -528,7 +559,8 @@ program
         console.log(chalk.gray('   📩 Configuring email...'));
         const emailModuleDir = path.join(modulesDir, 'nodemailer-email');
         await fs.copy(emailModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        ensureDeps({ 'nodemailer': '^6.9.13' });
+        ensureDeps({ 'nodemailer': '^9.0.3' });
+        ensureDevDeps({ '@types/nodemailer': '^7.0.4' });
         selectedModules.push('nodemailer-email');
         await mergeEnvFiles(targetDir, selectedModules);
       }
@@ -561,39 +593,11 @@ program
       if (includePWA) {
         console.log(chalk.gray('   📱 Configuring PWA...'));
         const pwaModuleDir = path.join(modulesDir, 'pwa');
-        await fs.copy(pwaModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        // Ensure next-pwa is installed
-        ensureDeps({ 'next-pwa': '^5.6.0' });
-
-        // Smoothly wrap next.config.ts with next-pwa
-        const projectNextConfigPath = path.join(targetDir, 'next.config.ts');
-        if (await fs.pathExists(projectNextConfigPath)) {
-          let cfg = await fs.readFile(projectNextConfigPath, 'utf8');
-
-          // Add import if missing
-          if (!cfg.includes("from 'next-pwa'")) {
-            cfg = `import withPWA from 'next-pwa';\n` + cfg;
-          }
-
-          // Add configured wrapper const if missing
-          if (!cfg.includes('const withPWAConfigured')) {
-            cfg = cfg.replace(
-              /export default\s+/, 
-              "const withPWAConfigured = withPWA({ dest: 'public', register: true, skipWaiting: true, disable: process.env.NODE_ENV === 'development' });\n\nexport default "
-            );
-          }
-
-          // Wrap the export call: export default withPWAConfigured(<existingExportExpression>);
-          if (!cfg.includes('export default withPWAConfigured(')) {
-            cfg = cfg.replace(/export default\s*([\s\S]*?);\s*$/m, (m, expr) => {
-              // Trim potential trailing commas/spaces that can break wrapping
-              const cleaned = expr.replace(/,\s*\)$/g, ')');
-              return `export default withPWAConfigured(${cleaned});`;
-            });
-          }
-
-          await fs.writeFile(projectNextConfigPath, cfg, 'utf8');
-        }
+        await fs.copy(pwaModuleDir, targetDir, {
+          overwrite: true,
+          filter: (src) => !['.env.example', 'icon-200.jpeg'].includes(path.basename(src)),
+        });
+        console.log(chalk.green('   ✅ PWA manifest and service worker added'));
       }
 
       // ===============================
@@ -650,12 +654,12 @@ program
         const sentryModuleDir = path.join(modulesDir, 'sentry');
         await fs.copy(sentryModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
         // Ensure Sentry is installed
-        ensureDeps({ '@sentry/nextjs': '^8.0.0' });
+        ensureDeps({ '@sentry/nextjs': '^10.65.0' });
         selectedModules.push('sentry');
         // Merge environment variables again to include Sentry
         await mergeEnvFiles(targetDir, selectedModules);
 
-        // Smoothly wrap next.config.ts with Sentry
+        // Wrap next.config.ts with Sentry's current two-argument API.
         const projectNextConfigPath = path.join(targetDir, 'next.config.ts');
         if (await fs.pathExists(projectNextConfigPath)) {
           let cfg = await fs.readFile(projectNextConfigPath, 'utf8');
@@ -665,28 +669,19 @@ program
             cfg = `import { withSentryConfig } from '@sentry/nextjs';\n` + cfg;
           }
 
-          // Add Sentry configuration if missing
-          if (!cfg.includes('const sentryWebpackPluginOptions')) {
-            // Add Sentry configuration before the export statement
+          if (!cfg.includes('const sentryOptions')) {
             cfg = cfg.replace(
               /export default\s+/,
-              `const sentryWebpackPluginOptions = {
-  // Suppresses source map uploading logs during build
+              `const sentryOptions = {
   silent: true,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-};
-
-const sentryNextjsOptions = {
-  // Upload a larger set of source maps for prettier stack traces
   widenClientFileUpload: true,
-  // Automatically annotate React components to show their full name in breadcrumbs
-  reactComponentAnnotation: { enabled: true },
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
   tunnelRoute: '/monitoring',
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-  // Disable Sentry telemetry
+  webpack: {
+    reactComponentAnnotation: { enabled: true },
+    treeshake: { removeDebugLogging: true },
+  },
   telemetry: false,
 };
 
@@ -696,46 +691,24 @@ export default `
 
           // Wrap the export call with Sentry
           if (!cfg.includes('withSentryConfig(')) {
-            cfg = cfg.replace(/export default\s*([\s\S]*?);\s*$/m, (m, expr) => {
-              // Trim potential trailing commas/spaces that can break wrapping
-              const cleaned = expr.replace(/,\s*\)$/g, ')');
-              return `export default withSentryConfig(${cleaned}, sentryWebpackPluginOptions, sentryNextjsOptions);`;
-            });
+            const marker = 'export default ';
+            const exportIndex = cfg.indexOf(marker);
+            if (exportIndex === -1) {
+              throw new Error('Could not find the default export in next.config.ts');
+            }
+
+            const prefix = cfg.slice(0, exportIndex);
+            const exportedExpression = cfg.slice(exportIndex + marker.length).trim();
+            if (!exportedExpression.endsWith(';')) {
+              throw new Error('Expected next.config.ts default export to end with a semicolon');
+            }
+
+            cfg = `${prefix}export default withSentryConfig(${exportedExpression.slice(0, -1)}, sentryOptions);\n`;
           }
 
           await fs.writeFile(projectNextConfigPath, cfg, 'utf8');
         }
         console.log(chalk.green('   ✅ Sentry configuration added'));
-      }
-
-      // Configure ORM module
-      if (ormChoice !== 'None') {
-        console.log(chalk.gray(`   📁 Configuring ${ormChoice} ORM...`));
-        const ormModuleDir = path.join(modulesDir, `orm-${ormChoice.toLowerCase()}`);
-        await fs.copy(ormModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        
-        if (ormChoice === 'Drizzle') {
-          ensureDeps({ 
-            'drizzle-orm': '^0.36.4',
-            'drizzle-kit': '^0.28.0',
-            'postgres': '^3.4.4'
-          });
-          selectedModules.push('orm-drizzle');
-        } else if (ormChoice === 'Prisma') {
-          ensureDeps({ 
-            '@prisma/client': '^5.22.0',
-            'prisma': '^5.22.0'
-          });
-          selectedModules.push('orm-prisma');
-        } else if (ormChoice === 'Mongoose') {
-          ensureDeps({ 
-            'mongoose': '^8.0.0'
-          });
-          selectedModules.push('orm-mongoose');
-        }
-        
-        await mergeEnvFiles(targetDir, selectedModules);
-        console.log(chalk.green(`   ✅ ${ormChoice} ORM configuration added`));
       }
 
       // Inject configuration into landing page
@@ -849,4 +822,4 @@ export default `
     }
   });
 
-program.parse();
+await program.parseAsync();

@@ -3,3 +3,5 @@ node_modules/
 .env
 .git
 .gitignore
+templates/base/public/assets/images/
+templates/modules/pwa/public/icon-200.jpeg

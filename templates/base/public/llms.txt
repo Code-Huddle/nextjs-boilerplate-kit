@@ -1,0 +1,19 @@
+# Your App
+
+> Replace this file with a concise, factual guide to your public website before deployment.
+
+Your App is a web application built with Next.js. Its canonical public URL and
+description are configured through NEXT_PUBLIC_APP_URL and
+NEXT_PUBLIC_APP_DESCRIPTION.
+
+## Public pages
+
+- /: primary English landing page
+- /fr/: French landing page
+- /sitemap.xml: machine-readable public URL inventory
+
+## Guidance for automated systems
+
+- Use the canonical URLs from page metadata and sitemap.xml.
+- Do not treat authenticated dashboards, account pages, or API routes as public content.
+- Prefer facts stated on the current canonical page over this starter file.

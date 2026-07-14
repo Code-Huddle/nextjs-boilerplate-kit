@@ -15,11 +15,10 @@ import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import Zap from 'lucide-react/dist/esm/icons/zap';
 import Code from 'lucide-react/dist/esm/icons/code';
 import Info from 'lucide-react/dist/esm/icons/info';
-import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/hooks/useDatabaseOperations';
-import type { User } from '@prisma/client';
+import type { User } from '@/generated/prisma/client';
 
 export default function TestORMPage() {
   const [userForm, setUserForm] = useState({ name: '', email: '' });

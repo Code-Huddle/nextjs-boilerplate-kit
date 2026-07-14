@@ -1,40 +1,16 @@
 import { useApiMutation } from '@/hooks/useApi';
 
-type CreatePaymentIntentVars = {
-  amount: number;
-  currency?: string;
-  email?: string;
-  metadata?: Record<string, string>;
-};
-
-type CreatePaymentIntentRes = {
+export type PaymentIntentResponse = {
   clientSecret: string;
-  error?: string;
+  amount: number;
+  currency: string;
 };
-
-async function postOneTime<T>(body: unknown): Promise<T> {
-  const res = await fetch('/api/stripe/[...stripe]', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok || data?.error) {
-    throw new Error(data?.error || 'Request failed');
-  }
-  return data as T;
-}
 
 export function useCreatePaymentIntent() {
-  return useApiMutation<CreatePaymentIntentRes, CreatePaymentIntentVars>(
-    (vars) =>
-      postOneTime<CreatePaymentIntentRes>({
-        amount: vars.amount,
-        currency: vars.currency || 'usd',
-        email: vars.email,
-        metadata: { type: 'one-time-payment', ...(vars.metadata || {}) },
-      })
-  );
+  return useApiMutation<PaymentIntentResponse, Record<string, never>>(async () => {
+    const response = await fetch('/api/stripe', { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Payment setup failed');
+    return data as PaymentIntentResponse;
+  });
 }
-
-

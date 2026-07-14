@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
@@ -11,18 +10,32 @@ import { AuthTechBadge } from '@/components/AuthTechBadge';
 import { StripeTechBadge } from '@/components/StripeFeatureCard';
 import { EmailTechBadge } from '@/components/EmailTechBadge';
 import { PWADownloadPrompt } from '@/components/PWADownloadPrompt';
+import { JsonLd } from '@/components/JsonLd';
+import { constructMetadata } from '@/components/Seo';
+import { AppConfig } from '@/utils/AppConfig';
+import { getBaseUrl, getI18nPath } from '@/utils/Helpers';
 
 type IIndexProps = {
   params: Promise<{ locale: string }>;
 };
 
-export async function generateMetadata(props: IIndexProps) {
-  const { locale } = await props.params;
-  console.log('locale', locale);
-  return {
-    title: 'CodeHuddle - Modern Web Development Boilerplate',
-    description: 'A modern Next.js boilerplate with TypeScript, Tailwind CSS, and authentication built by CodeHuddle.',
-  };
+export async function generateMetadata({ params }: IIndexProps) {
+  const { locale } = await params;
+  const baseUrl = getBaseUrl();
+  const canonical = `${baseUrl}${getI18nPath('/', locale)}`;
+  const languages = Object.fromEntries([
+    ...AppConfig.locales.map(item => [item, `${baseUrl}${getI18nPath('/', item)}`]),
+    ['x-default', `${baseUrl}/`],
+  ]);
+
+  return constructMetadata({
+    canonical,
+    languages,
+    openGraph: {
+      locale: locale === 'fr' ? 'fr_FR' : AppConfig.locale,
+      url: canonical,
+    },
+  });
 }
 
 export default async function Index(props: IIndexProps) {
@@ -45,8 +58,8 @@ export default async function Index(props: IIndexProps) {
 
   // Generator placeholders (strings) safely handled at runtime
   const AUTH_MESSAGE = '__AUTH_MESSAGE__';
-  const STRIPE_INTEGRATION_TYPE = '__STRIPE_INTEGRATION_TYPE__';
-  const AUTH_TYPE = '__AUTH_TYPE__';
+  const STRIPE_INTEGRATION_TYPE: string = '__STRIPE_INTEGRATION_TYPE__';
+  const AUTH_TYPE: string = '__AUTH_TYPE__';
   const EMAIL_INTEGRATION = '__EMAIL_INTEGRATION__';
   const DASHBOARD_MESSAGE = '__DASHBOARD_MESSAGE__';
   const PWA_MESSAGE = '__PWA_MESSAGE__';
@@ -54,11 +67,32 @@ export default async function Index(props: IIndexProps) {
   const DOCKER_MESSAGE = '__DOCKER_MESSAGE__';
   const SENTRY_MESSAGE = '__SENTRY_MESSAGE__';
   const ORM_MESSAGE = '__ORM_MESSAGE__';
-  const ORM_TYPE = '__ORM_TYPE__';
+  const ORM_TYPE: string = '__ORM_TYPE__';
   const DARK_MODE_ENABLED = '__DARK_MODE_ENABLED__';
 
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        name: AppConfig.name,
+        url: AppConfig.url,
+        description: AppConfig.description,
+        inLanguage: AppConfig.locales,
+      },
+      {
+        '@type': 'WebApplication',
+        name: AppConfig.name,
+        url: AppConfig.url,
+        description: AppConfig.description,
+        applicationCategory: 'WebApplication',
+        operatingSystem: 'Any',
+      },
+    ],
+  };
+
   const hasStripe = !STRIPE_INTEGRATION_TYPE.startsWith('__') && (STRIPE_INTEGRATION_TYPE === 'OneTime' || STRIPE_INTEGRATION_TYPE === 'Subscriptions');
-  const hasAuth = !AUTH_TYPE.startsWith('__');
+  const hasAuth = !AUTH_TYPE.startsWith('__') && AUTH_TYPE !== 'None';
   const hasEmail = !EMAIL_INTEGRATION.startsWith('__') && EMAIL_INTEGRATION.length > 0;
   const hasDashboard = !DASHBOARD_MESSAGE.startsWith('__') && DASHBOARD_MESSAGE.length > 0;
   const hasPwa = !PWA_MESSAGE.startsWith('__') && PWA_MESSAGE.length > 0;
@@ -70,6 +104,7 @@ export default async function Index(props: IIndexProps) {
 
   return (
     <div className="geometric-bg min-h-screen bg-background">
+      <JsonLd data={structuredData} />
       {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b border-border/20 bg-background/80 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-6 py-4">
@@ -79,7 +114,7 @@ export default async function Index(props: IIndexProps) {
                 href="/"
                 className="text-futuristic text-2xl font-bold transition-all duration-500 hover:scale-105"
               >
-                CodeHuddle
+                {AppConfig.name}
               </Link>
               <a
                 href="https://github.com/codehuddle"
@@ -133,7 +168,7 @@ export default async function Index(props: IIndexProps) {
             <h1 className="text-5xl font-bold leading-tight tracking-tight md:text-6xl lg:text-7xl xl:text-8xl">
               <span className="block text-foreground">Welcome to</span>
               <span className="text-futuristic block">
-                CodeHuddle
+                {AppConfig.name}
               </span>
             </h1>
           </div>
@@ -442,7 +477,7 @@ export default async function Index(props: IIndexProps) {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                title: 'Next.js 15',
+                title: 'Next.js 16',
                 description: 'Built with the latest Next.js App Router for optimal performance and cutting-edge features.',
                 icon: '⚡',
                 gradient: 'from-black to-gray-800',
@@ -468,7 +503,7 @@ export default async function Index(props: IIndexProps) {
               },
               {
                 title: 'Developer Tools',
-                description: 'ESLint, Prettier, Husky, and comprehensive testing setup for smooth development.',
+                description: 'ESLint, TypeScript, Vitest, Playwright, and production build checks for reliable delivery.',
                 icon: '🛠️',
                 gradient: 'from-white to-gray-100',
               },
@@ -579,11 +614,11 @@ export default async function Index(props: IIndexProps) {
               rel="noopener noreferrer"
               className="font-semibold text-primary transition-all duration-300 hover:scale-105 hover:text-primary/80"
             >
-              CodeHuddle
+              {AppConfig.name}
             </a>
           </p>
           <p className="mt-2 text-sm text-muted-foreground/70">
-            Licensed under the MIT License, Copyright © 2024 CodeHuddle.
+            Licensed under the MIT License, Copyright © {new Date().getFullYear()} {AppConfig.author}.
           </p>
         </div>
       </div>

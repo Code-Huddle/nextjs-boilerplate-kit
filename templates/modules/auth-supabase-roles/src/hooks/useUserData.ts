@@ -1,35 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getUserData } from '@/lib/cookies';
+import { useEffect, useState } from 'react';
+import { getCurrentUser } from '@/lib/supabase';
 
-interface UserData {
-  role: string;
-  id: string;
-  email: string;
-  name?: string;
-}
+type UserData = { id: string; email?: string; role: 'user' | 'admin' };
 
 export function useUserData() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const data = getUserData();
-    setUserData(data);
+  const refreshUserData = async () => {
+    const { user } = await getCurrentUser();
+    setUserData(user ? { id: user.id, email: user.email, role: user.role === 'admin' ? 'admin' : 'user' } : null);
     setIsLoading(false);
-  }, []);
-
-  const refreshUserData = () => {
-    const data = getUserData();
-    setUserData(data);
   };
+
+  useEffect(() => { void refreshUserData(); }, []);
 
   return {
     userData,
     isLoading,
     refreshUserData,
-    isAuthenticated: !!userData,
+    isAuthenticated: Boolean(userData),
     role: userData?.role,
     isAdmin: userData?.role === 'admin',
     isUser: userData?.role === 'user',

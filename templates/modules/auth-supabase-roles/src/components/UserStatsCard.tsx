@@ -1,15 +1,13 @@
-import React from "react";
+import type { ComponentType, SVGProps } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { LucideIcon } from "lucide-react";
 
 interface UserStatsCardProps {
   title: string;
   value: string | number;
   change?: string;
-  changeType?: "positive" | "negative" | "neutral";
-  icon: LucideIcon;
+  changeType?: "positive" | "negative" | "neutral" | "warning";
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   description?: string;
   progress?: number;
   maxValue?: number;
@@ -29,6 +27,7 @@ export function UserStatsCard({
     positive: "text-green-600",
     negative: "text-red-600",
     neutral: "text-muted-foreground",
+    warning: "text-yellow-600",
   }[changeType];
 
   return (

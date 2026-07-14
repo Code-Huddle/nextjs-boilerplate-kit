@@ -1,18 +1,25 @@
 {
   "name": "nextjs-boilerplate-kit",
-  "version": "1.6.2",
-  "description": "🚀 Interactive CLI tool to generate modern Next.js 15 apps with authentication, payments, dashboard, PWA, and more. Choose your stack with TypeScript, Tailwind CSS, shadcn/ui, and enterprise features.",
+  "version": "2.0.0",
+  "description": "Generate secure, modular Next.js 16 and React 19 applications with selectable auth, ORM, Stripe, PWA, Sentry, Storybook, and production quality gates.",
+  "type": "module",
   "main": "bin/index.js",
   "bin": {
     "nextjs-boilerplate-kit": "./bin/index.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.js",
+    "test:matrix": "node scripts/test-generation-matrix.mjs --generate-only",
+    "test:matrix:full": "node scripts/test-generation-matrix.mjs",
+    "prepublishOnly": "npm test && npm run test:matrix"
   },
   "keywords": [
     "nextjs",
+    "nextjs-16",
     "next.js",
     "react",
+    "react-19",
+    "app-router",
     "typescript",
     "tailwind",
     "tailwindcss",
@@ -22,12 +29,22 @@
     "auth",
     "nextauth",
     "supabase",
+    "supabase-ssr",
+    "rbac",
+    "prisma",
+    "drizzle-orm",
+    "mongoose",
     "stripe",
     "payments",
     "dashboard",
     "pwa",
     "progressive-web-app",
     "storybook",
+    "sentry",
+    "docker",
+    "i18n",
+    "vitest",
+    "playwright",
     "boilerplate",
     "starter",
     "template",
@@ -35,8 +52,7 @@
     "generator",
     "create-app",
     "fullstack",
-    "enterprise",
-    "production-ready",
+    "saas",
     "modern",
     "developer-tools",
     "codehuddle"
@@ -52,11 +68,36 @@
       "email": "haris.ahmed@code-huddle.com"
     }
   ],
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Code-Huddle/nextjs-boilerplate-kit.git"
+  },
+  "homepage": "https://github.com/Code-Huddle/nextjs-boilerplate-kit#readme",
+  "bugs": {
+    "url": "https://github.com/Code-Huddle/nextjs-boilerplate-kit/issues"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
+  },
+  "packageManager": "npm@11.18.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "bin",
+    "templates",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "SECURITY.md"
+  ],
   "dependencies": {
-    "chalk": "^4.1.2",
-    "commander": "^9.4.0",
-    "fs-extra": "^10.1.0",
-    "inquirer": "^8.2.6"
+    "chalk": "^5.6.2",
+    "commander": "^15.0.0",
+    "fs-extra": "^11.3.6",
+    "inquirer": "^14.0.2"
   }
 }

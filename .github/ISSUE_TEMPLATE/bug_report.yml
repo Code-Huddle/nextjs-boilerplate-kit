@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a reproducible generator or unmodified generated-app defect.
+title: "[Bug]: "
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: Do not disclose vulnerabilities or secrets here. Use SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: 2.0.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, architecture, Node version, and npm version.
+      placeholder: macOS 15 arm64, Node 24.13.0, npm 11.12.1
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Generator command and options
+      description: Remove every token, password, key, and private path.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: Include the first failing quality-gate command.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and relevant logs
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I reproduced this with a freshly generated project.
+          required: true
+        - label: I removed secrets and private data.
+          required: true
+        - label: This is not a vulnerability report.
+          required: true

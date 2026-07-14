@@ -1,16 +1,12 @@
-import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
-import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import Home from 'lucide-react/dist/esm/icons/home';
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card';
 import Mail from 'lucide-react/dist/esm/icons/mail';
 import Shield from 'lucide-react/dist/esm/icons/shield';
 import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
-import Download from 'lucide-react/dist/esm/icons/download';
-import Info from 'lucide-react/dist/esm/icons/info';
 import Link from 'next/link';
 
 interface PaymentSuccessPageProps {

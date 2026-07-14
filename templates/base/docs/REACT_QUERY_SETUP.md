@@ -1,10 +1,10 @@
-# React Query Setup Guide for Next.js 15
+# React Query Setup Guide for Next.js 16
 
-This guide covers the proper setup and configuration of TanStack Query (React Query) with Next.js 15, following the latest best practices.
+This guide covers the setup and configuration of TanStack Query (React Query) with Next.js 16.
 
 ## Overview
 
-Our React Query setup follows the recommended patterns from the official documentation, optimized for Next.js 15 with App Router and Server Components.
+The setup uses the App Router and Server Components architecture.
 
 ## Configuration
 

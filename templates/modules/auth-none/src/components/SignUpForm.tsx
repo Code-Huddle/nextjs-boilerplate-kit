@@ -16,7 +16,6 @@ export function SignUpForm() {
     password: '',
     confirmPassword: '',
   });
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,11 +27,6 @@ export function SignUpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setLoading(false);
     setMessage('Authentication is disabled. Cannot create account.');
 
     // Handle sign up logic here

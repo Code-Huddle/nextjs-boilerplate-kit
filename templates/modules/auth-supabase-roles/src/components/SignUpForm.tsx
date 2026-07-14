@@ -7,20 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import Eye from 'lucide-react/dist/esm/icons/eye';
 import EyeOff from 'lucide-react/dist/esm/icons/eye-off';
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
 import { signUpWithRole } from '@/lib/supabase';
-import { USER_ROLES } from '@/lib/roles';
-import { getUserData } from '@/lib/cookies';
 
 export function SignUpForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<string>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +46,7 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await signUpWithRole(email, password, selectedRole as any);
+      const { data, error } = await signUpWithRole(email, password);
       
       if (error) {
         if (error.message.includes('User already registered')) {
@@ -69,7 +65,7 @@ export function SignUpForm() {
           router.push('/sign-in');
         }, 2000);
       }
-    } catch (err: any) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -129,25 +125,6 @@ export function SignUpForm() {
               disabled={isLoading}
               className="border-futuristic"
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole} disabled={isLoading}>
-              <SelectTrigger className="border-futuristic justify-start text-left">
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                {USER_ROLES.map((role) => (
-                  <SelectItem key={role.id} value={role.name} className="justify-start text-left">
-                    <div className="text-left">
-                      <div className="font-medium">{role.displayName}</div>
-                      <div className="text-sm text-muted-foreground">{role.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           
           <div className="space-y-2">

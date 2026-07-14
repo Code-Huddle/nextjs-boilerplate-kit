@@ -1,50 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireApiUser } from '@/lib/server-auth';
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: idParam } = await params;
-    const id = parseInt(idParam);
-    const body = await request.json();
+type Context = { params: Promise<{ id: string }> };
 
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
-    }
-
-    const user = await prisma.user.update({
-      where: { id },
-      data: body,
-    });
-
-    return NextResponse.json(user);
-  } catch (error) {
-    console.error('Error updating user:', error);
-    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
-  }
+export async function PUT(request: NextRequest, { params }: Context) {
+  const auth = await requireApiUser(request);
+  if (!auth.ok) return auth.response;
+  const id = Number.parseInt((await params).id, 10);
+  const { name, email } = await request.json() as { name?: string; email?: string };
+  if (!Number.isInteger(id)) return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
+  const result = await prisma.user.updateMany({
+    where: { id, ownerId: auth.user.id },
+    data: { ...(name ? { name } : {}), ...(email ? { email } : {}) },
+  });
+  if (!result.count) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  return NextResponse.json(await prisma.user.findFirst({ where: { id, ownerId: auth.user.id } }));
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: idParam } = await params;
-    const id = parseInt(idParam);
-
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
-    }
-
-    await prisma.user.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
-  }
+export async function DELETE(request: NextRequest, { params }: Context) {
+  const auth = await requireApiUser(request);
+  if (!auth.ok) return auth.response;
+  const id = Number.parseInt((await params).id, 10);
+  if (!Number.isInteger(id)) return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
+  const result = await prisma.user.deleteMany({ where: { id, ownerId: auth.user.id } });
+  return result.count ? NextResponse.json({ deleted: true }) : NextResponse.json({ error: 'User not found' }, { status: 404 });
 }

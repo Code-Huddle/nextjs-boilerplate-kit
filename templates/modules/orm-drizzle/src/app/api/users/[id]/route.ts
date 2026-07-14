@@ -1,61 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { and, eq } from 'drizzle-orm';
 import { db, users } from '@/lib/db';
-import { eq } from 'drizzle-orm';
+import { requireApiUser } from '@/lib/server-auth';
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: idParam } = await params;
-    const id = parseInt(idParam);
-    const body = await request.json();
+type Context = { params: Promise<{ id: string }> };
 
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
-    }
-
-    const updatedUser = await db
-      .update(users)
-      .set({ ...body, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-
-    if (updatedUser.length === 0) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(updatedUser[0]);
-  } catch (error) {
-    console.error('Error updating user:', error);
-    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
-  }
+export async function PUT(request: NextRequest, { params }: Context) {
+  const auth = await requireApiUser(request);
+  if (!auth.ok) return auth.response;
+  const id = Number.parseInt((await params).id, 10);
+  const { name, email } = await request.json() as { name?: string; email?: string };
+  if (!Number.isInteger(id)) return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
+  const [updated] = await db.update(users)
+    .set({ ...(name ? { name } : {}), ...(email ? { email } : {}), updatedAt: new Date() })
+    .where(and(eq(users.id, id), eq(users.ownerId, auth.user.id))).returning();
+  return updated ? NextResponse.json(updated) : NextResponse.json({ error: 'User not found' }, { status: 404 });
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: idParam } = await params;
-    const id = parseInt(idParam);
-
-    if (isNaN(id)) {
-      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
-    }
-
-    const deletedUser = await db
-      .delete(users)
-      .where(eq(users.id, id))
-      .returning();
-
-    if (deletedUser.length === 0) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
-  }
+export async function DELETE(request: NextRequest, { params }: Context) {
+  const auth = await requireApiUser(request);
+  if (!auth.ok) return auth.response;
+  const id = Number.parseInt((await params).id, 10);
+  if (!Number.isInteger(id)) return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
+  const [deleted] = await db.delete(users).where(and(eq(users.id, id), eq(users.ownerId, auth.user.id))).returning();
+  return deleted ? NextResponse.json({ deleted: true }) : NextResponse.json({ error: 'User not found' }, { status: 404 });
 }

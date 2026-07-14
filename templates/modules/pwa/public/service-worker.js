@@ -1,7 +1,7 @@
-const CACHE_NAME = 'codehuddle-pwa-v1';
+const CACHE_NAME = 'app-shell-v2';
 const OFFLINE_URLS = [
   '/',
-  '/manifest.json',
+  '/manifest.webmanifest',
 ];
 
 self.addEventListener('install', (event) => {

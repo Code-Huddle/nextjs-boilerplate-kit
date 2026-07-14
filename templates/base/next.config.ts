@@ -11,15 +11,24 @@ const bundleAnalyzer = withBundleAnalyzer({
 /** @type {import('next').NextConfig} */
 export default bundleAnalyzer(
   withNextIntl({
-    eslint: {
-      dirs: ['.'],
-    },
     poweredByHeader: false,
     reactStrictMode: true,
     serverExternalPackages: ['@electric-sql/pglite'],
 
     // Performance optimizations
     compress: true,
+
+    async headers() {
+      return [{
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      }];
+    },
 
     // Modularize imports to reduce bundle size
     modularizeImports: {

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,9 +16,7 @@ import Settings from 'lucide-react/dist/esm/icons/settings';
 import BarChart3 from 'lucide-react/dist/esm/icons/bar-chart-3';
 import Clock from 'lucide-react/dist/esm/icons/clock';
 import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
-import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import Star from 'lucide-react/dist/esm/icons/star';
-import Download from 'lucide-react/dist/esm/icons/download';
 import Upload from 'lucide-react/dist/esm/icons/upload';
 import Share2 from 'lucide-react/dist/esm/icons/share-2';
 import Eye from 'lucide-react/dist/esm/icons/eye';

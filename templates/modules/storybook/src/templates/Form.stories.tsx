@@ -88,7 +88,6 @@ const FormComponent = (props: FormComponentProps) => {
   });
   // Console the output
   function onSubmit(data: FormData) {
-    // eslint-disable-next-line no-console
     console.log(data);
   }
 

@@ -1,14 +1,13 @@
 import type { MetadataRoute } from 'next';
-import { getBaseUrl } from '@/utils/Helpers';
+import { AppConfig } from '@/utils/AppConfig';
+import { getBaseUrl, getI18nPath } from '@/utils/Helpers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: `${getBaseUrl()}/`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    // Add more URLs here
-  ];
+  const baseUrl = getBaseUrl();
+
+  return AppConfig.locales.map(locale => ({
+    url: `${baseUrl}${getI18nPath('/', locale)}`,
+    changeFrequency: 'weekly',
+    priority: 1,
+  }));
 }

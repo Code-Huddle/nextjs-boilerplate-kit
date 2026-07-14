@@ -1,59 +1,32 @@
-import antfu from '@antfu/eslint-config';
+import js from '@eslint/js';
 import nextPlugin from '@next/eslint-plugin-next';
-import jestDom from 'eslint-plugin-jest-dom';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import playwright from 'eslint-plugin-playwright';
-import testingLibrary from 'eslint-plugin-testing-library';
+import reactHooks from 'eslint-plugin-react-hooks';
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
 
-export default antfu({
-  react: true,
-  typescript: true,
-
-  lessOpinionated: true,
-  isInEditor: false,
-
-  stylistic: {
-    semi: true,
+export default defineConfig([
+  {
+    ignores: ['.next/**', 'coverage/**', 'out/**', 'storybook-static/**', 'src/generated/**', 'next-env.d.ts'],
   },
-
-  formatters: {
-    css: true,
+  { ...js.configs.recommended, rules: { ...js.configs.recommended.rules, 'no-undef': 'off' } },
+  ...tseslint.configs.recommended,
+  {
+    plugins: { 'react-hooks': reactHooks },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+    },
   },
-
-  ignores: [
-    'migrations/**/*',
-    'next-env.d.ts',
-    '**/*.md',
-    'docs/**/*',
-  ],
-}, jsxA11y.flatConfigs.recommended, {
-  plugins: {
-    '@next/next': nextPlugin,
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: { '@next/next': nextPlugin },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+      '@next/next/no-html-link-for-pages': 'off',
+      'no-undef': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
   },
-  rules: {
-    ...nextPlugin.configs.recommended.rules,
-    ...nextPlugin.configs['core-web-vitals'].rules,
-  },
-}, {
-  files: [
-    '**/*.test.ts?(x)',
-  ],
-  ...testingLibrary.configs['flat/react'],
-  ...jestDom.configs['flat/recommended'],
-}, {
-  files: [
-    '**/*.spec.ts',
-    '**/*.e2e.ts',
-  ],
-  ...playwright.configs['flat/recommended'],
-}, {
-  rules: {
-    'antfu/no-top-level-await': 'off', // Allow top-level await
-    'style/brace-style': ['error', '1tbs'], // Use the default brace style
-    'ts/consistent-type-definitions': ['error', 'type'], // Use `type` instead of `interface`
-    'react/prefer-destructuring-assignment': 'off', // Vscode doesn't support automatically destructuring, it's a pain to add a new variable
-    'node/prefer-global/process': 'off', // Allow using `process.env`
-    'test/padding-around-all': 'error', // Add padding in test files
-    'test/prefer-lowercase-title': 'off', // Allow using uppercase titles in test titles
-  },
-});
+]);

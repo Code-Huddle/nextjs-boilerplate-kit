@@ -3,7 +3,8 @@ export function buildSampleEmail(params: { title?: string; message?: string; app
   const message =
     params.message ||
     'This is a sample transactional email sent via Nodemailer. You can customize this template as needed.';
-  const appUrl = params.appUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = safeHttpUrl(params.appUrl || process.env.NEXT_PUBLIC_APP_URL);
+  const escapedAppUrl = escapeHtml(appUrl);
 
   // Basic responsive email with inline styles for broad client support
   return `
@@ -39,7 +40,7 @@ export function buildSampleEmail(params: { title?: string; message?: string; app
                     <p style="margin:0 0 16px 0;">You can safely edit this template at <code style="background:#111827;color:#93c5fd;padding:2px 6px;border-radius:6px;">src/emails/sample.ts</code>.</p>
                   </div>
                   <div style="margin-top:16px;text-align:center;">
-                    <a href="${appUrl}"
+                    <a href="${escapedAppUrl}"
                        style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;padding:10px 16px;border-radius:10px;font-family:Inter,Segoe UI,Arial,sans-serif;">
                       Open App
                     </a>
@@ -49,8 +50,8 @@ export function buildSampleEmail(params: { title?: string; message?: string; app
               <tr>
                 <td style="background:#0b1220;padding:16px 24px;border-top:1px solid #1f2937;">
                   <div style="font-size:12px;color:#64748b;text-align:center;font-family:Inter,Segoe UI,Arial,sans-serif;">
-                    Sent with Nodemailer • <a href="${appUrl}"
-                    style="color:#93c5fd;text-decoration:none;">${escapeHtml(appUrl)}</a>
+                    Sent with Nodemailer • <a href="${escapedAppUrl}"
+                    style="color:#93c5fd;text-decoration:none;">${escapedAppUrl}</a>
                   </div>
                 </td>
               </tr>
@@ -71,4 +72,13 @@ function escapeHtml(str: string) {
     .replace(/'/g, '&#039;');
 }
 
+function safeHttpUrl(value?: string) {
+  if (!value) return 'http://localhost:3000';
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : 'http://localhost:3000';
+  } catch {
+    return 'http://localhost:3000';
+  }
+}
 

@@ -1,32 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireApiUser } from '@/lib/server-auth';
 
-export async function GET() {
-  try {
-    const users = await prisma.user.findMany();
-    return NextResponse.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
-  }
+export async function GET(request: NextRequest) {
+  const auth = await requireApiUser(request);
+  if (!auth.ok) return auth.response;
+  return NextResponse.json(await prisma.user.findMany({ where: { ownerId: auth.user.id } }));
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { name, email } = body;
-
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
-    }
-
-    const user = await prisma.user.create({
-      data: { name, email },
-    });
-
-    return NextResponse.json(user);
-  } catch (error) {
-    console.error('Error creating user:', error);
-    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
-  }
+  const auth = await requireApiUser(request);
+  if (!auth.ok) return auth.response;
+  const { name, email } = await request.json() as { name?: string; email?: string };
+  if (!name || !email) return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
+  const user = await prisma.user.create({ data: { ownerId: auth.user.id, name, email } });
+  return NextResponse.json(user, { status: 201 });
 }

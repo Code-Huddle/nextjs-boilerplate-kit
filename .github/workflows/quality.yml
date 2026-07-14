@@ -1,0 +1,45 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  generator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  generated-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sample:
+          - none-none
+          - none-drizzle
+          - none-prisma
+          - none-mongoose
+          - nextauth-none
+          - nextauth-drizzle
+          - nextauth-prisma
+          - nextauth-mongoose
+          - supabase-none
+          - supabase-drizzle
+          - supabase-prisma
+          - supabase-mongoose
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/test-generation-matrix.mjs --sample ${{ matrix.sample }}

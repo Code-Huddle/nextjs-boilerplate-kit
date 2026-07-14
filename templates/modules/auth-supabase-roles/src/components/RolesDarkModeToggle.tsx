@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun } from "lucide-react/dist/esm/icons";
+import Moon from "lucide-react/dist/esm/icons/moon";
+import Sun from "lucide-react/dist/esm/icons/sun";
 
 export function RolesDarkModeToggle() {
   const [isDark, setIsDark] = useState(false);

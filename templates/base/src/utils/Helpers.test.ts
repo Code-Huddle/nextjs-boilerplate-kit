@@ -1,20 +1,11 @@
-import { routing } from '@/libs/i18nNavigation';
 import { getI18nPath } from './Helpers';
 
-describe('Helpers', () => {
-  describe('getI18nPath function', () => {
-    it('should not change the path for default language', () => {
-      const url = '/random-url';
-      const locale = routing.defaultLocale;
+describe('getI18nPath', () => {
+  it('keeps the default locale path unchanged', () => {
+    expect(getI18nPath('/docs', 'en')).toBe('/docs');
+  });
 
-      expect(getI18nPath(url, locale)).toBe(url);
-    });
-
-    it('should prepend the locale to the path for non-default language', () => {
-      const url = '/random-url';
-      const locale = 'fr';
-
-      expect(getI18nPath(url, locale)).toMatch(/^\/fr/);
-    });
+  it('prefixes a non-default locale', () => {
+    expect(getI18nPath('/docs', 'fr')).toBe('/fr/docs');
   });
 });

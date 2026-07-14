@@ -1,40 +1,32 @@
 import type { NextRequest } from 'next/server';
 import { buildSampleEmail } from '@/emails/sample';
-import { transporter, fromEmail } from '@/lib/mailer';
+import { fromEmail, transporter } from '@/lib/mailer';
+import { requireApiUser } from '@/lib/server-auth';
 
 export async function POST(request: NextRequest) {
+  const auth = await requireApiUser(request);
+  if (!auth.ok) return auth.response;
+
+  const recipient = auth.user.email ?? process.env.EMAIL_TEST_RECIPIENT;
+  if (!recipient) {
+    return Response.json({ error: 'The authenticated user has no email address' }, { status: 400 });
+  }
+
   try {
-    const { to, subject, html, useSample, title, message } = await request.json();
-
-    if (!to || !subject || !html) {
-      return Response.json({ error: 'Missing required fields: to, subject, html' }, { status: 400 });
-    }
-
-    const recipients = Array.isArray(to)
-      ? to
-      : String(to)
-          .split(',')
-          .map((x) => x.trim())
-          .filter(Boolean);
-
-    if (recipients.length === 0) {
-      return Response.json({ error: 'No valid recipients provided' }, { status: 400 });
-    }
-
+    const { title, message } = await request.json() as { title?: string; message?: string };
     const info = await transporter.sendMail({
       from: fromEmail,
-      to: recipients.join(','),
-      subject,
-      html: useSample ? buildSampleEmail({ title, message, appUrl: process.env.NEXT_PUBLIC_APP_URL }) : html,
+      to: recipient,
+      subject: 'Transactional email test',
+      html: buildSampleEmail({
+        title: title?.slice(0, 100) || 'Your app email is configured',
+        message: message?.slice(0, 1000) || 'This protected test was sent to your authenticated email address.',
+        appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      }),
     });
-
-    return Response.json({ id: info.messageId, to: recipients });
+    return Response.json({ id: info.messageId, to: [recipient] });
   } catch (error) {
-    console.error('Resend API error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Email send failed:', error);
+    return Response.json({ error: 'Email delivery failed' }, { status: 500 });
   }
-}
-
-export async function GET() {
-  return Response.json({ message: 'Email sending API endpoint' });
 }

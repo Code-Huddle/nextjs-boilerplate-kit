@@ -1,9 +1,7 @@
-import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import XCircle from 'lucide-react/dist/esm/icons/x-circle';
-import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import Home from 'lucide-react/dist/esm/icons/home';
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card';
 import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';

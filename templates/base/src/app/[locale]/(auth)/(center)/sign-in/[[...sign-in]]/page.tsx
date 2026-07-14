@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import Github from 'lucide-react/dist/esm/icons/github';
+import GitBranch from 'lucide-react/dist/esm/icons/git-branch';
 import Mail from 'lucide-react/dist/esm/icons/mail';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -90,7 +90,7 @@ export default function SignIn() {
               onClick={() => setError('Authentication module not configured')}
               className="w-full"
             >
-              <Github className="mr-2 size-4" />
+              <GitBranch className="mr-2 size-4" />
               {' '}
               Sign in with GitHub
             </Button>

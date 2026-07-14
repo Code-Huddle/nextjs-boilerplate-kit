@@ -2,19 +2,29 @@ import type { LocalePrefixMode } from 'next-intl/routing';
 
 const localePrefix: LocalePrefixMode = 'as-needed';
 
-// App configuration variables - adjust according to your project
+const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Your App';
+const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION
+  || 'A fast, accessible web application built with Next.js.';
+const twitterHandle = process.env.NEXT_PUBLIC_TWITTER_HANDLE || undefined;
+
+// Replace the defaults and public environment variables before deployment.
 export const AppConfig = {
   // App info
-  name: 'Next.js Boilerplate',
-  title: 'Next.js Boilerplate - Production Ready Template',
-  description: 'A modern Next.js boilerplate with App Router, TypeScript, Tailwind CSS, and more.',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://nextjs-boilerplate.vercel.app',
+  name: appName,
+  title: appName,
+  description: appDescription,
+  url: (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, ''),
 
   // SEO defaults
   titleSeparator: ' | ',
   locale: 'en_US',
-  author: 'Haris Ahmed',
-  twitterHandle: '@harisahmed',
+  author: 'Your Team',
+  twitterHandle,
+  keywords: [
+    appName,
+    'web application',
+    'Next.js',
+  ],
 
   // Internationalization settings
   locales: ['en', 'fr'],
@@ -25,13 +35,13 @@ export const AppConfig = {
   defaultTheme: 'system', // 'light', 'dark', or 'system'
 
   // Contact information
-  contactEmail: 'hello@example.com',
+  contactEmail: '',
 
   // Social media
   social: {
-    github: 'https://github.com/yourusername/nextjs-boilerplate',
-    twitter: 'https://twitter.com/yourusername',
-    linkedin: 'https://linkedin.com/in/yourusername',
+    github: '',
+    twitter: '',
+    linkedin: '',
   },
 
   // Analytics

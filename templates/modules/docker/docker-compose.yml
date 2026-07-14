@@ -1,11 +1,9 @@
 # Generic Docker Compose configuration for Next.js applications
 # This is a template file - customize as needed for your specific requirements
 
-version: '3.8'
-
 services:
   app:
-    image: node:20-alpine
+    image: node:24-alpine
     working_dir: /app
     command: sh -c "npm install && npm run dev"
     ports:
@@ -16,7 +14,6 @@ services:
       # Generic environment variables - customize based on your needs
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
       NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID}
       # Add your specific environment variables here
     volumes:
