@@ -29,5 +29,7 @@ jobs:
       - name: Verify tag matches package version
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: test "v$(node --print \"require('./package.json').version\")" = "$RELEASE_TAG"
+        run: |
+          PACKAGE_VERSION="$(node --print "require('./package.json').version")"
+          test "v${PACKAGE_VERSION}" = "${RELEASE_TAG}"
       - run: npm publish --access public --provenance
