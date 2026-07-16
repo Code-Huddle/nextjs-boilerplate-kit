@@ -56,7 +56,7 @@ starter after generation.
 Core principles:
 
 - **Deterministic:** every interactive decision has a non-interactive option.
-- **Security-first:** generated API examples establish a server trust boundary.
+- **Security-first:** real auth, payment, and webhook boundaries stay server-side.
 - **Composable:** auth, ORM, payments, and optional features are selected
   independently where technically valid.
 - **Inspectable:** generated integrations are application code, not a hidden
@@ -347,7 +347,7 @@ Authentication and ORM are independent selections.
 
 | ORM | Database | Generated baseline |
 | --- | --- | --- |
-| None | none selected | API trust boundary still exists; add your own data layer. |
+| None | none selected | no generated data layer; add your own domain model |
 | Drizzle | PostgreSQL | typed schema/client and CRUD user examples |
 | Prisma | PostgreSQL | Prisma 7 config, PostgreSQL adapter, schema/client, CRUD examples |
 | Mongoose | MongoDB | connection/model code and CRUD examples |

@@ -62,7 +62,7 @@ export function useSubscriptionStatus() {
   const queryFn = useCallback(async () => {
     return (await postStripe<{ subscription: Subscription }>({ action: 'status', sessionId })).subscription;
   }, [sessionId]);
-  return useApi<Subscription>(['stripe', 'subscription', sessionId], queryFn, { enabled: Boolean(sessionId) });
+  return useApi<Subscription>(['stripe', 'subscription', sessionId ?? ''], queryFn, { enabled: Boolean(sessionId) });
 }
 
 export function useSubscriptionConfig() {

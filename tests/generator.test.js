@@ -163,6 +163,8 @@ test('security-sensitive templates keep server-side trust boundaries', () => {
   assert.ok(oneTime.includes('STRIPE_ONE_TIME_PRICE_ID'));
   assert.ok(!oneTime.includes('request.json()'));
   assert.ok(!oneTime.includes('customerId'));
+  assert.ok(!oneTime.includes("from '../../../../auth'"));
+  assert.ok(!oneTime.includes('requireApiUser'));
 
   const subscriptions = readFileSync(template('modules', 'stripe-subscriptions', 'src', 'app', 'api', 'stripe', 'route.ts'), 'utf8');
   assert.ok(subscriptions.includes("plan?: 'monthly' | 'yearly'"));

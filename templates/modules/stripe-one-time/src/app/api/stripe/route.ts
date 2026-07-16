@@ -1,10 +1,6 @@
-import type { NextRequest } from 'next/server';
-import { auth } from '../../../../auth';
 import { stripe } from '@/lib/stripe';
 
-export async function POST(_request: NextRequest) {
-  const session = await auth();
-
+export async function POST() {
   const priceId = process.env.STRIPE_ONE_TIME_PRICE_ID;
   if (!priceId) return Response.json({ error: 'STRIPE_ONE_TIME_PRICE_ID is not configured' }, { status: 503 });
 
@@ -16,11 +12,9 @@ export async function POST(_request: NextRequest) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: price.unit_amount,
       currency: price.currency,
-      receipt_email: session?.user?.email ?? undefined,
       automatic_payment_methods: { enabled: true },
       metadata: {
         price_id: price.id,
-        ...(session?.user?.id ? { app_user_id: session.user.id } : {}),
       },
     });
     return Response.json({
