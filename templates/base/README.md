@@ -67,12 +67,11 @@ rg -n "Your App|Your Team|example.com|your-|replace-with|FIXME|TODO" . \
 
 ## Security baseline
 
-- Data, email, and payment API examples authenticate on the server.
-- Projects generated with no user auth require a timing-safe
-  `Authorization: Bearer <API_ACCESS_TOKEN>` header for APIs.
+- Demo data, email, and payment examples are starter code and may be anonymous.
+- Add product-specific authentication and authorization wherever your real
+  feature needs it.
 - Supabase uses the SSR client and server-validated claims. Roles come only from
   trusted `app_metadata`, never user-editable metadata or a role cookie.
-- ORM examples derive ownership from the authenticated principal.
 - Stripe prices, amounts, customer identity, plan mapping, and redirect URLs are
   server-controlled. Webhooks verify the raw-body Stripe signature.
 - Auth.js uses OAuth/server sessions; no hard-coded credential backend is

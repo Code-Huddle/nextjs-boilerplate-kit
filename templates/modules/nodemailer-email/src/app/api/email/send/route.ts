@@ -1,15 +1,10 @@
-import type { NextRequest } from 'next/server';
 import { buildSampleEmail } from '@/emails/sample';
 import { fromEmail, transporter } from '@/lib/mailer';
-import { requireApiUser } from '@/lib/server-auth';
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiUser(request);
-  if (!auth.ok) return auth.response;
-
-  const recipient = auth.user.email ?? process.env.EMAIL_TEST_RECIPIENT;
+export async function POST(request: Request) {
+  const recipient = process.env.EMAIL_TEST_RECIPIENT;
   if (!recipient) {
-    return Response.json({ error: 'The authenticated user has no email address' }, { status: 400 });
+    return Response.json({ error: 'EMAIL_TEST_RECIPIENT is not configured' }, { status: 503 });
   }
 
   try {
@@ -20,7 +15,7 @@ export async function POST(request: NextRequest) {
       subject: 'Transactional email test',
       html: buildSampleEmail({
         title: title?.slice(0, 100) || 'Your app email is configured',
-        message: message?.slice(0, 1000) || 'This protected test was sent to your authenticated email address.',
+        message: message?.slice(0, 1000) || 'This test email was sent to the configured server-side recipient.',
         appUrl: process.env.NEXT_PUBLIC_APP_URL,
       }),
     });

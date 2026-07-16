@@ -1,9 +1,34 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useApi, useApiMutation } from '@/hooks/useApi';
 
 type Empty = Record<string, never>;
 type Subscription = { id: string; status: string; cancelAtPeriodEnd: boolean } | null;
 type Price = { id: string; unit_amount: number | null; currency: string; product: { name: string } | null } | null;
+const STRIPE_SUBSCRIPTION_SESSION_STORAGE_KEY = 'stripe-subscription-session-id';
+
+function readStoredStripeSessionId() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.localStorage.getItem(STRIPE_SUBSCRIPTION_SESSION_STORAGE_KEY);
+}
+
+export function storeStripeSubscriptionSessionId(sessionId: string) {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(STRIPE_SUBSCRIPTION_SESSION_STORAGE_KEY, sessionId);
+  }
+}
+
+export function useStoredStripeSubscriptionSessionId() {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSessionId(readStoredStripeSessionId());
+  }, []);
+
+  return sessionId;
+}
 
 async function postStripe<T>(body: object): Promise<T> {
   const response = await fetch('/api/stripe', {
@@ -23,16 +48,21 @@ export function useCreateCheckoutSession() {
 }
 
 export function useCreatePortalSession() {
-  return useApiMutation<{ url: string }, Empty>(() => postStripe({ action: 'portal' }));
+  const sessionId = useStoredStripeSubscriptionSessionId();
+  return useApiMutation<{ url: string }, Empty>(() => postStripe({ action: 'portal', sessionId }));
 }
 
 export function useCancelSubscription() {
-  return useApiMutation<{ subscription: Subscription }, Empty>(() => postStripe({ action: 'cancel' }));
+  const sessionId = useStoredStripeSubscriptionSessionId();
+  return useApiMutation<{ subscription: Subscription }, Empty>(() => postStripe({ action: 'cancel', sessionId }));
 }
 
 export function useSubscriptionStatus() {
-  const queryFn = useCallback(async () => (await postStripe<{ subscription: Subscription }>({ action: 'status' })).subscription, []);
-  return useApi<Subscription>(['stripe', 'subscription'], queryFn, { enabled: true });
+  const sessionId = useStoredStripeSubscriptionSessionId();
+  const queryFn = useCallback(async () => {
+    return (await postStripe<{ subscription: Subscription }>({ action: 'status', sessionId })).subscription;
+  }, [sessionId]);
+  return useApi<Subscription>(['stripe', 'subscription', sessionId], queryFn, { enabled: Boolean(sessionId) });
 }
 
 export function useSubscriptionConfig() {

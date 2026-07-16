@@ -5,6 +5,7 @@ import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import Home from 'lucide-react/dist/esm/icons/home';
 import Calendar from 'lucide-react/dist/esm/icons/calendar';
 import Link from 'next/link';
+import { StripeSubscriptionSessionSync } from '@/components/StripeSubscriptionSessionSync';
 
 interface PaymentSuccessPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -12,11 +13,12 @@ interface PaymentSuccessPageProps {
 
 export default async function PaymentSuccessPage({ searchParams }: PaymentSuccessPageProps) {
   const params = await searchParams;
-  const sessionId = params.session_id as string;
-  const subscriptionId = params.subscription_id as string;
+  const sessionId = typeof params.session_id === 'string' ? params.session_id : undefined;
+  const subscriptionId = typeof params.subscription_id === 'string' ? params.subscription_id : undefined;
 
   return (
     <div className="geometric-bg min-h-screen bg-background flex items-center justify-center p-4">
+      <StripeSubscriptionSessionSync sessionId={sessionId} />
       <div className="w-full max-w-md">
         <Card className="border-futuristic bg-card/50 backdrop-blur-sm">
           <CardHeader className="text-center">

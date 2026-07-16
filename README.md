@@ -152,11 +152,11 @@ npx nextjs-boilerplate-kit [project-name] [options]
 | --- | --- | --- | --- |
 | `[project-name]` | directory name or `.` | prompts if omitted | Names may contain letters, numbers, `_`, and `-`. |
 | `--yes` | flag | off | Disables prompts and supplies documented defaults. |
-| `--auth` | `nextauth`, `supabase`, `none` | `nextauth` | `none` still protects generated APIs with a bearer token. |
+| `--auth` | `nextauth`, `supabase`, `none` | `nextauth` | `none` omits sign-in UI; add auth only where your real product needs it. |
 | `--roles` | boolean | `false` | Applies only to Supabase; roles come from `app_metadata`. |
 | `--orm` | `none`, `drizzle`, `prisma`, `mongoose` | `none` | Independent of authentication. |
 | `--payments` | `none`, `one-time`, `subscriptions` | `none` | Uses Stripe Checkout and signed webhooks. |
-| `--email` | boolean | `false` | Adds protected Nodemailer/SMTP example code. |
+| `--email` | boolean | `false` | Adds Nodemailer/SMTP example code. |
 | `--dark-mode` | boolean | `true` | Adds theme support and the UI toggle. |
 | `--dashboard` | boolean | `false` | Adds dashboard example UI. |
 | `--pwa` | boolean | `false` | Adds service-worker registration and an install prompt. |
@@ -189,7 +189,7 @@ npx nextjs-boilerplate-kit@latest app --yes \
   --payments none
 ```
 
-### Token-protected API starter with MongoDB
+### No-auth API starter with MongoDB
 
 ```bash
 npx nextjs-boilerplate-kit@latest service --yes \
@@ -279,8 +279,8 @@ The generator establishes these default trust boundaries:
 
 1. A browser is untrusted.
 2. Authentication is resolved on the server.
-3. Data ownership is derived from the authenticated principal, not a request
-   body field.
+3. Product-specific authorization should be enforced on the server wherever the
+   real feature needs it.
 4. Authorization roles are read from trusted server claims, not editable
    profile metadata or cookies.
 5. Payment price/customer/redirect decisions remain on the server.
@@ -288,9 +288,9 @@ The generator establishes these default trust boundaries:
 7. Secrets are server-only unless a provider explicitly defines a publishable
    browser key.
 
-Generated data, payment, and email API examples call `requireApiUser`. The
-expected exceptions are OAuth/Auth.js callback routes and Stripe webhook routes,
-which authenticate through their protocols and signature boundary.
+Generated demo data, payment, and email examples are intentionally generic.
+Protect real product flows with your chosen auth strategy and keep protocol-level
+boundaries such as OAuth callbacks and Stripe webhook signatures intact.
 
 This baseline does **not** automatically provide rate limiting, bot protection,
 organization-level permissions, audit retention, regulatory compliance,
@@ -338,16 +338,8 @@ Before production:
 
 ### No UI authentication
 
-`--auth none` means no user sign-in UI. It does **not** make generated APIs
-public. API routes require:
-
-```http
-Authorization: Bearer <API_ACCESS_TOKEN>
-```
-
-The comparison is timing-safe. Generate a long random token, store it as a
-server secret, rotate it per environment, and replace this single-token model
-if you need per-client identity, revocation, or fine-grained permissions.
+`--auth none` means no user sign-in UI. Generated demo routes stay generic and
+anonymous until you add product-specific auth requirements.
 
 ## ORM and data access
 
@@ -356,14 +348,13 @@ Authentication and ORM are independent selections.
 | ORM | Database | Generated baseline |
 | --- | --- | --- |
 | None | none selected | API trust boundary still exists; add your own data layer. |
-| Drizzle | PostgreSQL | typed schema/client and owner-scoped user examples |
-| Prisma | PostgreSQL | Prisma 7 config, PostgreSQL adapter, schema/client, owner-scoped examples |
-| Mongoose | MongoDB | connection/model code and owner-scoped examples |
+| Drizzle | PostgreSQL | typed schema/client and CRUD user examples |
+| Prisma | PostgreSQL | Prisma 7 config, PostgreSQL adapter, schema/client, CRUD examples |
+| Mongoose | MongoDB | connection/model code and CRUD examples |
 
-The CRUD routes derive `ownerId` from `requireApiUser`. A caller cannot choose a
-different owner by posting an ID. These are examples, not a complete domain
-model: define unique constraints, validation, migrations, pagination, deletion
-policy, tenant boundaries, and indexes for the actual product.
+The CRUD routes are intentionally generic starter examples. Define the real
+domain model, auth rules, validation, migrations, pagination, deletion policy,
+tenant boundaries, and indexes for the actual product.
 
 After choosing Prisma, `npm install` runs `prisma generate`. Configure
 `DATABASE_URL` before database operations. For Drizzle and Prisma, create and
@@ -405,10 +396,9 @@ mode as appropriate.
 
 ## Email
 
-The optional email module uses Nodemailer and SMTP. Its API route is protected by
-the selected authentication strategy. With token auth, the recipient remains
-server-controlled through `EMAIL_TEST_RECIPIENT`; arbitrary browser recipients
-are not accepted by the starter endpoint.
+The optional email module uses Nodemailer and SMTP. Its starter API route sends
+only to the server-controlled `EMAIL_TEST_RECIPIENT`; arbitrary browser
+recipients are not accepted by the example endpoint.
 
 Before production, add template-specific validation, unsubscribe/compliance
 behavior where applicable, delivery-event handling, rate limits, and provider
@@ -511,7 +501,6 @@ The generator merges only variables needed by selected modules into
 | `NEXT_PUBLIC_API_URL` | browser/public | public API base when used by client code |
 | `NEXT_PUBLIC_TWITTER_HANDLE` | browser/public | optional `@handle` for card attribution |
 | `NEXT_PUBLIC_GA_ID` | browser/public | optional analytics ID; integration is not enabled automatically |
-| `API_ACCESS_TOKEN` | server secret | bearer token for `auth=none` API requests |
 
 ### Auth.js
 
@@ -553,7 +542,7 @@ No service-role/secret Supabase key is generated into browser configuration.
 ### Email
 
 `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`,
-and optional `EMAIL_TEST_RECIPIENT` are server-side email configuration.
+and `EMAIL_TEST_RECIPIENT` are server-side email configuration.
 
 ### Sentry
 
@@ -853,11 +842,10 @@ indexing policy, and search/AI platform decisions outside this repository.
 Yes. The matrix tests all three auth modes against all four ORM choices. Your
 domain schema and provider-specific user linkage remain application decisions.
 
-### Why are APIs protected when auth is `none`?
+### Are demo APIs authenticated automatically?
 
-Because “no sign-in UI” should not silently create public mutation endpoints.
-The bearer token provides a minimal server boundary until you implement the
-identity model you need.
+No. Demo routes stay generic unless the real feature itself needs auth. Add the
+product-specific auth and authorization checks that match your domain.
 
 ### Why isn't every possible feature permutation installed in CI?
 

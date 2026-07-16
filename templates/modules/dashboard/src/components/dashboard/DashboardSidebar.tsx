@@ -12,10 +12,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Separator } from "@/components/ui/separator";
 
 const navItems = [
-  { href: "/dashboard", label: "Overview", icon: Home },
-  { href: "#", label: "Billing", icon: CreditCard },
-  { href: "#", label: "Analytics", icon: BarChart3 },
-  { href: "#", label: "Settings", icon: Settings },
+  { id: 'overview', href: '/dashboard', label: 'Overview', icon: Home },
+  { id: 'billing', href: '#', label: 'Billing', icon: CreditCard },
+  { id: 'analytics', href: '#', label: 'Analytics', icon: BarChart3 },
+  { id: 'settings', href: '#', label: 'Settings', icon: Settings },
 ];
 
 export default function DashboardSidebar() {
@@ -33,7 +33,7 @@ export default function DashboardSidebar() {
           const Icon = item.icon;
           const active = pathname === item.href || pathname?.startsWith(item.href + "/");
           return (
-            <Link key={item.href} href={item.href} className="block">
+            <Link key={item.id} href={item.href} className="block">
               <Button
                 variant={active ? "secondary" : "ghost"}
                 className="w-full justify-start gap-2"

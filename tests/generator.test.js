@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -49,7 +49,6 @@ test('all matrix combinations generate non-interactively', () => {
       assert.ok(!existsSync(path.join(project, 'public/assets/images')));
       assert.ok(!existsSync(path.join(project, 'public/icon-200.jpeg')));
       assert.ok(readFileSync(path.join(project, 'LICENSE'), 'utf8').includes('MIT License'));
-      assert.ok(readFileSync(path.join(project, 'src/lib/server-auth.ts'), 'utf8').includes('requireApiUser'));
       assert.ok(readFileSync(path.join(project, 'src/app/robots.ts'), 'utf8').includes("'/api/'"));
       assert.ok(readFileSync(path.join(project, 'src/app/sitemap.ts'), 'utf8').includes('AppConfig.locales'));
       assert.ok(readFileSync(path.join(project, 'src/app/manifest.ts'), 'utf8').includes('MetadataRoute.Manifest'));
@@ -134,23 +133,31 @@ test('local documentation links resolve', () => {
 
 test('security-sensitive templates keep server-side trust boundaries', () => {
   const template = (...parts) => path.join(root, 'templates', ...parts);
-  const apiRoutes = [];
-  const visit = (directory) => {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const entryPath = path.join(directory, entry.name);
-      if (entry.isDirectory()) visit(entryPath);
-      else if (entry.name === 'route.ts' && entryPath.includes(`${path.sep}api${path.sep}`)) apiRoutes.push(entryPath);
-    }
-  };
-  visit(template('modules'));
+  const drizzleUsers = readFileSync(template('modules', 'orm-drizzle', 'src', 'app', 'api', 'users', 'route.ts'), 'utf8');
+  const drizzleSchema = readFileSync(template('modules', 'orm-drizzle', 'src', 'lib', 'schema.ts'), 'utf8');
+  assert.ok(!drizzleUsers.includes('requireApiUser'));
+  assert.ok(!drizzleUsers.includes('ownerId'));
+  assert.ok(!drizzleSchema.includes('ownerId'));
 
-  for (const route of apiRoutes) {
-    const source = readFileSync(route, 'utf8');
-    const protectedRoute = source.includes('requireApiUser')
-      || source.includes('stripe.webhooks.constructEvent')
-      || route.includes(`[...nextauth]${path.sep}route.ts`);
-    assert.ok(protectedRoute, `API route lacks an authentication or signature boundary: ${route}`);
-  }
+  const prismaUsers = readFileSync(template('modules', 'orm-prisma', 'src', 'app', 'api', 'users', 'route.ts'), 'utf8');
+  const prismaUserById = readFileSync(template('modules', 'orm-prisma', 'src', 'app', 'api', 'users', '[id]', 'route.ts'), 'utf8');
+  const prismaSchema = readFileSync(template('modules', 'orm-prisma', 'prisma', 'schema.prisma'), 'utf8');
+  assert.ok(!prismaUsers.includes('requireApiUser'));
+  assert.ok(!prismaUsers.includes('ownerId'));
+  assert.ok(!prismaUserById.includes('ownerId'));
+  assert.ok(!prismaSchema.includes('ownerId'));
+
+  const mongooseUsers = readFileSync(template('modules', 'orm-mongoose', 'src', 'app', 'api', 'users', 'route.ts'), 'utf8');
+  const mongooseUserById = readFileSync(template('modules', 'orm-mongoose', 'src', 'app', 'api', 'users', '[id]', 'route.ts'), 'utf8');
+  const mongooseModel = readFileSync(template('modules', 'orm-mongoose', 'src', 'models', 'User.ts'), 'utf8');
+  assert.ok(!mongooseUsers.includes('requireApiUser'));
+  assert.ok(!mongooseUsers.includes('ownerId'));
+  assert.ok(!mongooseUserById.includes('ownerId'));
+  assert.ok(!mongooseModel.includes('ownerId'));
+
+  const emailRoute = readFileSync(template('modules', 'nodemailer-email', 'src', 'app', 'api', 'email', 'send', 'route.ts'), 'utf8');
+  assert.ok(!emailRoute.includes('requireApiUser'));
+  assert.ok(emailRoute.includes('EMAIL_TEST_RECIPIENT'));
 
   const oneTime = readFileSync(template('modules', 'stripe-one-time', 'src', 'app', 'api', 'stripe', 'route.ts'), 'utf8');
   assert.ok(oneTime.includes('STRIPE_ONE_TIME_PRICE_ID'));
@@ -159,9 +166,13 @@ test('security-sensitive templates keep server-side trust boundaries', () => {
 
   const subscriptions = readFileSync(template('modules', 'stripe-subscriptions', 'src', 'app', 'api', 'stripe', 'route.ts'), 'utf8');
   assert.ok(subscriptions.includes("plan?: 'monthly' | 'yearly'"));
-  assert.ok(!subscriptions.includes('customerId'));
+  assert.ok(subscriptions.includes('sessionId?: string'));
+  assert.ok(!subscriptions.includes('requireApiUser'));
   assert.ok(!subscriptions.includes('amount?:'));
   assert.ok(!subscriptions.includes('body.amount'));
+
+  const webhook = readFileSync(template('modules', 'stripe-subscriptions', 'src', 'app', 'api', 'stripe', 'webhook', 'route.ts'), 'utf8');
+  assert.ok(webhook.includes('constructEvent'));
 
   const rolesProxy = readFileSync(template('modules', 'auth-supabase-roles', 'src', 'proxy.ts'), 'utf8');
   assert.ok(rolesProxy.includes('claims.app_metadata'));

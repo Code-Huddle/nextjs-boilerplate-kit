@@ -1,20 +1,7 @@
-import type { NextRequest } from 'next/server';
 import type Stripe from 'stripe';
-import { requireApiUser } from '@/lib/server-auth';
 import { stripe } from '@/lib/stripe';
 
 type Action = 'checkout' | 'portal' | 'status' | 'cancel' | 'config';
-
-async function customerFor(user: { id: string; email: string | null }) {
-  const found = await stripe.customers.search({
-    query: `metadata['app_user_id']:'${user.id.replaceAll("'", '')}'`,
-    limit: 1,
-  });
-  return found.data[0] ?? stripe.customers.create({
-    email: user.email ?? undefined,
-    metadata: { app_user_id: user.id },
-  });
-}
 
 function serializePrice(price: Stripe.Price) {
   const product = typeof price.product === 'object' && !('deleted' in price.product) ? price.product : null;
@@ -27,13 +14,37 @@ function serializePrice(price: Stripe.Price) {
   };
 }
 
-export async function POST(request: NextRequest) {
-  const auth = await requireApiUser(request);
-  if (!auth.ok) return auth.response;
+type RequestBody = {
+  action?: Action;
+  plan?: 'monthly' | 'yearly';
+  sessionId?: string;
+};
+
+async function getCheckoutSession(sessionId: string) {
+  return stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['customer', 'subscription'],
+  });
+}
+
+async function requireCompletedCheckoutSession(sessionId: string | undefined) {
+  if (!sessionId) {
+    return Response.json({ error: 'A completed checkout session is required' }, { status: 400 });
+  }
+
+  const session = await getCheckoutSession(sessionId);
+  if (session.mode !== 'subscription' || session.status !== 'complete') {
+    return Response.json({ error: 'The checkout session is not a completed subscription session' }, { status: 400 });
+  }
+
+  return session;
+}
+
+export async function POST(request: Request) {
 
   try {
-    const body = await request.json() as { action?: Action; plan?: 'monthly' | 'yearly' };
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.nextUrl.origin;
+    const body = await request.json() as RequestBody;
+    const url = new URL(request.url);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? url.origin;
 
     if (body.action === 'config') {
       const entries = await Promise.all(['monthly', 'yearly'].map(async (plan) => {
@@ -45,29 +56,32 @@ export async function POST(request: NextRequest) {
       return Response.json({ config: Object.fromEntries(entries) });
     }
 
-    const customer = await customerFor(auth.user);
     if (body.action === 'checkout') {
       const priceId = body.plan === 'yearly' ? process.env.STRIPE_PRICE_ID_YEARLY : process.env.STRIPE_PRICE_ID_MONTHLY;
       if (!priceId) return Response.json({ error: 'The selected server-side price is not configured' }, { status: 503 });
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
-        customer: customer.id,
+        customer_creation: 'always',
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/payment/cancel`,
-        client_reference_id: auth.user.id,
-        metadata: { app_user_id: auth.user.id, plan: body.plan ?? 'monthly' },
+        metadata: { plan: body.plan ?? 'monthly' },
       });
       return Response.json({ url: session.url });
     }
 
+    const session = await requireCompletedCheckoutSession(body.sessionId);
+    if (session instanceof Response) return session;
+
+    const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
     if (body.action === 'portal') {
-      const session = await stripe.billingPortal.sessions.create({ customer: customer.id, return_url: `${appUrl}/dashboard` });
-      return Response.json({ url: session.url });
+      if (!customerId) return Response.json({ error: 'No customer found for this checkout session' }, { status: 404 });
+      const portalSession = await stripe.billingPortal.sessions.create({ customer: customerId, return_url: `${appUrl}/dashboard` });
+      return Response.json({ url: portalSession.url });
     }
 
-    const subscriptions = await stripe.subscriptions.list({ customer: customer.id, status: 'all', limit: 1 });
-    const subscription = subscriptions.data[0];
+    const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+    const subscription = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
     if (body.action === 'cancel') {
       if (!subscription) return Response.json({ error: 'No subscription found' }, { status: 404 });
       const updated = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
