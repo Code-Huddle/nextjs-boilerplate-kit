@@ -208,7 +208,7 @@ program
       const authOption = options.auth?.toLowerCase();
       if (authOption && !authValues[authOption]) throw new Error(`Unsupported auth provider: ${options.auth}`);
       const authProvider = await pick(authOption ? authValues[authOption] : undefined, options.yes ? 'NextAuth' : undefined, {
-          type: 'list',
+          type: 'select',
           name: 'authProvider',
           message: '🔐 Choose your authentication provider:',
           choices: [
@@ -236,7 +236,7 @@ program
       const ormOption = options.orm?.toLowerCase();
       if (ormOption && !ormValues[ormOption]) throw new Error(`Unsupported ORM: ${options.orm}`);
       ormChoice = await pick(ormOption ? ormValues[ormOption] : undefined, options.yes ? 'None' : undefined, {
-            type: 'list',
+            type: 'select',
             name: 'ormChoice',
             message: '📁 Choose your ORM (Object-Relational Mapping):',
             choices: [
@@ -257,7 +257,7 @@ program
       const paymentOption = options.payments?.toLowerCase();
       if (paymentOption && !paymentValues[paymentOption]) throw new Error(`Unsupported payment mode: ${options.payments}`);
       const stripeIntegration = await pick(paymentOption ? paymentValues[paymentOption] : undefined, options.yes ? 'None' : undefined, {
-          type: 'list',
+          type: 'select',
           name: 'stripeIntegration',
           message: '💳 Choose your Stripe integration:',
           choices: [
