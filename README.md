@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/nextjs-boilerplate-kit.svg)](https://www.npmjs.com/package/nextjs-boilerplate-kit)
 [![npm downloads](https://img.shields.io/npm/dm/nextjs-boilerplate-kit.svg)](https://www.npmjs.com/package/nextjs-boilerplate-kit)
+[![quality](https://github.com/Code-Huddle/nextjs-boilerplate-kit/actions/workflows/quality.yml/badge.svg)](https://github.com/Code-Huddle/nextjs-boilerplate-kit/actions/workflows/quality.yml)
 [![Node.js 24](https://img.shields.io/badge/Node.js-24%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
