@@ -559,7 +559,7 @@ program
         console.log(chalk.gray('   📩 Configuring email...'));
         const emailModuleDir = path.join(modulesDir, 'nodemailer-email');
         await fs.copy(emailModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
-        ensureDeps({ 'nodemailer': '^9.0.3' });
+        ensureDeps({ 'nodemailer': '^7.0.7' });
         ensureDevDeps({ '@types/nodemailer': '^7.0.4' });
         selectedModules.push('nodemailer-email');
         await mergeEnvFiles(targetDir, selectedModules);
