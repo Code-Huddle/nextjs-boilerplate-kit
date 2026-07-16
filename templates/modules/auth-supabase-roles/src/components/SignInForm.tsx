@@ -60,6 +60,12 @@ export function SignInForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <p className="mb-4 rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs text-muted-foreground">
+          Admins are redirected to <span className="font-medium text-foreground">/admin</span>, users to{' '}
+          <span className="font-medium text-foreground">/user</span>. Promote a user by setting{' '}
+          <code className="rounded bg-muted px-1 py-0.5">app_metadata.role = &quot;admin&quot;</code> in Supabase,
+          then sign in again.
+        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <Alert variant="destructive">

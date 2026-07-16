@@ -106,6 +106,11 @@ export function SignUpForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <p className="mb-4 rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs text-muted-foreground">
+          New accounts are created as <span className="font-medium text-foreground">user</span>.
+          Set <code className="rounded bg-muted px-1 py-0.5">app_metadata.role = &quot;admin&quot;</code> in the
+          Supabase Dashboard to grant admin access.
+        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <Alert variant="destructive">

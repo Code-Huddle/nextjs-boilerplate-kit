@@ -202,8 +202,8 @@ export default async function Index(props: IIndexProps) {
                         {AUTH_TYPE === 'SupabaseRoles' && 'Supabase Auth with Roles configured'}
                       </p>
                       {AUTH_TYPE === 'SupabaseRoles' && (
-                        <div className="mb-3">
-                          <p className="text-xs text-muted-foreground mb-2">Protected Routes:</p>
+                        <div className="mb-3 space-y-2">
+                          <p className="text-xs text-muted-foreground">Protected Routes:</p>
                           <div className="flex flex-wrap gap-2">
                             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">
                               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -218,6 +218,11 @@ export default async function Index(props: IIndexProps) {
                               /user (User only)
                             </span>
                           </div>
+                          <p className="text-xs text-muted-foreground">
+                            Signup defaults to user. Set{' '}
+                            <code className="rounded bg-muted px-1 py-0.5">app_metadata.role = &quot;admin&quot;</code>
+                            {' '}in Supabase, then sign in again.
+                          </p>
                         </div>
                       )}
                       {AUTH_TYPE === 'None' ? (
