@@ -1,4 +1,4 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { DarkModeToggle } from '@/components/DarkModeToggle';
@@ -6,6 +6,7 @@ import { RandomJoke } from '@/components/RandomJoke';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthFeatureCard } from '@/components/AuthFeatureCard';
+import { AuthNav } from '@/components/AuthNav';
 import { AuthTechBadge } from '@/components/AuthTechBadge';
 import { StripeTechBadge } from '@/components/StripeFeatureCard';
 import { EmailTechBadge } from '@/components/EmailTechBadge';
@@ -41,10 +42,6 @@ export async function generateMetadata({ params }: IIndexProps) {
 export default async function Index(props: IIndexProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
-  const t = await getTranslations({
-    locale,
-    namespace: 'RootLayout',
-  });
 
   // Get auth-specific content
   const authFeatureCard = AuthFeatureCard();
@@ -127,17 +124,7 @@ export default async function Index(props: IIndexProps) {
             </div>
 
             <div className="flex items-center space-x-6">
-              <Link
-                href="/sign-in"
-                className="text-muted-foreground transition-all duration-300 hover:scale-105 hover:text-foreground"
-              >
-                {t('sign_in_link')}
-              </Link>
-              <Button asChild variant="futuristic" size="sm">
-                <Link href="/sign-up">
-                  {t('sign_up_link')}
-                </Link>
-              </Button>
+              <AuthNav />
               {hasDashboard && (
                 <Link
                   href="/dashboard"
@@ -614,7 +601,7 @@ export default async function Index(props: IIndexProps) {
               rel="noopener noreferrer"
               className="font-semibold text-primary transition-all duration-300 hover:scale-105 hover:text-primary/80"
             >
-              {AppConfig.name}
+              {AppConfig.author}
             </a>
           </p>
           <p className="mt-2 text-sm text-muted-foreground/70">

@@ -59,9 +59,9 @@ export async function POST(request: Request) {
     if (body.action === 'checkout') {
       const priceId = body.plan === 'yearly' ? process.env.STRIPE_PRICE_ID_YEARLY : process.env.STRIPE_PRICE_ID_MONTHLY;
       if (!priceId) return Response.json({ error: 'The selected server-side price is not configured' }, { status: 503 });
+      // Subscription Checkout always creates a Stripe Customer; customer_creation is payment-mode only.
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
-        customer_creation: 'always',
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/payment/cancel`,

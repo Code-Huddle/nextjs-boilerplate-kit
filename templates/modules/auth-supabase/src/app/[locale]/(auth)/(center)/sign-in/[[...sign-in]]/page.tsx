@@ -43,7 +43,7 @@ export default function SignIn() {
       if (error) {
         setError(error.message);
       } else if (data.user) {
-        router.push('/dashboard');
+        router.push('__AUTH_REDIRECT__');
       }
     } catch (error) {
       console.error('Sign in error:', error);
@@ -102,7 +102,7 @@ export default function SignIn() {
               const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'github',
                 options: {
-                  redirectTo: `${window.location.origin}/dashboard`,
+                  redirectTo: `${window.location.origin}__AUTH_REDIRECT__`,
                 },
               });
               if (error) setError(error.message);

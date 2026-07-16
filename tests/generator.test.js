@@ -74,6 +74,22 @@ test('all matrix combinations generate non-interactively', () => {
         const webhook = readFileSync(path.join(project, 'src/app/api/stripe/webhook/route.ts'), 'utf8');
         assert.ok(webhook.includes('constructEvent'));
       }
+      // --yes defaults dashboard off; post-auth redirect must not point at a missing /dashboard
+      if (sample.auth === 'nextauth') {
+        const signInForm = readFileSync(path.join(project, 'src/components/SignInForm.tsx'), 'utf8');
+        assert.ok(signInForm.includes("redirectTo: '/'"));
+        assert.ok(!signInForm.includes('__AUTH_REDIRECT__'));
+        assert.ok(!signInForm.includes("redirectTo: '/dashboard'"));
+      }
+      if (sample.auth === 'supabase' && !sample.roles) {
+        const signInPage = readFileSync(
+          path.join(project, 'src/app/[locale]/(auth)/(center)/sign-in/[[...sign-in]]/page.tsx'),
+          'utf8',
+        );
+        assert.ok(signInPage.includes("router.push('/')"));
+        assert.ok(!signInPage.includes('__AUTH_REDIRECT__'));
+        assert.ok(!signInPage.includes("router.push('/dashboard')"));
+      }
     }
   } finally {
     rmSync(cwd, { recursive: true, force: true });

@@ -589,6 +589,21 @@ program
         await fs.copy(dashboardModuleDir, targetDir, { overwrite: true, filter: (src) => path.basename(src) !== '.env.example' });
       }
 
+      // Post-auth redirect: /dashboard when that module is included, otherwise home
+      const authRedirect = includeDashboard ? '/dashboard' : '/';
+      const authRedirectFiles = [
+        path.join(targetDir, 'src', 'components', 'SignInForm.tsx'),
+        path.join(targetDir, 'src', 'components', 'SignUpForm.tsx'),
+        path.join(targetDir, 'src', 'app', '[locale]', '(auth)', '(center)', 'sign-in', '[[...sign-in]]', 'page.tsx'),
+      ];
+      for (const authRedirectFile of authRedirectFiles) {
+        if (!(await fs.pathExists(authRedirectFile))) continue;
+        let authRedirectContent = await fs.readFile(authRedirectFile, 'utf8');
+        if (!authRedirectContent.includes('__AUTH_REDIRECT__')) continue;
+        authRedirectContent = authRedirectContent.replaceAll('__AUTH_REDIRECT__', authRedirect);
+        await fs.writeFile(authRedirectFile, authRedirectContent, 'utf8');
+      }
+
       // Configure PWA (optional)
       if (includePWA) {
         console.log(chalk.gray('   📱 Configuring PWA...'));

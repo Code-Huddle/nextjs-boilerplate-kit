@@ -18,7 +18,7 @@ export const AppConfig = {
   // SEO defaults
   titleSeparator: ' | ',
   locale: 'en_US',
-  author: 'Your Team',
+  author: 'Code Huddle',
   twitterHandle,
   keywords: [
     appName,

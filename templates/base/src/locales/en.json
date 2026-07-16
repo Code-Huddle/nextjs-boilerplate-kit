@@ -5,7 +5,8 @@
     "counter_link": "Counter",
     "portfolio_link": "Portfolio",
     "sign_in_link": "Sign in",
-    "sign_up_link": "Sign up"
+    "sign_up_link": "Sign up",
+    "sign_out_link": "Log out"
   },
   "BaseTemplate": {
     "description": "Modern Next.js boilerplate with TypeScript, Tailwind CSS, and authentication built by CodeHuddle",

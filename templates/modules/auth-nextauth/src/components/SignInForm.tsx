@@ -12,8 +12,19 @@ export function SignInForm() {
         <CardDescription>Use a configured OAuth provider. No external password backend is bundled.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Button className="w-full" onClick={() => signIn('github', { redirectTo: '/dashboard' })}>Continue with GitHub</Button>
-        <Button className="w-full" variant="outline" onClick={() => signIn('google', { redirectTo: '/dashboard' })}>Continue with Google</Button>
+        <Button
+          className="w-full"
+          onClick={() => signIn('github', { redirectTo: '__AUTH_REDIRECT__' }, { prompt: 'consent' })}
+        >
+          Continue with GitHub
+        </Button>
+        <Button
+          className="w-full"
+          variant="outline"
+          onClick={() => signIn('google', { redirectTo: '__AUTH_REDIRECT__' }, { prompt: 'select_account' })}
+        >
+          Continue with Google
+        </Button>
       </CardContent>
     </Card>
   );
