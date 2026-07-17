@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: monthly
+      interval: weekly
     open-pull-requests-limit: 5
     groups:
       generator-dependencies:
@@ -13,5 +13,11 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: monthly
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: docker
+    directory: /templates/modules/docker
+    schedule:
+      interval: weekly
     open-pull-requests-limit: 5
