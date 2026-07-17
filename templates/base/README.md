@@ -67,7 +67,9 @@ rg -n "Your App|Your Team|example.com|your-|replace-with|FIXME|TODO" . \
 
 ## Security baseline
 
-- Demo data, email, and payment examples are starter code and may be anonymous.
+- Generic ORM and email demo APIs are starter code and are not automatically
+  authenticated or owner-scoped. Payment routes enforce their protocol-level
+  server boundaries but still need product-specific authorization decisions.
 - Add product-specific authentication and authorization wherever your real
   feature needs it.
 - Supabase uses the SSR client and server-validated claims. Roles come only from
@@ -99,6 +101,15 @@ If Supabase is selected:
 - assign `app_metadata.role` from a trusted admin workflow only;
 - refresh the user's JWT after changing app metadata;
 - do not publicly cache authenticated responses that may refresh cookies.
+
+The browser auth navigation tolerates missing Supabase configuration so an
+unconfigured project can build, but sign-in still requires real values. With
+role support, new accounts are `user` by default. Set `app_metadata.role` to
+`admin` only through a trusted Dashboard/server workflow and have the user sign
+in again. The generated role flow sends admins to `/admin`, other users to
+`/user`, and protects `/admin`, `/user`, and `/dashboard`. Without roles,
+successful sign-in goes to `/dashboard` when that module exists and `/`
+otherwise. Auth.js uses the same dashboard-or-home redirect.
 
 ## Stripe notes
 

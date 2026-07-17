@@ -86,7 +86,8 @@ Generator changes are incomplete unless they include:
   URL when the server can derive or configure it.
 - Keep secret and service-role keys out of browser bundles.
 - Verify webhook signatures against the raw request body.
-- Scope example data access to the authenticated principal.
+- Keep generic demo APIs explicitly documented as anonymous, or add and test
+  product-appropriate authentication, authorization, and ownership boundaries.
 - With Supabase, use `app_metadata` for authorization and pair exposed tables
   with RLS policies.
 - Add negative-path tests for security-sensitive behavior.

@@ -42,8 +42,10 @@ are still welcome.
 
 ## Security baseline for generated apps
 
-Generated code authenticates API routes, verifies Stripe webhooks, keeps Stripe
-price/customer decisions server-side, uses server-validated Supabase claims,
-and scopes ORM examples to their owner. Application teams must still add their
-own authorization policy, rate limits, abuse controls, data classification,
-RLS policies, monitoring, backups, and deployment review.
+Generated code protects the role-specific Supabase pages, verifies Stripe
+webhooks, keeps Stripe price/customer decisions server-side, and uses
+server-validated Supabase claims. Generic ORM and email demo APIs are not
+automatically authenticated or owner-scoped. Application teams must add the
+authorization policy, validation, rate limits, abuse controls, data
+classification, RLS policies, monitoring, backups, and deployment review their
+product requires.

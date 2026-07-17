@@ -1,140 +1,119 @@
-# React Query Setup Guide for Next.js 16
+# TanStack Query setup
 
-This guide covers the setup and configuration of TanStack Query (React Query) with Next.js 16.
+The generated Next.js 16 application includes TanStack Query 5 for client-side
+queries, mutations, optimistic updates, and server-prefetched hydration.
 
-## Overview
+## Included configuration
 
-The setup uses the App Router and Server Components architecture.
+`src/libs/queryClient.ts` creates the query client and exports
+`QueryClientProvider`, `getQueryClient`, and `makeQueryClient`.
 
-## Configuration
+Default query behavior:
 
-### 1. QueryClient Setup
+- data is fresh for 6 seconds;
+- failed queries retry three times with exponential backoff capped at 30
+  seconds;
+- failed mutations retry once after 1 second;
+- queries do not refetch on window focus;
+- stale queries refetch after reconnect;
+- the server creates a new client per render/request;
+- the browser reuses one client so React suspense does not discard query state.
 
-The QueryClient is configured with optimal settings for SSR and performance:
+`src/app/[locale]/layout.tsx` already wraps localized application routes with
+the provider. Do not add a second provider unless you intentionally need an
+isolated cache.
 
-- **staleTime**: 6 seconds - prevents unnecessary refetches
-- **retry**: 3 attempts with exponential backoff
-- **refetchOnWindowFocus**: false - only refetch if data is stale
-- **refetchOnReconnect**: true - refetch on network reconnect
+## Client query with optional initial data
 
-### 2. Server/Client Handling
+`src/components/ExamplePosts.tsx` demonstrates `useQuery` and accepts optional
+`initialData`:
 
-The setup properly handles both server and client environments:
+```tsx
+const query = useQuery({
+  queryKey: ['posts'],
+  queryFn: fetchPosts,
+  initialData,
+});
+```
 
-- **Server**: Creates a new QueryClient for each request
-- **Client**: Reuses the same QueryClient to prevent recreation during React suspense
+Use this pattern when a server component already has the data and passing it
+directly to a nearby client component is simpler than dehydrating a cache.
 
-## Usage Patterns
+## Server prefetch and hydration
 
-### Pattern 1: Initial Data Technique
+`src/components/ServerPrefetchedPosts.tsx` creates a server-only client,
+prefetches `['posts']`, dehydrates it, and renders the client list inside a
+`HydrationBoundary`. Its example fetch uses Next.js revalidation for one hour.
 
-Use this when you want to pass server-fetched data directly to client components.
+```tsx
+const queryClient = makeQueryClient();
 
-**Pros:**
-- Simple to implement
-- No hydration complexity
-- Good for simple use cases
+await queryClient.prefetchQuery({
+  queryKey: ['posts'],
+  queryFn: fetchPosts,
+});
 
-**Cons:**
-- Passing data down component tree can be cumbersome
-- Not ideal for deeply nested queries
+return (
+  <HydrationBoundary state={dehydrate(queryClient)}>
+    <PostsList />
+  </HydrationBoundary>
+);
+```
 
-### Pattern 2: Hydration Technique (Recommended)
+Use hydration when multiple nested client components should read the same
+prefetched cache without threading data through props.
 
-Use this for optimal performance and better developer experience.
+The starter components are examples, not a routed page. Import one into a route
+when you want to expose it.
 
-**Pros:**
-- Better performance with server-side prefetching
-- Automatic hydration
-- Works well with nested components
-- Follows React Query best practices
+## Shared hooks
 
-**Cons:**
-- Slightly more complex setup
-- Requires understanding of hydration
+`src/hooks/useApi.ts` includes:
 
-## Best Practices
+- `useApi` for a typed query with `enabled`, `staleTime`, and `initialData`;
+- `useApiMutation` for a mutation that invalidates the example `['posts']`
+  query after success;
+- `useOptimisticMutation` for cancellation, snapshot, optimistic cache update,
+  rollback on failure, and final invalidation.
 
-### 1. Query Keys
+Change the hard-coded `['posts']` invalidation in `useApiMutation` when adapting
+that example to another resource.
 
-Use consistent and descriptive query keys:
+## Query-key guidance
 
-**Good examples:**
-- `['posts']`
-- `['posts', { userId: 123 }]`
-- `['posts', 'comments', { postId: 456 }]`
+Use stable, descriptive keys and include every input used by the query:
 
-**Avoid:**
-- `['data']`
-- `['posts', 'stuff']`
+```ts
+['posts']
+['posts', { userId }]
+['post', postId, 'comments']
+```
 
-### 2. Error Handling
-
-Always handle errors gracefully with proper retry mechanisms and user feedback.
-
-### 3. Loading States
-
-Provide meaningful loading states to improve user experience.
-
-### 4. Stale Time Configuration
-
-Configure appropriate stale times based on your data:
-
-- **Frequently changing data**: `staleTime: 0`
-- **Semi-static data**: `staleTime: 5 * 60 * 1000` (5 minutes)
-- **Static data**: `staleTime: Infinity`
-
-### 5. Server-Side Fetching
-
-Use Next.js fetch with revalidation for optimal performance.
-
-## Example Implementation
-
-See the complete examples in:
-- `src/components/ExamplePosts.tsx` - Client component with initialData support
-- `src/components/ServerPrefetchedPosts.tsx` - Server component with prefetching
-- `src/app/[locale]/react-query-example/page.tsx` - Complete page demonstrating both patterns
+Avoid vague keys such as `['data']`. Centralize key factories once the
+application has enough related queries that spelling or invalidation drift is a
+risk.
 
 ## Testing
 
-When testing React Query components:
+Create a fresh `QueryClient` for each test, disable retries when testing failure
+states, and wrap the component in TanStack Query's `QueryClientProvider`.
+Mock the network boundary and assert loading, error, success, mutation, and
+rollback behavior as appropriate. There is no separate
+`@tanstack/react-query-testing` dependency in this project.
 
-1. Wrap components in `QueryClientProvider`
-2. Use `@tanstack/react-query-testing` for testing utilities
-3. Mock API responses appropriately
-4. Test loading, error, and success states
+## Production considerations
 
-## Performance Considerations
+- Choose `staleTime` from the product's freshness requirements, not the starter
+  default.
+- Ensure server and browser query keys and result shapes match exactly before
+  hydrating.
+- Avoid putting user-specific server-prefetched data into shared public caches.
+- Add user-facing error and retry states for important queries.
+- Use TanStack Query Devtools only as an explicit development dependency if the
+  team wants them; they are not installed by the generator.
 
-1. **Stale Time**: Set appropriate stale times to balance freshness and performance
-2. **Prefetching**: Use server-side prefetching for critical data
-3. **Query Deduplication**: React Query automatically deduplicates identical queries
-4. **Background Updates**: Enable background refetching for better UX
+## References
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Hydration Mismatch**: Ensure server and client render the same content
-2. **Query Client Recreation**: Use the provided `getQueryClient()` function
-3. **Stale Data**: Adjust stale time and refetch intervals
-4. **Memory Leaks**: Properly clean up queries when components unmount
-
-### Debug Mode
-
-Enable React Query DevTools in development for better debugging experience.
-
-## Resources
-
-- [TanStack Query Documentation](https://tanstack.com/query/latest)
-- [Next.js Data Fetching](https://nextjs.org/docs/app/building-your-application/data-fetching)
-- [React Query with Next.js Guide](https://faun.pub/from-setup-to-execution-the-most-accurate-tanstack-query-and-next-js-14-integration-guide-8e5aff6ee8ba)
-
-## Migration from v4
-
-If migrating from React Query v4:
-
-1. Update imports from `react-query` to `@tanstack/react-query`
-2. Replace `useQueryClient` with `useQueryClient` (same API)
-3. Update any deprecated options
-4. Test thoroughly, especially SSR functionality
+- [TanStack Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview)
+- [TanStack Query advanced server rendering](https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr)
+- [Next.js data fetching](https://nextjs.org/docs/app/getting-started/fetching-data)

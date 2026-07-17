@@ -41,7 +41,10 @@ export const AppConfig = {
   social: {
     github: '',
     twitter: '',
-    linkedin: '',
+    linkedin: {
+      haris: 'https://www.linkedin.com/in/haris-ahmed-software-engineer/',
+      kashif: 'https://linkedin.com/in/kashiekzmi',
+    },
   },
 
   // Analytics

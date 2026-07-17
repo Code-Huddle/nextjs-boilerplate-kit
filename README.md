@@ -43,6 +43,7 @@ authorization, threat modeling, content strategy, or production operations.
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Contributing](#contributing)
+- [Maintainers](#maintainers)
 - [License and provenance](#license-and-provenance)
 
 ## Why this generator
@@ -242,7 +243,7 @@ result.
 
 ## Platform baseline
 
-Important generated versions at the `2.0.0` baseline:
+Important generated versions at the `2.3.2` baseline:
 
 | Area | Baseline |
 | --- | --- |
@@ -308,6 +309,11 @@ The NextAuth selection uses server sessions and configured GitHub/Google OAuth
 providers. It does not include the former hard-coded external credentials
 backend.
 
+The generated navigation reflects the live session, signs out to `/`, and asks
+GitHub/Google to show consent or account-selection UI instead of silently
+reusing the last account. After sign-in, users go to `/dashboard` when the
+dashboard module is selected and `/` otherwise.
+
 Required setup:
 
 1. Generate a strong `AUTH_SECRET`.
@@ -323,9 +329,23 @@ cookie `getAll`/`setAll`, and a Next.js proxy that refreshes and validates auth
 claims. Use the project's publishable key in the browser; never expose a secret
 or service-role key through `NEXT_PUBLIC_*`.
 
+Without real Supabase environment values, the browser navigation renders the
+signed-out state instead of failing the generated build. Authentication itself
+still requires a valid project URL and publishable key.
+
 The roles option reads `claims.app_metadata.role`. Assign that value only from a
 trusted admin process. Users can edit `user_metadata`, so it is intentionally
 excluded from authorization.
+
+With roles enabled, new accounts default to `user`. Promote an account by
+setting `app_metadata.role` to `admin` through a trusted Supabase Dashboard or
+server-side workflow, then have the user sign in again so a refreshed token
+contains the claim. Role-aware sign-in sends admins to `/admin` and all other
+authenticated users to `/user`; the proxy protects `/admin`, `/user`, and
+`/dashboard`, and redirects non-admin attempts on `/admin` to `/user`.
+
+Without roles, successful Supabase sign-in follows the generator-wide redirect:
+`/dashboard` when that module is selected and `/` otherwise.
 
 Before production:
 
@@ -352,9 +372,11 @@ Authentication and ORM are independent selections.
 | Prisma | PostgreSQL | Prisma 7 config, PostgreSQL adapter, schema/client, CRUD examples |
 | Mongoose | MongoDB | connection/model code and CRUD examples |
 
-The CRUD routes are intentionally generic starter examples. Define the real
-domain model, auth rules, validation, migrations, pagination, deletion policy,
-tenant boundaries, and indexes for the actual product.
+The CRUD routes are intentionally generic, anonymous starter examples; selecting
+an auth module does not protect or owner-scope them. Before exposing them,
+define the real domain model, authentication and authorization rules,
+validation, migrations, pagination, deletion policy, tenant boundaries, and
+indexes for the actual product.
 
 After choosing Prisma, `npm install` runs `prisma generate`. Configure
 `DATABASE_URL` before database operations. For Drizzle and Prisma, create and
@@ -487,8 +509,9 @@ traffic.
 
 ## Environment variables
 
-The generator merges only variables needed by selected modules into
-`.env.example`. Copy it to `.env.local`; never commit real values.
+The generator starts with the shared variables and appends unique variables for
+the selected modules to `.env.example`. Copy it to `.env.local`; never commit
+real values.
 
 ### Core
 
@@ -501,6 +524,8 @@ The generator merges only variables needed by selected modules into
 | `NEXT_PUBLIC_API_URL` | browser/public | public API base when used by client code |
 | `NEXT_PUBLIC_TWITTER_HANDLE` | browser/public | optional `@handle` for card attribution |
 | `NEXT_PUBLIC_GA_ID` | browser/public | optional analytics ID; integration is not enabled automatically |
+| `LOGTAIL_SOURCE_TOKEN` | server secret | optional Better Stack/Logtail destination for the included Pino logger |
+| `ARCJET_KEY` | server secret | reserved placeholder; no Arcjet integration is enabled automatically |
 
 ### Auth.js
 
@@ -536,13 +561,15 @@ No service-role/secret Supabase key is generated into browser configuration.
 | `STRIPE_WEBHOOK_SECRET` | server secret |
 | `STRIPE_ONE_TIME_PRICE_ID` | server configuration |
 | `STRIPE_PRICE_ID_MONTHLY`, `STRIPE_PRICE_ID_YEARLY` | server configuration |
-| `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` | server configuration |
-| `STRIPE_CURRENCY` | server configuration |
+| `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` | reserved customization values; the starter routes currently derive return URLs from `NEXT_PUBLIC_APP_URL` or the request origin |
+| `STRIPE_CURRENCY` | reserved customization value; the starter routes use Stripe Price configuration |
 
 ### Email
 
 `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`,
-and `EMAIL_TEST_RECIPIENT` are server-side email configuration.
+and `EMAIL_TEST_RECIPIENT` are server-side email configuration. The mailer also
+accepts `RESEND_FROM_EMAIL` as a legacy override for the sender address, but the
+generated `.env.example` uses `EMAIL_FROM`.
 
 ### Sentry
 
@@ -713,8 +740,8 @@ announcing the project:
    `react`, `typescript`, `boilerplate`, `generator`, `supabase`, `stripe`,
    `prisma`, and `storybook`.
 7. Upload a 1280×640 repository social-preview image.
-8. Create the `v2.0.0` release notes from the changelog only after the full
-   matrix passes on the release commit.
+8. For each release, create the matching `vX.Y.Z` notes from the changelog only
+   after the full matrix passes on the release commit.
 
 ## Customization checklist
 
@@ -888,6 +915,31 @@ npm run test:matrix
 npm run test:matrix:full
 npm pack --dry-run
 ```
+
+## Maintainers
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://linkedin.com/in/kashiekzmi">
+        <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+      </a>
+      <br />
+      <strong>Kashif Abbas Kazmi</strong>
+      <br />
+      <em>Software Engineer</em>
+    </td>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/haris-ahmed-software-engineer/">
+        <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+      </a>
+      <br />
+      <strong>Haris Ahmed</strong>
+      <br />
+      <em>Software Engineer</em>
+    </td>
+  </tr>
+</table>
 
 ## License and provenance
 
