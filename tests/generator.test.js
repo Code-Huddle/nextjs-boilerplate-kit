@@ -96,6 +96,17 @@ test('all matrix combinations generate non-interactively', () => {
   }
 });
 
+test('component generator rejects unsafe names before writing files', () => {
+  const generator = path.join(root, 'templates', 'base', 'scripts', 'generate-component.mjs');
+  for (const name of ['../Escape', 'button-name', 'Button;process.exit()', 'Button/Child']) {
+    const result = spawnSync(process.execPath, [generator, '--name', name, '--type', 'ui'], {
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 1, `Unsafe component name was accepted: ${name}`);
+    assert.match(result.stderr, /PascalCase identifier/);
+  }
+});
+
 test('package is ready for public, documented, provenance-aware releases', () => {
   const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.license, 'MIT');
@@ -117,6 +128,9 @@ test('package is ready for public, documented, provenance-aware releases', () =>
     'RELEASING.md',
     '.github/PULL_REQUEST_TEMPLATE.md',
     '.github/dependabot.yml',
+    '.github/CODEOWNERS',
+    '.github/workflows/codeql.yml',
+    '.github/workflows/dependency-review.yml',
     '.github/workflows/quality.yml',
     '.github/workflows/release.yml',
   ]) {

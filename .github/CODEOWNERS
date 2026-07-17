@@ -1,0 +1,6 @@
+# Default ownership keeps every change reviewable by a maintainer.
+* @code-huddle-haris @code-huddle-kashif-kazmi
+
+# Repository automation and release controls require an administrator review.
+/.github/ @code-huddle-haris
+/RELEASING.md @code-huddle-haris

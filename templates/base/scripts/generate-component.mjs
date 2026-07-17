@@ -32,6 +32,15 @@ if (!name) {
   process.exit(1);
 }
 
+// Component names are embedded in TypeScript and used as path segments. Keep
+// them to a single PascalCase identifier to prevent code injection and path
+// traversal in generated projects.
+const componentNamePattern = /^[A-Z][A-Za-z0-9]*$/;
+if (!componentNamePattern.test(name)) {
+  console.error('Error: Component name must be a PascalCase identifier containing only letters and numbers.');
+  process.exit(1);
+}
+
 // Validate component type
 const validTypes = ['ui', 'client', 'server', 'page'];
 if (!validTypes.includes(type)) {
@@ -161,7 +170,13 @@ switch (type) {
 
 // Create the file
 const filename = type === 'page' ? 'page.tsx' : `${name}.tsx`;
-const filePath = path.join(targetDir, filename);
+const resolvedTargetDir = path.resolve(targetDir);
+const filePath = path.resolve(resolvedTargetDir, filename);
+
+if (path.dirname(filePath) !== resolvedTargetDir) {
+  console.error('Error: Refusing to write outside the component directory.');
+  process.exit(1);
+}
 
 try {
   if (fs.existsSync(filePath)) {
